@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block contenido %}
+<div class="p-5 bg-white rounded shadow-sm">
+  <h1 class="display-6 fw-bold">Bienvenido a NEXALYS Tec</h1>
+  <p class="lead">Plataforma web para la promoción y comercialización de productos tecnológicos.</p>
+  {% if user.is_authenticated %}
+    <p>Has iniciado sesión como <strong>{{ user.username }}</strong>.</p>
+  {% else %}
+    <a href="{% url 'registro' %}" class="btn btn-primary">Crear cuenta</a>
+    <a href="{% url 'login' %}" class="btn btn-outline-secondary">Iniciar sesión</a>
+  {% endif %}
+</div>
+{% endblock %}

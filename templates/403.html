@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block titulo %}Acceso denegado | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="text-center py-5">
+  <h1 class="display-4 fw-bold">403</h1>
+  <p class="lead">No tienes permiso para acceder a esta sección.</p>
+  <a href="{% url 'inicio' %}" class="btn btn-primary">Volver al inicio</a>
+</div>
+{% endblock %}
