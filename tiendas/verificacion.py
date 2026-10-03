@@ -48,3 +48,5 @@ def enviar_correo_verificacion(request, tienda):
         from_email=None,  # usa DEFAULT_FROM_EMAIL
         recipient_list=[tienda.usuario.email],
     )
+    if settings.DEBUG:
+        print(f"\n[NEXALYS] Enlace de verificación para {tienda.usuario.email}:\n{enlace}\n")
