@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block titulo %}Enlace no válido | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="text-center py-5">
+  <h1 class="h3 fw-bold">El enlace de verificación no es válido o ya venció</h1>
+  <p class="text-muted">Inicia sesión con tu tienda y usa el botón <strong>"Reenviar correo de verificación"</strong> para recibir un enlace nuevo.</p>
+  <a href="{% url 'login' %}" class="btn btn-primary">Iniciar sesión</a>
+</div>
+{% endblock %}

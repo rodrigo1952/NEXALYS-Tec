@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cuentas',
+    'tiendas',
+    'catalogo',
 ]
 
 MIDDLEWARE = [
@@ -118,6 +120,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Archivos subidos por los usuarios (imagenes de productos)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
@@ -128,7 +134,13 @@ MAILERS = {
     },
 }
 
+# Remitente de los correos del sistema (en desarrollo se muestran en la consola)
+DEFAULT_FROM_EMAIL = 'NEXALYS Tec <no-responder@nexalys.local>'
+
 # Autenticacion
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'inicio'
 LOGOUT_REDIRECT_URL = 'inicio'
+
+# Verificacion de tiendas: horas de validez del enlace enviado por correo
+VERIFICACION_TIENDA_HORAS = 24

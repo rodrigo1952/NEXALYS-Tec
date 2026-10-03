@@ -1,0 +1,17 @@
+<div class="card h-100 shadow-sm">
+  {% if producto.imagen %}
+    <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}">
+  {% else %}
+    <div class="foto-vacia card-img-top">📦</div>
+  {% endif %}
+  <div class="card-body d-flex flex-column">
+    <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
+    <h3 class="h6 card-title mt-1">{{ producto.nombre }}</h3>
+    <p class="fw-bold fs-5 mb-1">S/ {{ producto.precio }}</p>
+    {% if producto.agotado %}
+      <span class="badge text-bg-secondary align-self-start mb-2">Agotado</span>
+    {% endif %}
+    <small class="text-muted mb-3">🏪 {{ producto.tienda }}</small>
+    <a href="{% url 'catalogo:detalle' producto.pk %}" class="btn btn-outline-primary btn-sm mt-auto">Ver detalle</a>
+  </div>
+</div>

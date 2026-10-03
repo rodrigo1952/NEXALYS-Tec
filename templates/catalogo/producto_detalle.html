@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}{{ producto.nombre }} | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<a href="{% url 'catalogo:catalogo' %}" class="small">&larr; Volver al catálogo</a>
+<div class="row g-4 mt-1">
+  <div class="col-md-5">
+    {% if producto.imagen %}
+      <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="img-fluid rounded bg-white p-3 shadow-sm w-100">
+    {% else %}
+      <div class="foto-vacia rounded shadow-sm" style="height:320px">📦</div>
+    {% endif %}
+  </div>
+  <div class="col-md-7">
+    <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
+    <h2 class="mt-1">{{ producto.nombre }}</h2>
+    <p class="display-6 fw-bold">S/ {{ producto.precio }}</p>
+    {% if producto.agotado %}
+      <span class="badge text-bg-secondary mb-3">Agotado</span>
+    {% else %}
+      <p class="text-success mb-3">Stock disponible: {{ producto.stock }}</p>
+    {% endif %}
+    {% if producto.descripcion %}<p>{{ producto.descripcion|linebreaksbr }}</p>{% endif %}
+
+    <div class="card card-body bg-light mb-3">
+      <strong>🏪 <a href="{% url 'tiendas:perfil' producto.tienda.pk %}">{{ producto.tienda }}</a></strong>
+      <span class="small text-muted">📍 {{ producto.tienda.direccion }}</span>
+    </div>
+    <a href="{{ producto.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-lg">
+      Consultar por WhatsApp
+    </a>
+  </div>
+</div>
+
+{% if relacionados %}
+  <h3 class="h5 mt-5 mb-3">También te puede interesar</h3>
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+    {% for producto in relacionados %}
+      <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

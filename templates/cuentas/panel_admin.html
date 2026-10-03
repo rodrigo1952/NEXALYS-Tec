@@ -1,6 +1,15 @@
 {% extends "base.html" %}
+{% block titulo %}Administración | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <h2>Panel de administración</h2>
-<p>Solo visible para el rol <strong>Administrador</strong>.</p>
-<a href="/admin/" class="btn btn-dark">Gestionar usuarios y roles</a>
+<p class="text-muted">Solo visible para el rol <strong>Administrador</strong>.</p>
+<div class="list-group">
+  <a href="{% url 'admin:tiendas_tienda_changelist' %}" class="list-group-item list-group-item-action">
+    🏪 Tiendas <small class="text-muted">— revisar, suspender o reactivar</small>
+  </a>
+  <a href="{% url 'admin:catalogo_categoria_changelist' %}" class="list-group-item list-group-item-action">🗂️ Categorías</a>
+  <a href="{% url 'admin:catalogo_marca_changelist' %}" class="list-group-item list-group-item-action">🏷️ Marcas</a>
+  <a href="{% url 'admin:catalogo_producto_changelist' %}" class="list-group-item list-group-item-action">📦 Productos</a>
+  <a href="{% url 'admin:auth_user_changelist' %}" class="list-group-item list-group-item-action">👥 Usuarios y roles</a>
+</div>
 {% endblock %}

@@ -1,0 +1,12 @@
+{% autoescape off %}Hola,
+
+Registraste la tienda "{{ tienda.nombre }}" en NEXALYS Tec.
+
+Para verificar tu correo y activar tu tienda, abre este enlace:
+
+{{ enlace }}
+
+El enlace vence en {{ horas }} horas. Si no registraste esta tienda, ignora este mensaje.
+
+Equipo NEXALYS Tec
+{% endautoescape %}

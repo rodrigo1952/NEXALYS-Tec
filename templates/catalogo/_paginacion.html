@@ -1,0 +1,13 @@
+{% if pagina.has_other_pages %}
+<nav class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if pagina.has_previous %}
+      <li class="page-item"><a class="page-link" href="{% querystring page=pagina.previous_page_number %}">Anterior</a></li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
+    {% if pagina.has_next %}
+      <li class="page-item"><a class="page-link" href="{% querystring page=pagina.next_page_number %}">Siguiente</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}

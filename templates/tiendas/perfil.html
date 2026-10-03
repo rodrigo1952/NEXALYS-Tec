@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}{{ tienda.nombre }} | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="p-4 bg-white rounded shadow-sm mb-4">
+  <h2 class="mb-1">🏪 {{ tienda.nombre }}</h2>
+  {% if tienda.descripcion %}<p class="text-muted">{{ tienda.descripcion }}</p>{% endif %}
+  <p class="mb-2">📍 {{ tienda.direccion }}</p>
+  <a href="{{ tienda.enlace_mapa }}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Ver en Google Maps</a>
+  <a href="{{ tienda.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-sm">Escribir por WhatsApp</a>
+</div>
+
+<h3 class="h5 mb-3">Productos de la tienda</h3>
+<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+  {% for producto in productos %}
+    <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
+  {% empty %}
+    <p class="text-muted">Esta tienda aún no tiene productos publicados.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Mi tienda | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h2 class="mb-0">🏪 {{ tienda.nombre }}</h2>
+  {% if tienda.estado == "activa" %}
+    <span class="badge text-bg-success fs-6">Activa</span>
+  {% elif tienda.estado == "pendiente" %}
+    <span class="badge text-bg-warning fs-6">Pendiente de verificación</span>
+  {% else %}
+    <span class="badge text-bg-danger fs-6">Suspendida</span>
+  {% endif %}
+</div>
+
+{% if tienda.estado == "pendiente" %}
+  <div class="alert alert-warning">
+    <p class="mb-2"><strong>Verifica tu correo para activar tu tienda.</strong>
+      Te enviamos un enlace a <strong>{{ user.email }}</strong>. Mientras no lo verifiques, no podrás publicar productos.</p>
+    <form method="post" action="{% url 'tiendas:reenviar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-warning">Reenviar correo de verificación</button>
+    </form>
+  </div>
+{% elif tienda.estado == "suspendida" %}
+  <div class="alert alert-danger">
+    Tu tienda está <strong>suspendida</strong> y sus productos no aparecen en el catálogo. Comunícate con el administrador.
+  </div>
+{% else %}
+  <div class="row g-3 mb-4">
+    <div class="col-sm-4"><div class="card text-center shadow-sm"><div class="card-body">
+      <div class="display-6 fw-bold">{{ total_productos }}</div><div class="text-muted">Productos</div>
+    </div></div></div>
+    <div class="col-sm-4"><div class="card text-center shadow-sm"><div class="card-body">
+      <div class="display-6 fw-bold">{{ publicados }}</div><div class="text-muted">Publicados</div>
+    </div></div></div>
+    <div class="col-sm-4"><div class="card text-center shadow-sm"><div class="card-body">
+      <div class="display-6 fw-bold">{{ agotados }}</div><div class="text-muted">Agotados</div>
+    </div></div></div>
+  </div>
+  <a href="{% url 'catalogo:crear' %}" class="btn btn-primary">+ Agregar producto</a>
+  <a href="{% url 'catalogo:mis_productos' %}" class="btn btn-outline-secondary">Gestionar mis productos</a>
+  <a href="{% url 'tiendas:perfil' tienda.pk %}" class="btn btn-outline-secondary">Ver mi tienda pública</a>
+{% endif %}
+
+<h3 class="h6 mt-4">Datos de la tienda</h3>
+<ul class="list-group">
+  <li class="list-group-item"><strong>Dirección:</strong> {{ tienda.direccion }}</li>
+  <li class="list-group-item"><strong>WhatsApp:</strong> {{ tienda.whatsapp }}</li>
+  <li class="list-group-item"><strong>Descripción:</strong> {{ tienda.descripcion|default:"—" }}</li>
+</ul>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block titulo %}Catálogo | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<h2 class="mb-3">Catálogo de productos</h2>
+
+<form method="get" class="card card-body shadow-sm mb-4" novalidate>
+  {% for error in form.non_field_errors %}<div class="alert alert-danger py-2">{{ error }}</div>{% endfor %}
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small" for="{{ form.q.id_for_label }}">Buscar</label>
+      {{ form.q }}
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="{{ form.categoria.id_for_label }}">Categoría</label>
+      {{ form.categoria }}
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="{{ form.marca.id_for_label }}">Marca</label>
+      {{ form.marca }}
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small" for="{{ form.tienda.id_for_label }}">Tienda</label>
+      {{ form.tienda }}
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="{{ form.precio_min.id_for_label }}">Precio mín. (S/)</label>
+      {{ form.precio_min }}
+      {% for e in form.precio_min.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label small" for="{{ form.precio_max.id_for_label }}">Precio máx. (S/)</label>
+      {{ form.precio_max }}
+      {% for e in form.precio_max.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small" for="{{ form.orden.id_for_label }}">Ordenar por</label>
+      {{ form.orden }}
+    </div>
+    <div class="col-md-5 d-flex gap-2">
+      <button type="submit" class="btn btn-primary flex-grow-1">Buscar</button>
+      <a href="{% url 'catalogo:catalogo' %}" class="btn btn-outline-secondary">Limpiar</a>
+    </div>
+  </div>
+</form>
+
+<p class="text-muted small">{{ pagina.paginator.count }} producto(s) encontrado(s)</p>
+
+<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+  {% for producto in pagina %}
+    <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
+  {% empty %}
+    <div class="col-12">
+      <div class="alert alert-info">No se encontraron productos con esos criterios.</div>
+    </div>
+  {% endfor %}
+</div>
+
+{% include "catalogo/_paginacion.html" %}
+{% endblock %}

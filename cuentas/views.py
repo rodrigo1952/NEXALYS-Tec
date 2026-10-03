@@ -7,6 +7,8 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 
+from catalogo.models import Producto
+
 from .forms import RegistroForm
 
 
@@ -32,7 +34,8 @@ def rol_requerido(*roles):
 
 
 def inicio(request):
-    return render(request, "inicio.html")
+    recientes = Producto.objects.visibles().select_related("tienda", "marca")[:8]
+    return render(request, "inicio.html", {"recientes": recientes})
 
 
 def registro(request):
@@ -62,8 +65,3 @@ def mi_cuenta(request):
 @rol_requerido("Administrador")
 def panel_admin(request):
     return render(request, "cuentas/panel_admin.html")
-
-
-@rol_requerido("Administrador", "Vendedor")
-def panel_vendedor(request):
-    return render(request, "cuentas/panel_vendedor.html")
