@@ -224,3 +224,9 @@ class CatalogoPublicoTests(BaseCatalogo):
         respuesta = self.client.get(reverse("catalogo:detalle", args=[producto.pk]))
         self.assertContains(respuesta, "https://wa.me/51911111111?text=")
         self.assertIn("Galaxy%20A15", producto.enlace_whatsapp())
+
+    def test_precio_se_muestra_con_punto_decimal(self):
+        self.crear_producto(nombre="Mouse", precio=Decimal("65.20"))
+        respuesta = self.client.get(reverse("catalogo:catalogo"))
+        self.assertContains(respuesta, "S/ 65.20")
+        self.assertNotContains(respuesta, "65,20")

@@ -145,3 +145,6 @@ LOGOUT_REDIRECT_URL = 'inicio'
 
 # Verificacion de tiendas: horas de validez del enlace enviado por correo
 VERIFICACION_TIENDA_HORAS = 24
+
+# Usar el formato numérico de config/formats (punto decimal)
+FORMAT_MODULE_PATH = ["config.formats"]
