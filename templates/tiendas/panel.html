@@ -37,7 +37,11 @@
       <div class="display-6 fw-bold">{{ agotados }}</div><div class="text-muted">Agotados</div>
     </div></div></div>
   </div>
+  {% if pedidos_pendientes %}
+    <div class="alert alert-info">Tienes <strong>{{ pedidos_pendientes }}</strong> pedido(s) pendiente(s). <a href="{% url 'pedidos:lista' %}?estado=pendiente">Ver pedidos</a></div>
+  {% endif %}
   <a href="{% url 'catalogo:crear' %}" class="btn btn-primary">+ Agregar producto</a>
+  <a href="{% url 'pedidos:crear' %}" class="btn btn-outline-primary">+ Registrar pedido</a>
   <a href="{% url 'catalogo:mis_productos' %}" class="btn btn-outline-secondary">Gestionar mis productos</a>
   <a href="{% url 'tiendas:perfil' tienda.pk %}" class="btn btn-outline-secondary">Ver mi tienda pública</a>
 {% endif %}

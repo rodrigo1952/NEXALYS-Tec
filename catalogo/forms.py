@@ -80,3 +80,32 @@ class BusquedaForm(EstiloBootstrapMixin, forms.Form):
         if minimo is not None and maximo is not None and minimo > maximo:
             raise ValidationError("El precio mínimo no puede ser mayor que el precio máximo.")
         return datos
+
+
+class NombreUnicoForm(EstiloBootstrapMixin, forms.ModelForm):
+    """Base para categorías y marcas (CU-07): el nombre no se repite, sin importar mayúsculas."""
+
+    def clean_nombre(self):
+        nombre = " ".join(self.cleaned_data["nombre"].split())
+        if len(nombre) < 2:
+            raise ValidationError("El nombre debe tener al menos 2 caracteres.")
+        repetidos = self._meta.model.objects.filter(nombre__iexact=nombre)
+        if self.instance.pk:
+            repetidos = repetidos.exclude(pk=self.instance.pk)
+        if repetidos.exists():
+            raise ValidationError("Ya existe un registro con ese nombre.")
+        return nombre
+
+
+class CategoriaForm(NombreUnicoForm):
+    class Meta:
+        model = Categoria
+        fields = ["nombre", "activa"]
+        help_texts = {"activa": "Si la desactivas, las tiendas ya no podrán elegirla en productos nuevos."}
+
+
+class MarcaForm(NombreUnicoForm):
+    class Meta:
+        model = Marca
+        fields = ["nombre", "activa"]
+        help_texts = {"activa": "Si la desactivas, las tiendas ya no podrán elegirla en productos nuevos."}

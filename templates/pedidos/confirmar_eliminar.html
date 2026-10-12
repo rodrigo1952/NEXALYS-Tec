@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Eliminar pedido | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-danger"><div class="card-body p-4">
+      <h2 class="h4">¿Eliminar el pedido #{{ pedido.pk }}?</h2>
+      <p>{{ pedido.cliente_nombre }} — {{ pedido.cantidad }} × {{ pedido.producto.nombre }} (S/ {{ pedido.total }}).</p>
+      {% if pedido.estado == "pendiente" %}
+        <p class="small text-muted">Las {{ pedido.cantidad }} unidad(es) volverán al stock del producto.</p>
+      {% endif %}
+      <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        <a href="{% url 'pedidos:detalle' pedido.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

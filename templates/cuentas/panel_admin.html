@@ -3,13 +3,21 @@
 {% block contenido %}
 <h2>Panel de administración</h2>
 <p class="text-muted">Solo visible para el rol <strong>Administrador</strong>.</p>
+
+<h3 class="h6 mt-4">Gestión dentro de la aplicación</h3>
+<div class="list-group mb-4">
+  <a href="{% url 'catalogo:gestion_lista' 'categorias' %}" class="list-group-item list-group-item-action">🗂️ Categorías</a>
+  <a href="{% url 'catalogo:gestion_lista' 'marcas' %}" class="list-group-item list-group-item-action">🏷️ Marcas</a>
+</div>
+
+<h3 class="h6">Administración de la base de datos (Django Admin)</h3>
 <div class="list-group">
   <a href="{% url 'admin:tiendas_tienda_changelist' %}" class="list-group-item list-group-item-action">
     🏪 Tiendas <small class="text-muted">— revisar, suspender o reactivar</small>
   </a>
-  <a href="{% url 'admin:catalogo_categoria_changelist' %}" class="list-group-item list-group-item-action">🗂️ Categorías</a>
-  <a href="{% url 'admin:catalogo_marca_changelist' %}" class="list-group-item list-group-item-action">🏷️ Marcas</a>
   <a href="{% url 'admin:catalogo_producto_changelist' %}" class="list-group-item list-group-item-action">📦 Productos</a>
+  <a href="{% url 'admin:pedidos_pedido_changelist' %}" class="list-group-item list-group-item-action">🧾 Pedidos</a>
   <a href="{% url 'admin:auth_user_changelist' %}" class="list-group-item list-group-item-action">👥 Usuarios y roles</a>
+  <a href="{% url 'admin:index' %}" class="list-group-item list-group-item-action">🛠️ Todas las tablas</a>
 </div>
 {% endblock %}

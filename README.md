@@ -42,17 +42,49 @@ python manage.py test -v 2
 | Tienda | Registro en "Registrar mi tienda" + verificación del correo | Gestionar sus propios productos (CRUD) |
 | Cliente | Registro en "Registrarse" | Ver su cuenta (el catálogo es público) |
 
-## Módulo principal: Gestionar productos (CU-03)
+## Módulos CRUD
 
-- **CRUD:** cada tienda crea, lista, edita y elimina sus productos.
-- **Validaciones:** campos obligatorios, precio mínimo S/ 0.10, stock no negativo, imagen JPG/PNG/WEBP de máximo 2 MB, WhatsApp peruano de 9 dígitos, correo y nombre de tienda únicos.
-- **Reglas de negocio:**
-  1. La tienda queda **pendiente** al registrarse y se **activa sola** al verificar su correo (sin intervención del administrador).
-  2. Solo las tiendas **activas** pueden gestionar productos.
-  3. Una tienda **no puede ver, editar ni eliminar** productos de otra (responde 404).
-  4. Una tienda no puede repetir el nombre de un producto.
-  5. El catálogo público solo muestra productos **publicados** de tiendas **activas**.
-  6. El administrador puede **suspender** una tienda; sus productos se ocultan y verificar el correo no la reactiva.
-  7. El enlace de verificación vence a las 24 horas y no se puede falsificar (está firmado).
+| Módulo | Rol | Caso de uso | Ruta |
+|---|---|---|---|
+| Productos | Tienda | CU-03 | `/catalogo/mis-productos/` |
+| Categorías y marcas | Administrador | CU-07 | `/catalogo/gestion/categorias/` y `/catalogo/gestion/marcas/` |
+| Pedidos | Tienda | CU-08 | `/pedidos/` |
+
+Los tres están integrados: un producto pertenece a una categoría y una marca, y cada pedido descuenta el stock del producto.
+
+### Validaciones
+
+- Campos obligatorios en todos los formularios.
+- Precio mínimo S/ 0.10, stock y cantidad no negativos (cantidad mínima 1).
+- Imagen JPG/PNG/WEBP de máximo 2 MB.
+- Celulares peruanos de 9 dígitos que empiezan con 9.
+- Nombres únicos sin importar mayúsculas: tiendas, categorías, marcas y productos de una misma tienda.
+
+### Reglas de negocio
+
+1. La tienda queda **pendiente** al registrarse y se **activa sola** al verificar su correo.
+2. Solo las tiendas **activas** gestionan productos y pedidos.
+3. Una tienda **no puede ver ni modificar** productos ni pedidos de otra (responde 404).
+4. El catálogo público solo muestra productos **publicados** de tiendas **activas**.
+5. El administrador puede **suspender** una tienda; sus productos se ocultan.
+6. Una categoría o marca **con productos no se elimina**, se desactiva; las inactivas no se ofrecen en productos nuevos.
+7. Registrar un pedido **descuenta el stock**; no se registra si no hay stock suficiente.
+8. El pedido sigue el flujo **pendiente → confirmado → entregado**, y puede **cancelarse** antes de entregarse; cancelar **restituye el stock**.
+9. Solo se **editan** pedidos pendientes; los confirmados o entregados **no se eliminan** (historial de ventas).
+10. Un producto **con pedidos no se elimina**; se puede ocultar.
+
+## Permisos por rol
+
+| Acción | Visitante | Cliente | Tienda | Administrador |
+|---|:-:|:-:|:-:|:-:|
+| Ver catálogo | ✅ | ✅ | ✅ | ✅ |
+| Gestionar sus productos y pedidos | | | ✅ | |
+| Gestionar categorías y marcas | | | | ✅ |
+| Suspender tiendas / Django Admin | | | | ✅ |
+
+## Administración de la base de datos
+
+- **Django Admin** (`/admin/`): consulta y gestión de todas las tablas para el Administrador.
+- **DB Browser for SQLite** (https://sqlitebrowser.org): abrir el archivo `db.sqlite3` para ver la estructura de las tablas y sus registros.
 
 En desarrollo, los correos se muestran en la consola donde corre `runserver`.

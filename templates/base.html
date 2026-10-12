@@ -30,6 +30,7 @@
         {% if es_tienda %}
           <li class="nav-item"><a class="nav-link" href="{% url 'tiendas:panel' %}">Mi tienda</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'catalogo:mis_productos' %}">Mis productos</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'pedidos:lista' %}">Pedidos</a></li>
         {% endif %}
         {% if es_admin %}
           <li class="nav-item"><a class="nav-link" href="{% url 'panel_admin' %}">Administración</a></li>

@@ -116,6 +116,14 @@ def producto_editar(request, pk):
 @tienda_requerida()
 def producto_eliminar(request, pk):
     producto = get_object_or_404(Producto, pk=pk, tienda=request.tienda)
+    # Regla de negocio: un producto con pedidos no se elimina, para conservar el historial de ventas.
+    if producto.pedidos.exists():
+        messages.error(
+            request,
+            f"No se puede eliminar \"{producto.nombre}\" porque tiene pedidos registrados. "
+            "Puedes ocultarlo desmarcando \"publicado\".",
+        )
+        return redirect("catalogo:mis_productos")
     if request.method == "POST":
         nombre = producto.nombre
         if producto.imagen:

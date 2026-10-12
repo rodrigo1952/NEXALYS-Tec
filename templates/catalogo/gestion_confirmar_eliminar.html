@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Eliminar {{ singular }} | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-danger"><div class="card-body p-4">
+      <h2 class="h4">¿Eliminar la {{ singular }} "{{ registro }}"?</h2>
+      {% if num_productos %}
+        <div class="alert alert-warning">
+          Tiene <strong>{{ num_productos }} producto(s)</strong> asociados, por eso <strong>no se puede eliminar</strong>.
+          Puedes desactivarla para que no se use en productos nuevos.
+        </div>
+        <a href="{% url 'catalogo:gestion_editar' tipo registro.pk %}" class="btn btn-primary">Desactivar</a>
+        <a href="{% url 'catalogo:gestion_lista' tipo %}" class="btn btn-outline-secondary">Volver</a>
+      {% else %}
+        <p>Esta acción no se puede deshacer.</p>
+        <form method="post" class="d-flex gap-2">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+          <a href="{% url 'catalogo:gestion_lista' tipo %}" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+      {% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

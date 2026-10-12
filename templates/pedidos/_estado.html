@@ -1,0 +1,4 @@
+{% if p.estado == "pendiente" %}<span class="badge text-bg-warning">Pendiente</span>
+{% elif p.estado == "confirmado" %}<span class="badge text-bg-primary">Confirmado</span>
+{% elif p.estado == "entregado" %}<span class="badge text-bg-success">Entregado</span>
+{% else %}<span class="badge text-bg-secondary">Cancelado</span>{% endif %}
