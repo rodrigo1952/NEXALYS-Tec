@@ -230,3 +230,23 @@ class CatalogoPublicoTests(BaseCatalogo):
         respuesta = self.client.get(reverse("catalogo:catalogo"))
         self.assertContains(respuesta, "S/ 65.20")
         self.assertNotContains(respuesta, "65,20")
+    
+    @override_settings(MEDIA_ROOT=CARPETA_MEDIA_PRUEBAS)
+    def test_cambiar_imagen_borra_la_anterior(self):
+        producto = self.crear_producto(nombre="Con foto", imagen=imagen_png("vieja.png"))
+        ruta_vieja = producto.imagen.path
+        self.assertTrue(os.path.exists(ruta_vieja))
+        with self.captureOnCommitCallbacks(execute=True):
+            producto.imagen = imagen_png("nueva.png")
+            producto.save()
+        self.assertFalse(os.path.exists(ruta_vieja))
+        self.assertTrue(os.path.exists(producto.imagen.path))
+
+    @override_settings(MEDIA_ROOT=CARPETA_MEDIA_PRUEBAS)
+    def test_quitar_imagen_borra_el_archivo(self):
+        producto = self.crear_producto(nombre="Foto temporal", imagen=imagen_png())
+        ruta = producto.imagen.path
+        with self.captureOnCommitCallbacks(execute=True):
+            producto.imagen = None
+            producto.save()
+        self.assertFalse(os.path.exists(ruta))

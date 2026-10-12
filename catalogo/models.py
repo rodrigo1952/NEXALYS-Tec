@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 
 PRECIO_MINIMO = Decimal("0.10")
 TAMANO_MAXIMO_IMAGEN_MB = 2
@@ -124,3 +124,23 @@ class Producto(models.Model):
 
     def enlace_whatsapp(self):
         return self.tienda.enlace_whatsapp(self.mensaje_whatsapp())
+    
+    def save(self, *args, **kwargs):
+        # Regla: al cambiar o quitar la imagen, se borra el archivo anterior
+        # para no acumular imágenes que ya nadie usa.
+        anterior = None
+        if self.pk:
+            anterior = Producto.objects.filter(pk=self.pk).values_list("imagen", flat=True).first()
+        super().save(*args, **kwargs)
+        if anterior and anterior != (self.imagen.name or ""):
+            almacenamiento = self.imagen.storage
+            transaction.on_commit(lambda: almacenamiento.delete(anterior))
+
+    def delete(self, *args, **kwargs):
+        # Al eliminar el producto, también se borra su imagen.
+        nombre = self.imagen.name
+        resultado = super().delete(*args, **kwargs)
+        if nombre:
+            almacenamiento = self.imagen.storage
+            transaction.on_commit(lambda: almacenamiento.delete(nombre))
+        return resultado
