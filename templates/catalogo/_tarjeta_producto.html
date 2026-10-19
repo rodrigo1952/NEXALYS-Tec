@@ -11,6 +11,10 @@
   <div class="card-body d-flex flex-column">
     <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
     <h3 class="h6 card-title mt-1">{{ producto.nombre }}</h3>
+    {% if producto.coincide_descripcion %}
+      {# Solo al buscar: la palabra no está en el nombre, sino en la descripción del producto. #}
+      <small class="text-muted fst-italic mb-1">Coincide con sus características</small>
+    {% endif %}
     <p class="fs-5 mb-1">{% include "catalogo/_precio.html" %}</p>
     {% if producto.agotado %}
       <span class="badge text-bg-secondary align-self-start mb-2">Agotado</span>

@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models, transaction
-from django.db.models import Case, DecimalField, F, Q, When
+from django.db.models import BooleanField, Case, DecimalField, F, IntegerField, Q, Value, When
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils import timezone
@@ -114,6 +114,49 @@ class ProductoQuerySet(models.QuerySet):
             resultado = resultado.filter(texto_busqueda__contains=palabra)
         return resultado
 
+    def con_relevancia(self, texto):
+        """
+        Agrega dos datos a cada producto encontrado con buscar():
+
+        - relevancia: puntaje para ordenar "Más relevantes". Por cada palabra buscada:
+            10 puntos si está en el NOMBRE, 3 si está en la MARCA o CATEGORÍA y
+            1 si solo está en la descripción. Si toda la frase aparece tal cual en
+            el nombre, 5 puntos extra.
+          Ej.: "teclado" -> el teclado Genius (10) sale antes que la laptop que
+          solo lo menciona en sus características (1).
+        - coincide_descripcion: True si alguna palabra solo se encontró en la
+          descripción. La tarjeta muestra "Coincide con sus características".
+        """
+        palabras = normalizar(texto).split()
+        if not palabras:
+            return self.annotate(relevancia=Value(0), coincide_descripcion=Value(False))
+
+        relevancia = Value(0)
+        solo_en_descripcion = Q()
+        for palabra in palabras:
+            relevancia = relevancia + Case(
+                When(nombre_busqueda__contains=palabra, then=Value(10)),
+                When(etiquetas_busqueda__contains=palabra, then=Value(3)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+            solo_en_descripcion |= ~Q(nombre_busqueda__contains=palabra) & ~Q(etiquetas_busqueda__contains=palabra)
+        frase = " ".join(palabras)
+        if len(palabras) > 1:
+            relevancia = relevancia + Case(
+                When(nombre_busqueda__contains=frase, then=Value(5)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        return self.annotate(
+            relevancia=relevancia,
+            coincide_descripcion=Case(
+                When(solo_en_descripcion, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+        )
+
 
 class Producto(models.Model):
     """CU-03 Gestionar productos."""
@@ -187,6 +230,9 @@ class Producto(models.Model):
     )
     motivo_ocultamiento = models.TextField("motivo del ocultamiento", blank=True)
     texto_busqueda = models.TextField("texto de búsqueda", blank=True, editable=False)
+    # Partes separadas del texto de búsqueda, para ordenar por relevancia.
+    nombre_busqueda = models.TextField("nombre para buscar", blank=True, editable=False)
+    etiquetas_busqueda = models.TextField("marca y categoría para buscar", blank=True, editable=False)
     creado = models.DateTimeField("creado", auto_now_add=True)
     actualizado = models.DateTimeField("actualizado", auto_now=True)
 
@@ -236,25 +282,34 @@ class Producto(models.Model):
         return self.tienda.enlace_whatsapp(self.mensaje_whatsapp())
 
     # --- Búsqueda -----------------------------------------------------------------
-    def generar_texto_busqueda(self):
-        partes = [self.nombre, self.descripcion]
+    def campos_busqueda(self):
+        """Textos sin tildes para el buscador: todo junto, solo el nombre y marca + categoría."""
+        etiquetas = []
         if self.marca_id:
-            partes.append(self.marca.nombre)
+            etiquetas.append(self.marca.nombre)
         if self.categoria_id:
-            partes.append(self.categoria.nombre)
-        return normalizar(" ".join(partes))
+            etiquetas.append(self.categoria.nombre)
+        return {
+            "texto_busqueda": normalizar(" ".join([self.nombre, self.descripcion, *etiquetas])),
+            "nombre_busqueda": normalizar(self.nombre),
+            "etiquetas_busqueda": normalizar(" ".join(etiquetas)),
+        }
+
+    def generar_texto_busqueda(self):
+        return self.campos_busqueda()["texto_busqueda"]
 
     @classmethod
     def actualizar_texto_busqueda(cls, productos):
-        """Recalcula el texto de búsqueda (p. ej. cuando el admin renombra una marca)."""
+        """Recalcula los textos de búsqueda (p. ej. cuando el admin renombra una marca)."""
         for producto in productos.select_related("marca", "categoria"):
-            cls.objects.filter(pk=producto.pk).update(texto_busqueda=producto.generar_texto_busqueda())
+            cls.objects.filter(pk=producto.pk).update(**producto.campos_busqueda())
 
     # --- Guardar y eliminar ---------------------------------------------------------
     def save(self, *args, **kwargs):
         # Los guardados parciales (p. ej. solo el stock al registrar un pedido) no cambian el texto.
         if kwargs.get("update_fields") is None:
-            self.texto_busqueda = self.generar_texto_busqueda()
+            for campo, valor in self.campos_busqueda().items():
+                setattr(self, campo, valor)
             optimizar_campo(self.imagen, LADO_MAXIMO_PRODUCTO)
         # Regla: al cambiar o quitar la imagen, se borra el archivo anterior
         # para no acumular imágenes que ya nadie usa.

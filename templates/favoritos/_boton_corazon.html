@@ -3,18 +3,20 @@ Corazón de favoritos. Usar con:
   {% include "favoritos/_boton_corazon.html" %}                  (ícono sobre la tarjeta)
   {% include "favoritos/_boton_corazon.html" with con_texto=True %} (botón con texto)
 Solo lo ven los clientes y los visitantes; las tiendas y el administrador no.
+El formulario lleva data-favorito: el JavaScript de base.html lo envía sin recargar
+la página, así el cliente no pierde el lugar donde estaba.
 {% endcomment %}
 {% if es_cliente %}
-  <form method="post" action="{% url 'favoritos:alternar' producto.pk %}" class="{% if con_texto %}d-inline{% else %}boton-favorito{% endif %}">
+  <form method="post" action="{% url 'favoritos:alternar' producto.pk %}" data-favorito="{{ producto.pk }}" class="{% if con_texto %}d-inline{% else %}boton-favorito{% endif %}">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
     {% if producto.pk in ids_favoritos %}
-      <button type="submit" class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm{% endif %}" title="Quitar de favoritos">
-        ❤️{% if con_texto %} Quitar de favoritos{% endif %}
+      <button type="submit" class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm{% endif %}" title="Quitar de favoritos" aria-pressed="true">
+        <span data-icono aria-hidden="true">❤️</span>{% if con_texto %} <span data-texto>Quitar de favoritos</span>{% else %}<span class="visually-hidden" data-texto>Quitar de favoritos</span>{% endif %}
       </button>
     {% else %}
-      <button type="submit" class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm{% endif %}" title="Guardar en favoritos">
-        🤍{% if con_texto %} Guardar en favoritos{% endif %}
+      <button type="submit" class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm{% endif %}" title="Guardar en favoritos" aria-pressed="false">
+        <span data-icono aria-hidden="true">🤍</span>{% if con_texto %} <span data-texto>Guardar en favoritos</span>{% else %}<span class="visually-hidden" data-texto>Guardar en favoritos</span>{% endif %}
       </button>
     {% endif %}
   </form>

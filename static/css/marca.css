@@ -1,0 +1,207 @@
+/* =====================================================================
+   NEXALYS Tec · Marca "Circuito" (azul marino y cian)
+   ---------------------------------------------------------------------
+   TODOS los colores y la letra de la página salen de este archivo.
+   Para cambiar de marca en el futuro basta con cambiar las variables
+   de la sección 1 (y el logo en templates/_logo.html).
+   ===================================================================== */
+
+/* 1. Variables de la marca -------------------------------------------- */
+:root {
+  --nx-oscuro: #0B1B3A;        /* azul marino: menú, pie y botones principales */
+  --nx-oscuro-rgb: 11, 27, 58;
+  --nx-principal-hover: #14306A;
+  --nx-acento: #19C3E6;        /* cian: botones de acción y detalles sobre fondo oscuro */
+  --nx-acento-rgb: 25, 195, 230;
+  --nx-acento-hover: #12AACB;
+  --nx-acento-texto: #0A6F89;  /* cian oscuro: enlaces sobre fondo claro (se lee bien) */
+  --nx-blanco: #FFFFFF;
+
+  --nx-fondo: #F3F6FA;         /* fondo general de la página */
+  --nx-fondo-suave: #E4EBF4;   /* fondos de fotos vacías, filas de tabla */
+  --nx-borde: #CBD5E3;
+  --nx-borde-suave: #E0E6EF;
+  --nx-texto: #0B1B3A;
+  --nx-texto-suave: #56677F;   /* textos secundarios (text-muted) */
+  --nx-menu-texto: #C8D5EA;    /* enlaces del menú sobre azul marino */
+  --nx-pie-texto: #A8B7CF;
+
+  --nx-letra: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --nx-radio: .75rem;
+  --nx-sombra: 0 1px 3px rgba(var(--nx-oscuro-rgb), .08);
+
+  /* Bootstrap toma sus colores de estas variables */
+  --bs-primary: var(--nx-oscuro);
+  --bs-primary-rgb: var(--nx-oscuro-rgb);
+  --bs-primary-text-emphasis: var(--nx-oscuro);
+  --bs-primary-bg-subtle: #DCE4F2;
+  --bs-primary-border-subtle: #A9BADB;
+  --bs-info: var(--nx-acento);
+  --bs-dark: var(--nx-oscuro);
+  --bs-dark-rgb: var(--nx-oscuro-rgb);
+  --bs-info-rgb: var(--nx-acento-rgb);
+  --bs-body-font-family: var(--nx-letra);
+  --bs-body-color: var(--nx-texto);
+  --bs-body-color-rgb: var(--nx-oscuro-rgb);
+  --bs-body-bg: var(--nx-fondo);
+  --bs-secondary-color: var(--nx-texto-suave);
+  --bs-emphasis-color: var(--nx-oscuro);
+  --bs-link-color: var(--nx-acento-texto);
+  --bs-link-color-rgb: 10, 111, 137;
+  --bs-link-hover-color: var(--nx-oscuro);
+  --bs-link-hover-color-rgb: var(--nx-oscuro-rgb);
+  --bs-border-color: var(--nx-borde);
+  --bs-border-radius: var(--nx-radio);
+  --bs-border-radius-lg: 1rem;
+  --bs-focus-ring-color: rgba(var(--nx-acento-rgb), .35);
+}
+
+/* 2. Base ------------------------------------------------------------- */
+body { font-family: var(--nx-letra); color: var(--nx-texto); }
+.fondo-marca { background: var(--nx-fondo); }
+h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
+.text-muted { color: var(--nx-texto-suave) !important; }
+
+/* 3. Logo ------------------------------------------------------------- */
+.logo-marca { display: inline-flex; align-items: center; gap: .6rem; text-decoration: none; }
+.logo-marca svg { flex-shrink: 0; }
+.logo-marca__texto { font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em; line-height: 1; color: var(--nx-blanco); }
+.logo-marca__tec { color: var(--nx-acento); font-weight: 500; }
+.logo-marca--claro .logo-marca__texto { color: var(--nx-oscuro); }
+.logo-marca--claro .logo-marca__tec { color: var(--nx-acento-texto); }
+
+/* 4. Menú superior ---------------------------------------------------- */
+.navbar-marca { background: var(--nx-oscuro); min-height: 72px; }
+.navbar-marca .nav-link { color: var(--nx-menu-texto); }
+.navbar-marca .nav-link:hover, .navbar-marca .nav-link:focus { color: var(--nx-blanco); }
+.navbar-marca .nav-link.active { color: var(--nx-blanco); font-weight: 600; border-bottom: 2px solid var(--nx-acento); }
+.navbar-marca .navbar-toggler { border-color: rgba(255, 255, 255, .35); min-width: 44px; min-height: 44px; }
+.navbar-marca .btn-outline-light { border-color: #3E5A86; }
+
+/* Menú fijo arriba: se oculta al bajar y aparece al subir (lo controla base.html) */
+.cabecera-marca { position: sticky; top: 0; z-index: 1030; transition: transform .25s ease; }
+.cabecera-marca.cabecera-oculta { transform: translateY(-100%); }
+@media (prefers-reduced-motion: reduce) { .cabecera-marca { transition: none; } }
+
+/* Buscador del menú */
+.buscador-menu { display: flex; gap: .5rem; width: 100%; margin: .5rem 0 .35rem; }
+.buscador-menu .form-control {
+  border: 0; border-radius: 999px; min-height: 44px; padding-left: 1.1rem; color: var(--nx-texto);
+}
+.buscador-menu .form-control:focus { box-shadow: 0 0 0 .25rem rgba(var(--nx-acento-rgb), .45); }
+.buscador-menu .btn {
+  border-radius: 999px; min-width: 48px; min-height: 44px; padding: 0 .9rem;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* Segunda fila con las secciones */
+.menu-secciones .nav-link { padding-top: .45rem; padding-bottom: .45rem; }
+@media (min-width: 992px) {
+  .buscador-menu { flex: 1 1 auto; width: auto; max-width: 640px; margin: 0 1.5rem; }
+  .navbar-expand-lg .navbar-collapse.menu-fila {
+    flex-basis: 100%;
+    border-top: 1px solid rgba(255, 255, 255, .10);
+    margin-top: .6rem;
+  }
+  .menu-secciones { gap: .5rem; }
+  .menu-secciones .nav-link { padding-left: .5rem; padding-right: .5rem; font-size: .95rem; }
+}
+
+/* 5. Botones ---------------------------------------------------------- */
+.btn { font-weight: 600; }
+.btn-primary {
+  --bs-btn-bg: var(--nx-oscuro);
+  --bs-btn-border-color: var(--nx-oscuro);
+  --bs-btn-hover-bg: var(--nx-principal-hover);
+  --bs-btn-hover-border-color: var(--nx-principal-hover);
+  --bs-btn-active-bg: var(--nx-principal-hover);
+  --bs-btn-active-border-color: var(--nx-principal-hover);
+  --bs-btn-disabled-bg: var(--nx-oscuro);
+  --bs-btn-disabled-border-color: var(--nx-oscuro);
+  --bs-btn-focus-shadow-rgb: var(--nx-acento-rgb);
+}
+.btn-outline-primary {
+  --bs-btn-color: var(--nx-oscuro);
+  --bs-btn-border-color: var(--nx-oscuro);
+  --bs-btn-hover-bg: var(--nx-oscuro);
+  --bs-btn-hover-border-color: var(--nx-oscuro);
+  --bs-btn-active-bg: var(--nx-oscuro);
+  --bs-btn-active-border-color: var(--nx-oscuro);
+  --bs-btn-disabled-color: var(--nx-oscuro);
+  --bs-btn-disabled-border-color: var(--nx-oscuro);
+  --bs-btn-focus-shadow-rgb: var(--nx-acento-rgb);
+}
+/* Botón de acción en cian con texto azul marino (Registrar mi tienda, Buscar, etc.) */
+.btn-acento {
+  --bs-btn-color: var(--nx-oscuro);
+  --bs-btn-bg: var(--nx-acento);
+  --bs-btn-border-color: var(--nx-acento);
+  --bs-btn-hover-color: var(--nx-oscuro);
+  --bs-btn-hover-bg: var(--nx-acento-hover);
+  --bs-btn-hover-border-color: var(--nx-acento-hover);
+  --bs-btn-active-color: var(--nx-oscuro);
+  --bs-btn-active-bg: var(--nx-acento-hover);
+  --bs-btn-active-border-color: var(--nx-acento-hover);
+  --bs-btn-disabled-color: var(--nx-oscuro);
+  --bs-btn-disabled-bg: var(--nx-acento);
+  --bs-btn-disabled-border-color: var(--nx-acento);
+  --bs-btn-focus-shadow-rgb: var(--nx-acento-rgb);
+}
+.btn-outline-secondary {
+  --bs-btn-color: #3A4862;
+  --bs-btn-border-color: var(--nx-borde);
+  --bs-btn-hover-color: var(--nx-oscuro);
+  --bs-btn-hover-bg: var(--nx-fondo-suave);
+  --bs-btn-hover-border-color: var(--nx-borde);
+  --bs-btn-active-color: var(--nx-oscuro);
+  --bs-btn-active-bg: var(--nx-fondo-suave);
+  --bs-btn-active-border-color: var(--nx-borde);
+}
+
+/* 6. Tarjetas, formularios y tablas ----------------------------------- */
+.card { --bs-card-border-color: var(--nx-borde-suave); --bs-card-border-radius: 1rem; --bs-card-inner-border-radius: calc(1rem - 1px); }
+.form-control, .form-select, .formulario input:not([type=checkbox]):not([type=radio]):not([type=hidden]),
+.formulario select, .formulario textarea { border-color: var(--nx-borde); border-radius: .6rem; }
+.form-control:focus, .form-select:focus,
+.formulario input:focus, .formulario select:focus, .formulario textarea:focus {
+  border-color: var(--nx-acento);
+  box-shadow: 0 0 0 .25rem rgba(var(--nx-acento-rgb), .25);
+  outline: 0;
+}
+.form-check-input:checked { background-color: var(--nx-oscuro); border-color: var(--nx-oscuro); }
+.form-check-input:focus { border-color: var(--nx-acento); box-shadow: 0 0 0 .25rem rgba(var(--nx-acento-rgb), .25); }
+.table-light { --bs-table-bg: var(--nx-fondo); --bs-table-border-color: var(--nx-borde-suave); }
+.nav-pills { --bs-nav-pills-link-active-bg: var(--nx-oscuro); }
+.list-group { --bs-list-group-active-bg: var(--nx-oscuro); --bs-list-group-active-border-color: var(--nx-oscuro); }
+.pagination {
+  --bs-pagination-color: var(--nx-oscuro);
+  --bs-pagination-hover-color: var(--nx-oscuro);
+  --bs-pagination-active-bg: var(--nx-oscuro);
+  --bs-pagination-active-border-color: var(--nx-oscuro);
+  --bs-pagination-focus-box-shadow: 0 0 0 .25rem rgba(var(--nx-acento-rgb), .25);
+}
+
+/* 7. Portada (inicio) ------------------------------------------------- */
+.portada-marca {
+  background: var(--nx-oscuro);
+  color: var(--nx-blanco);
+  border-radius: 1.5rem;
+  padding: 3rem 2.5rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2rem;
+  overflow: hidden;
+}
+.portada-marca__texto { flex: 999 1 420px; display: flex; flex-direction: column; gap: 1rem; }
+.portada-marca__dibujo { flex: 1 1 200px; display: flex; justify-content: center; }
+.portada-marca h1 { color: var(--nx-blanco); font-size: clamp(1.8rem, 4vw, 2.75rem); line-height: 1.1; margin: 0; }
+.portada-marca p { color: var(--nx-menu-texto); font-size: 1.1rem; margin: 0; max-width: 34rem; }
+.portada-marca__etiqueta {
+  align-self: flex-start; background: rgba(var(--nx-acento-rgb), .16); color: #8BE3F4;
+  font-weight: 600; font-size: .9rem; padding: .35rem .8rem; border-radius: 999px;
+}
+.portada-marca .btn-outline-light { border-color: #3E5A86; }
+@media (max-width: 576px) { .portada-marca { padding: 2rem 1.25rem; } .portada-marca__dibujo { display: none; } }
+
+/* 8. Pie de página ---------------------------------------------------- */
+.pie-marca { background: var(--nx-oscuro); color: var(--nx-pie-texto); }
+.pie-marca a { color: var(--nx-menu-texto); text-decoration: none; }
+.pie-marca a:hover { color: var(--nx-blanco); }

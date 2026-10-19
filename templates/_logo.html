@@ -1,0 +1,19 @@
+{% comment %}
+Logo de NEXALYS Tec (marca "Circuito"). Es el ÚNICO lugar donde está dibujado.
+Uso:
+  {% include "_logo.html" %}                          sobre fondo oscuro (menú, pie)
+  {% include "_logo.html" with claro=True %}          sobre fondo blanco
+  {% include "_logo.html" with tamano=56 %}           más grande (alto en píxeles)
+  {% include "_logo.html" with solo_icono=True %}     solo la N, sin el texto
+{% endcomment %}
+<span class="logo-marca{% if claro %} logo-marca--claro{% endif %}">
+  <svg width="{% if tamano %}{% widthratio tamano 44 40 %}{% else %}33{% endif %}" height="{% firstof tamano 36 %}" viewBox="0 0 40 44" aria-hidden="true" focusable="false">
+    <path d="M6 10.5 V33.5 M34 10.5 V33.5 M9 9.5 L31 34.5" stroke="{% if claro %}#0B1B3A{% else %}#FFFFFF{% endif %}"
+          stroke-width="4" stroke-linecap="round" fill="none"/>
+    <circle cx="6" cy="6" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
+    <circle cx="34" cy="6" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
+    <circle cx="6" cy="38" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
+    <circle cx="34" cy="38" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
+  </svg>
+  {% if not solo_icono %}<span class="logo-marca__texto">NEXALYS <span class="logo-marca__tec">Tec.</span></span>{% endif %}
+</span>

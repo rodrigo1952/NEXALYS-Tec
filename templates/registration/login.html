@@ -4,7 +4,8 @@
 <div class="row justify-content-center">
   <div class="col-md-5">
     <div class="card shadow-sm"><div class="card-body p-4">
-      <h2 class="h4 mb-3">Iniciar sesión</h2>
+      <div class="text-center mb-3">{% include "_logo.html" with claro=True tamano=44 %}</div>
+      <h2 class="h4 mb-3 text-center">Iniciar sesión</h2>
       {% if form.errors %}
         <div class="alert alert-danger">Usuario o contraseña incorrectos.</div>
       {% endif %}

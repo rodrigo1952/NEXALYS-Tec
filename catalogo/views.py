@@ -10,11 +10,13 @@ from .forms import BusquedaForm, ProductoForm
 from .models import Producto
 
 ORDENES = {
-    "recientes": "-creado",
+    "recientes": ("-creado",),
     # Se ordena por el precio que paga el cliente hoy (con la oferta, si hay una vigente).
-    "precio_asc": "precio_actual",
-    "precio_desc": "-precio_actual",
-    "nombre": "nombre",
+    "precio_asc": ("precio_actual",),
+    "precio_desc": ("-precio_actual",),
+    "nombre": ("nombre",),
+    # "Más relevantes" (opción vacía) cuando hay algo escrito en el buscador.
+    "relevantes": ("-relevancia", "-creado"),
 }
 
 
@@ -30,7 +32,9 @@ def catalogo(request):
         datos = form.cleaned_data
         if datos["q"]:
             # Sin tildes ni mayúsculas: "camara" encuentra "Cámara".
-            productos = productos.buscar(datos["q"])
+            # También busca en la descripción, pero con "Más relevantes" sale primero
+            # lo que coincide en el nombre.
+            productos = productos.buscar(datos["q"]).con_relevancia(datos["q"])
         if datos["solo_ofertas"]:
             productos = productos.en_oferta()
         if datos["categoria"]:
@@ -43,7 +47,8 @@ def catalogo(request):
             productos = productos.filter(precio_actual__gte=datos["precio_min"])
         if datos["precio_max"] is not None:
             productos = productos.filter(precio_actual__lte=datos["precio_max"])
-        productos = productos.order_by(ORDENES.get(datos["orden"] or "recientes"))
+        orden = datos["orden"] or ("relevantes" if datos["q"] else "recientes")
+        productos = productos.order_by(*ORDENES.get(orden, ORDENES["recientes"]))
 
     pagina = Paginator(productos, 12).get_page(request.GET.get("page"))
     return render(request, "catalogo/catalogo.html", {"form": form, "pagina": pagina})

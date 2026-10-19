@@ -1,0 +1,17 @@
+{% comment %}Enlaces de la cuenta (o de iniciar sesión). Se usa dos veces en base.html:
+en la fila de arriba en computadora y dentro del botón ☰ en el celular.{% endcomment %}
+{% if user.is_authenticated %}
+  <li class="nav-item">
+    <a class="nav-link{% if not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta password_change' %} active" aria-current="page{% endif %}" href="{% url 'mi_cuenta' %}">👤 {{ user.username }}</a>
+  </li>
+  <li class="nav-item">
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-light btn-sm ms-lg-2">Cerrar sesión</button>
+    </form>
+  </li>
+{% else %}
+  <li class="nav-item"><a class="nav-link{% if vista == 'login' %} active{% endif %}" href="{% url 'login' %}">Iniciar sesión</a></li>
+  <li class="nav-item"><a class="nav-link{% if vista == 'registro' and not ns %} active{% endif %}" href="{% url 'registro' %}">Registrarse</a></li>
+  <li class="nav-item"><a class="btn btn-acento btn-sm ms-lg-2" href="{% url 'tiendas:registro' %}">Registrar mi tienda</a></li>
+{% endif %}

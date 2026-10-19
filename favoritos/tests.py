@@ -236,3 +236,43 @@ class ConteoParaTiendaTests(BaseFavoritos):
         panel = self.client.get(reverse("tiendas:panel"))
         self.assertContains(panel, "2 personas")
         self.assertNotContains(panel, "cliente2")
+
+
+class CorazonSinRecargarTests(BaseFavoritos):
+    """El corazón responde con JSON cuando lo envía el JavaScript (la página no salta arriba)."""
+
+    def alternar_js(self):
+        return self.client.post(
+            reverse("favoritos:alternar", args=[self.producto.pk]),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+    def test_guardar_y_quitar_responde_json(self):
+        self.client.force_login(self.cliente)
+        respuesta = self.alternar_js()
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(respuesta.json()["guardado"])
+        self.assertIn("Guardaste", respuesta.json()["mensaje"])
+        self.assertTrue(Favorito.objects.filter(usuario=self.cliente, producto=self.producto).exists())
+
+        respuesta = self.alternar_js()
+        self.assertFalse(respuesta.json()["guardado"])
+        self.assertFalse(Favorito.objects.filter(usuario=self.cliente, producto=self.producto).exists())
+
+    def test_con_json_no_quedan_mensajes_pendientes(self):
+        # Si quedara el mensaje, aparecería repetido al cambiar de página.
+        self.client.force_login(self.cliente)
+        self.alternar_js()
+        respuesta = self.client.get(reverse("inicio"))
+        self.assertNotContains(respuesta, "Guardaste")
+
+    def test_sin_javascript_sigue_redirigiendo(self):
+        self.client.force_login(self.cliente)
+        respuesta = self.alternar()
+        self.assertEqual(respuesta.status_code, 302)
+
+    def test_el_boton_lleva_la_marca_para_el_javascript(self):
+        self.client.force_login(self.cliente)
+        respuesta = self.client.get(reverse("catalogo:detalle", args=[self.producto.pk]))
+        self.assertContains(respuesta, f'data-favorito="{self.producto.pk}"')
+        self.assertContains(respuesta, 'id="aviso-favorito"')

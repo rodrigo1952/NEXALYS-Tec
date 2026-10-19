@@ -1,17 +1,30 @@
 {% extends "base.html" %}
 {% block contenido %}
-<div class="p-5 bg-white rounded shadow-sm mb-4">
-  <h1 class="display-6 fw-bold">Bienvenido a NEXALYS Tec</h1>
-  <p class="lead">Encuentra productos tecnológicos de las tiendas de tu ciudad y contáctalas directamente por WhatsApp.</p>
-  <a href="{% url 'catalogo:catalogo' %}" class="btn btn-primary">Ver catálogo</a>
-  {% if user.is_authenticated %}
-    {% if es_tienda %}
-      <a href="{% url 'tiendas:panel' %}" class="btn btn-outline-secondary">Ir a mi tienda</a>
-    {% endif %}
-  {% else %}
-    <a href="{% url 'tiendas:registro' %}" class="btn btn-outline-secondary">¿Tienes una tienda? Regístrala</a>
-  {% endif %}
-</div>
+<section class="portada-marca mb-5">
+  <div class="portada-marca__texto">
+    <span class="portada-marca__etiqueta">Tiendas tecnológicas de Quillabamba</span>
+    <h1>Bienvenido a NEXALYS Tec</h1>
+    <p>Encuentra productos tecnológicos de las tiendas de tu ciudad y contáctalas directamente por WhatsApp.</p>
+    <form method="get" action="{% url 'catalogo:catalogo' %}" class="d-flex flex-wrap gap-2" role="search" style="max-width: 34rem">
+      <label for="buscar-portada" class="visually-hidden">Buscar productos</label>
+      <input id="buscar-portada" type="search" name="q" class="form-control form-control-lg flex-grow-1" style="min-width: 0; flex-basis: 14rem" placeholder="¿Qué estás buscando? Ej.: laptop, audífonos">
+      <button type="submit" class="btn btn-acento btn-lg">Buscar</button>
+    </form>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'catalogo:catalogo' %}" class="btn btn-outline-light">Ver catálogo</a>
+      {% if user.is_authenticated %}
+        {% if es_tienda %}
+          <a href="{% url 'tiendas:panel' %}" class="btn btn-outline-light">Ir a mi tienda</a>
+        {% endif %}
+      {% else %}
+        <a href="{% url 'tiendas:registro' %}" class="btn btn-outline-light">¿Tienes una tienda? Regístrala</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="portada-marca__dibujo" aria-hidden="true">
+    {% include "_logo.html" with tamano=200 solo_icono=True %}
+  </div>
+</section>
 
 {% if destacados %}
   <h2 class="h5 mb-3">⭐ Productos destacados</h2>

@@ -187,6 +187,9 @@ class BusquedaForm(EstiloBootstrapMixin, forms.Form):
     """CU-04 Buscar y filtrar productos."""
 
     ORDENES = [
+        # Vacío = "Más relevantes": al buscar, primero lo que coincide en el nombre;
+        # sin búsqueda, los más recientes.
+        ("", "Más relevantes"),
         ("recientes", "Más recientes"),
         ("precio_asc", "Precio: menor a mayor"),
         ("precio_desc", "Precio: mayor a menor"),

@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -71,17 +72,28 @@ def lista(request):
 @require_POST
 @cliente_requerido
 def alternar(request, pk):
-    """El corazón: si el producto ya está en favoritos lo quita; si no, lo guarda."""
+    """
+    El corazón: si el producto ya está en favoritos lo quita; si no, lo guarda.
+
+    Si el clic llega desde JavaScript (cabecera X-Requested-With), responde con
+    JSON y la página NO se recarga: el usuario se queda en el mismo lugar.
+    Sin JavaScript funciona igual que antes: guarda y vuelve a la página de origen.
+    """
     favorito = Favorito.objects.filter(usuario=request.user, producto_id=pk).select_related("producto").first()
     if favorito:
         nombre = favorito.producto.nombre
         favorito.delete()
-        messages.info(request, f"Quitaste \"{nombre}\" de tus favoritos.")
+        guardado, mensaje = False, f"Quitaste \"{nombre}\" de tus favoritos."
     else:
         # Solo se pueden guardar productos que se ven en el catálogo.
         producto = get_object_or_404(Producto.objects.visibles(), pk=pk)
         Favorito.guardar(request.user, producto)
-        messages.success(request, f"Guardaste \"{producto.nombre}\" en tus favoritos.")
+        guardado, mensaje = True, f"Guardaste \"{producto.nombre}\" en tus favoritos."
+
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({"guardado": guardado, "mensaje": mensaje})
+
+    (messages.success if guardado else messages.info)(request, mensaje)
     return redirect(_destino_seguro(request, reverse("favoritos:lista")))
 
 

@@ -132,6 +132,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# Carpeta con los archivos propios del proyecto: static/css/marca.css (colores) y static/img/favicon.svg
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Archivos subidos por los usuarios (imagenes de productos)
 MEDIA_URL = 'media/'
