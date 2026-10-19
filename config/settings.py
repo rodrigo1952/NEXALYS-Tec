@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'tiendas',
     'catalogo',
     'pedidos',
+    'favoritos',
 ]
 
 MIDDLEWARE = [
@@ -66,6 +67,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'cuentas.context_processors.roles',
+                'favoritos.context_processors.favoritos',
             ],
         },
     },
@@ -142,6 +144,9 @@ DEFAULT_FROM_EMAIL = 'NEXALYS Tec <no-responder@nexalys.local>'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'inicio'
 LOGOUT_REDIRECT_URL = 'inicio'
+
+# Recuperar contraseña: el enlace enviado por correo vence a las 24 horas
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24
 
 # Verificacion de tiendas: horas de validez del enlace enviado por correo
 VERIFICACION_TIENDA_HORAS = 24

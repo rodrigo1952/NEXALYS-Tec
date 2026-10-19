@@ -1,4 +1,5 @@
 <div class="card h-100 shadow-sm">
+  {% include "favoritos/_boton_corazon.html" %}
   {% if producto.imagen %}
     <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}">
   {% else %}

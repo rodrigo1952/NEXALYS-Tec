@@ -37,6 +37,21 @@
       <div class="display-6 fw-bold">{{ agotados }}</div><div class="text-muted">Agotados</div>
     </div></div></div>
   </div>
+  {% if mas_guardados %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h3 class="h6">❤️ Productos que más clientes guardaron en favoritos</h3>
+        <ul class="list-group list-group-flush">
+          {% for producto in mas_guardados %}
+            <li class="list-group-item d-flex justify-content-between px-0">
+              <span>{{ producto.nombre }}</span>
+              <span class="text-muted">{{ producto.num_favoritos }} persona{{ producto.num_favoritos|pluralize }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
   {% if pedidos_pendientes %}
     <div class="alert alert-info">Tienes <strong>{{ pedidos_pendientes }}</strong> pedido(s) pendiente(s). <a href="{% url 'pedidos:lista' %}?estado=pendiente">Ver pedidos</a></div>
   {% endif %}

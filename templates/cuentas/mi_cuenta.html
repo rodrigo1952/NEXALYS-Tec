@@ -1,12 +1,35 @@
 {% extends "base.html" %}
+{% block titulo %}Mi cuenta | NEXALYS Tec{% endblock %}
 {% block contenido %}
-<h2>Mi cuenta</h2>
-<ul class="list-group">
-  <li class="list-group-item"><strong>Usuario:</strong> {{ user.username }}</li>
-  <li class="list-group-item"><strong>Nombre:</strong> {{ user.get_full_name|default:"—" }}</li>
-  <li class="list-group-item"><strong>Correo:</strong> {{ user.email|default:"—" }}</li>
-  <li class="list-group-item"><strong>Rol:</strong>
-    {% for g in user.groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}Sin rol asignado{% endfor %}
-  </li>
-</ul>
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <h2 class="mb-3">👤 Mi cuenta</h2>
+    <ul class="list-group mb-3 shadow-sm">
+      <li class="list-group-item"><strong>Usuario:</strong> {{ user.username }}</li>
+      <li class="list-group-item"><strong>Nombre:</strong> {{ user.get_full_name|default:"—" }}</li>
+      <li class="list-group-item"><strong>Correo:</strong> {{ user.email|default:"—" }}</li>
+      <li class="list-group-item"><strong>Rol:</strong>
+        {% for g in user.groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}Sin rol asignado{% endfor %}
+      </li>
+    </ul>
+
+    <div class="d-flex flex-wrap gap-2 mb-4">
+      <a href="{% url 'editar_datos' %}" class="btn btn-primary">Editar mis datos</a>
+      <a href="{% url 'password_change' %}" class="btn btn-outline-secondary">Cambiar contraseña</a>
+      {% if es_cliente %}
+        <a href="{% url 'favoritos:lista' %}" class="btn btn-outline-danger">❤️ Mis favoritos ({{ total_favoritos }})</a>
+      {% endif %}
+    </div>
+
+    {% if puede_eliminar %}
+      <div class="card border-danger">
+        <div class="card-body">
+          <h3 class="h6 text-danger">Eliminar mi cuenta</h3>
+          <p class="small text-muted mb-2">Se borran tu cuenta y tus favoritos. Esta acción no se puede deshacer.</p>
+          <a href="{% url 'eliminar_cuenta' %}" class="btn btn-sm btn-outline-danger">Eliminar mi cuenta</a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

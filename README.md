@@ -40,7 +40,7 @@ python manage.py test -v 2
 |---|---|---|
 | Administrador | `createsuperuser` | Gestionar tiendas (suspender / reactivar), categorías, marcas y usuarios |
 | Tienda | Registro en "Registrar mi tienda" + verificación del correo | Gestionar sus propios productos (CRUD) |
-| Cliente | Registro en "Registrarse" | Ver su cuenta (el catálogo es público) |
+| Cliente | Registro en "Registrarse" | Guardar favoritos, editar sus datos, cambiar o recuperar su contraseña y eliminar su cuenta (el catálogo es público) |
 
 ## Módulos CRUD
 
@@ -72,12 +72,21 @@ Los tres están integrados: un producto pertenece a una categoría y una marca, 
 8. El pedido sigue el flujo **pendiente → confirmado → entregado**, y puede **cancelarse** antes de entregarse; cancelar **restituye el stock**.
 9. Solo se **editan** pedidos pendientes; los confirmados o entregados **no se eliminan** (historial de ventas).
 10. Un producto **con pedidos no se elimina**; se puede ocultar.
+11. Solo los **clientes** tienen favoritos; un producto aparece **una sola vez** en la lista de cada cliente.
+12. Si un visitante toca el corazón, va a iniciar sesión y el producto **se guarda solo** al entrar.
+13. "Bajó de precio" compara con el **precio que tenía al guardarlo**; el contador del menú muestra las novedades desde la última vez que el cliente abrió "Mis favoritos".
+14. Si la tienda elimina el producto, el favorito **se borra**; si lo oculta, se agota o la tienda es suspendida, se muestra **"No disponible"** sin borrarlo.
+15. La tienda ve **cuántos** clientes guardaron cada producto, **nunca quiénes**.
+16. Para **cambiar el correo** se pide la contraseña actual; solo los clientes pueden **eliminar su cuenta** (se borran también sus favoritos).
 
 ## Permisos por rol
 
 | Acción | Visitante | Cliente | Tienda | Administrador |
 |---|:-:|:-:|:-:|:-:|
 | Ver catálogo | ✅ | ✅ | ✅ | ✅ |
+| Guardar favoritos | | ✅ | | |
+| Editar datos y cambiar contraseña | | ✅ | ✅ | ✅ |
+| Eliminar su cuenta | | ✅ | | |
 | Gestionar sus productos y pedidos | | | ✅ | |
 | Gestionar categorías y marcas | | | | ✅ |
 | Suspender tiendas / Django Admin | | | | ✅ |
@@ -88,3 +97,4 @@ Los tres están integrados: un producto pertenece a una categoría y una marca, 
 - **DB Browser for SQLite** (https://sqlitebrowser.org): abrir el archivo `db.sqlite3` para ver la estructura de las tablas y sus registros.
 
 En desarrollo, los correos se muestran en la consola donde corre `runserver`.
+Los enlaces de verificación de tienda y de recuperación de contraseña también se imprimen completos con el prefijo `[NEXALYS]`.

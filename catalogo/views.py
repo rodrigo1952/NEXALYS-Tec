@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from tiendas.decorators import tienda_requerida
@@ -74,7 +74,12 @@ def producto_detalle(request, pk):
 
 @tienda_requerida()
 def mis_productos(request):
-    productos = Producto.objects.filter(tienda=request.tienda).select_related("categoria", "marca")
+    productos = (
+        Producto.objects.filter(tienda=request.tienda)
+        .select_related("categoria", "marca")
+        # Privacidad: la tienda solo ve cuántos clientes guardaron el producto, no quiénes.
+        .annotate(num_favoritos=Count("favoritos"))
+    )
     texto = request.GET.get("q", "").strip()
     if texto:
         productos = productos.filter(nombre__icontains=texto)

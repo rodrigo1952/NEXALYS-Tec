@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Eliminar mi cuenta | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <a href="{% url 'mi_cuenta' %}" class="small">&larr; Volver a mi cuenta</a>
+    <div class="card border-danger shadow-sm mt-2"><div class="card-body p-4">
+      <h2 class="h4 text-danger mb-3">Eliminar mi cuenta</h2>
+      <p>Se borrarán de forma permanente:</p>
+      <ul>
+        <li>Tu usuario y tus datos personales (nombre y correo).</li>
+        <li>Todos tus favoritos.</li>
+      </ul>
+      <p class="text-muted small">Podrás seguir viendo el catálogo sin cuenta, y crear una nueva cuando quieras.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "_campos_formulario.html" %}
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-danger">Eliminar definitivamente</button>
+          <a href="{% url 'mi_cuenta' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

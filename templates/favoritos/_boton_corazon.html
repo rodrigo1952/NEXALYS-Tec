@@ -1,0 +1,27 @@
+{% comment %}
+Corazón de favoritos. Usar con:
+  {% include "favoritos/_boton_corazon.html" %}                  (ícono sobre la tarjeta)
+  {% include "favoritos/_boton_corazon.html" with con_texto=True %} (botón con texto)
+Solo lo ven los clientes y los visitantes; las tiendas y el administrador no.
+{% endcomment %}
+{% if es_cliente %}
+  <form method="post" action="{% url 'favoritos:alternar' producto.pk %}" class="{% if con_texto %}d-inline{% else %}boton-favorito{% endif %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    {% if producto.pk in ids_favoritos %}
+      <button type="submit" class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm{% endif %}" title="Quitar de favoritos">
+        ❤️{% if con_texto %} Quitar de favoritos{% endif %}
+      </button>
+    {% else %}
+      <button type="submit" class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm{% endif %}" title="Guardar en favoritos">
+        🤍{% if con_texto %} Guardar en favoritos{% endif %}
+      </button>
+    {% endif %}
+  </form>
+{% elif not user.is_authenticated %}
+  <a href="{% url 'favoritos:guardar_despues' producto.pk %}"
+     class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm boton-favorito{% endif %}"
+     title="Inicia sesión para guardar en favoritos">
+    🤍{% if con_texto %} Guardar en favoritos{% endif %}
+  </a>
+{% endif %}

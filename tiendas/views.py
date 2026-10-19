@@ -3,6 +3,7 @@ import logging
 from django.contrib import messages
 from django.contrib.auth import login
 from django.db import transaction
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -95,6 +96,12 @@ def panel(request):
         "publicados": productos.filter(activo=True).count(),
         "agotados": productos.filter(stock=0).count(),
         "pedidos_pendientes": tienda.pedidos.filter(estado="pendiente").count(),
+        # Privacidad: solo cantidades, nunca quiénes guardaron cada producto.
+        "mas_guardados": (
+            productos.annotate(num_favoritos=Count("favoritos"))
+            .filter(num_favoritos__gt=0)
+            .order_by("-num_favoritos", "nombre")[:5]
+        ),
     }
     return render(request, "tiendas/panel.html", contexto)
 
