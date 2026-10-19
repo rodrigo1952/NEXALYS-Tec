@@ -4,6 +4,8 @@
 {% for campo in form %}
   {% if campo.is_hidden %}
     {{ campo }}
+  {% elif campo.field.aparte %}
+    {# Este campo lo dibuja la plantilla que incluye este archivo. #}
   {% else %}
     <div class="mb-3">
       {% if campo.widget_type == "checkbox" %}

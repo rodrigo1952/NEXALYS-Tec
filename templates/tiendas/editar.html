@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block titulo %}Editar mi tienda | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<a href="{% url 'tiendas:panel' %}" class="small">&larr; Volver a mi tienda</a>
+<h2 class="h4 mt-2 mb-3">Editar datos de mi tienda</h2>
+
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  <div class="row g-4">
+    <div class="col-lg-8 col-xl-7">
+      <div class="card shadow-sm"><div class="card-body p-4">
+        <h3 class="h6 mb-3">Datos y logo</h3>
+        {% if tienda.logo %}
+          <img src="{{ tienda.logo.url }}" alt="Logo actual" width="80" height="80" class="rounded-circle border bg-white mb-3" style="object-fit:cover">
+        {% endif %}
+        {% include "_campos_formulario.html" %}
+      </div></div>
+    </div>
+
+    <div class="col-12">
+      <div class="card shadow-sm"><div class="card-body p-4">
+        <h3 class="h6 mb-1">Horario de atención</h3>
+        <ul class="small text-muted ps-3">
+          <li>Deja <strong>Abre</strong> y <strong>Cierra</strong> vacíos los días que no atiendes.</li>
+          <li>Si cierras al mediodía para almorzar, indica el <strong>refrigerio</strong>; si no, déjalo vacío.</li>
+        </ul>
+        {% for error in horario.non_field_errors %}<div class="alert alert-danger py-2">{{ error }}</div>{% endfor %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="small">
+              <tr><th>Día</th><th>Abre</th><th>Refrigerio desde</th><th>Refrigerio hasta</th><th>Cierra</th></tr>
+            </thead>
+            <tbody>
+              {% for dia, abre, desde, hasta, cierra in horario.dias %}
+                <tr>
+                  <td class="fw-semibold small">{{ dia }}</td>
+                  <td style="min-width:175px"><div class="d-flex gap-1">{{ abre }}</div>{% for e in abre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                  <td style="min-width:175px"><div class="d-flex gap-1">{{ desde }}</div>{% for e in desde.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                  <td style="min-width:175px"><div class="d-flex gap-1">{{ hasta }}</div>{% for e in hasta.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                  <td style="min-width:175px"><div class="d-flex gap-1">{{ cierra }}</div>{% for e in cierra.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="small text-muted mt-2 mb-0">Ejemplo: abre <strong>8:00 a. m.</strong>, refrigerio de <strong>1:00 p. m.</strong> a <strong>3:00 p. m.</strong>, cierra <strong>10:00 p. m.</strong> En cada casilla elige la hora y luego <strong>a. m.</strong> o <strong>p. m.</strong>; deja ambas en «—» para no poner hora.</p>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a href="{% url 'tiendas:panel' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

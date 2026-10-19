@@ -1,23 +1,69 @@
 {% extends "base.html" %}
+{% load formato %}
 {% block titulo %}Administración | NEXALYS Tec{% endblock %}
 {% block contenido %}
-<h2>Panel de administración</h2>
-<p class="text-muted">Solo visible para el rol <strong>Administrador</strong>.</p>
+{% include "administracion/_menu.html" %}
 
-<h3 class="h6 mt-4">Gestión dentro de la aplicación</h3>
-<div class="list-group mb-4">
-  <a href="{% url 'catalogo:gestion_lista' 'categorias' %}" class="list-group-item list-group-item-action">🗂️ Categorías</a>
-  <a href="{% url 'catalogo:gestion_lista' 'marcas' %}" class="list-group-item list-group-item-action">🏷️ Marcas</a>
+<h3 class="h6 text-muted text-uppercase mb-3">Tiendas</h3>
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <a href="{% url 'administracion:tiendas' %}?estado=activa" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
+      <div class="display-6 fw-bold text-success">{{ tiendas_activas }}</div><div class="text-muted">Activas</div>
+    </div></a>
+  </div>
+  <div class="col-sm-4">
+    <a href="{% url 'administracion:tiendas' %}?estado=pendiente" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
+      <div class="display-6 fw-bold text-warning">{{ tiendas_pendientes }}</div><div class="text-muted">Pendientes de verificar</div>
+    </div></a>
+  </div>
+  <div class="col-sm-4">
+    <a href="{% url 'administracion:tiendas' %}?estado=suspendida" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
+      <div class="display-6 fw-bold text-danger">{{ tiendas_suspendidas }}</div><div class="text-muted">Suspendidas</div>
+    </div></a>
+  </div>
 </div>
 
-<h3 class="h6">Administración de la base de datos (Django Admin)</h3>
-<div class="list-group">
-  <a href="{% url 'admin:tiendas_tienda_changelist' %}" class="list-group-item list-group-item-action">
-    🏪 Tiendas <small class="text-muted">— revisar, suspender o reactivar</small>
-  </a>
-  <a href="{% url 'admin:catalogo_producto_changelist' %}" class="list-group-item list-group-item-action">📦 Productos</a>
-  <a href="{% url 'admin:pedidos_pedido_changelist' %}" class="list-group-item list-group-item-action">🧾 Pedidos</a>
-  <a href="{% url 'admin:auth_user_changelist' %}" class="list-group-item list-group-item-action">👥 Usuarios y roles</a>
-  <a href="{% url 'admin:index' %}" class="list-group-item list-group-item-action">🛠️ Todas las tablas</a>
+<h3 class="h6 text-muted text-uppercase mb-3">Catálogo y clientes</h3>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <a href="{% url 'administracion:productos' %}?estado=publicado" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
+      <div class="h2 fw-bold mb-0">{{ productos_publicados }}</div><div class="text-muted small">Productos en el catálogo</div>
+    </div></a>
+  </div>
+  <div class="col-6 col-lg-3">
+    <a href="{% url 'administracion:productos' %}?estado=oculto_admin" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
+      <div class="h2 fw-bold mb-0">{{ productos_ocultos }}</div><div class="text-muted small">Ocultos por el administrador</div>
+    </div></a>
+  </div>
+  <div class="col-6 col-lg-3">
+    <a href="{% url 'administracion:usuarios' %}?rol=cliente" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
+      <div class="h2 fw-bold mb-0">{{ clientes }}</div><div class="text-muted small">Clientes registrados</div>
+    </div></a>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card text-center shadow-sm h-100"><div class="card-body">
+      <div class="h2 fw-bold mb-0">{{ categorias }} / {{ marcas }}</div><div class="text-muted small">Categorías / marcas</div>
+    </div></div>
+  </div>
 </div>
+
+<h3 class="h6 text-muted text-uppercase mb-3">Este mes</h3>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6">
+    <a href="{% url 'administracion:pedidos' %}" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
+      <div class="h2 fw-bold mb-0">{{ pedidos_mes }}</div><div class="text-muted small">Pedidos registrados por las tiendas</div>
+    </div></a>
+  </div>
+  <div class="col-sm-6">
+    <div class="card text-center shadow-sm h-100"><div class="card-body">
+      <div class="h2 fw-bold mb-0">{{ ventas_mes|soles }}</div><div class="text-muted small">Vendido en pedidos entregados</div>
+    </div></div>
+  </div>
+</div>
+
+<p class="small text-muted mb-0 mt-5 border-top pt-3">
+  Herramientas avanzadas:
+  <a href="{% url 'admin:index' %}" class="link-secondary">Django Admin</a>
+  (base de datos completa; úsalo solo si el panel no tiene la opción que necesitas).
+</p>
 {% endblock %}

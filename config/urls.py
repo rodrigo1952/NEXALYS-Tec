@@ -30,6 +30,7 @@ urlpatterns = [
     path("catalogo/", include("catalogo.urls")),
     path("pedidos/", include("pedidos.urls")),
     path("favoritos/", include("favoritos.urls")),
+    path("administracion/", include("administracion.urls")),
     path("", include("cuentas.urls")),
 ]
 

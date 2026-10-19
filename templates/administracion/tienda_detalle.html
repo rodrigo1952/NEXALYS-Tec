@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titulo %}{{ tienda.nombre }} | Administración | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "administracion/_menu.html" %}
+<a href="{% url 'administracion:tiendas' %}" class="small">&larr; Volver a tiendas</a>
+
+<div class="d-flex flex-wrap align-items-center gap-3 my-3">
+  {% if tienda.logo %}
+    <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" data-ampliar="{{ tienda.logo.url }}" width="64" height="64" class="rounded-circle border bg-white" style="object-fit:cover">
+  {% endif %}
+  <h3 class="h4 mb-0">{{ tienda.nombre }}</h3>
+  {% with t=tienda %}{% include "administracion/_estado_tienda.html" %}{% endwith %}
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <ul class="list-group shadow-sm mb-3">
+      <li class="list-group-item"><strong>Usuario:</strong> {{ tienda.usuario.username }} · {{ tienda.usuario.email }}{% if not tienda.usuario.is_active %} <span class="badge text-bg-secondary">Cuenta desactivada</span>{% endif %}</li>
+      <li class="list-group-item"><strong>WhatsApp:</strong> {{ tienda.whatsapp }}</li>
+      <li class="list-group-item"><strong>Dirección:</strong> {{ tienda.direccion }}</li>
+      <li class="list-group-item"><strong>Descripción:</strong> {{ tienda.descripcion|default:"—" }}</li>
+      <li class="list-group-item"><strong>Registrada:</strong> {{ tienda.creada_en|date:"d/m/Y H:i" }} · <strong>Correo verificado:</strong> {{ tienda.verificada_en|date:"d/m/Y"|default:"No" }}</li>
+      <li class="list-group-item"><strong>Productos:</strong> {{ total_productos }} ({{ publicados }} publicados{% if ocultos_admin %}, {{ ocultos_admin }} ocultos por el administrador{% endif %}) · <strong>Pedidos:</strong> {{ total_pedidos }}</li>
+    </ul>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'administracion:productos' %}?tienda={{ tienda.pk }}" class="btn btn-outline-secondary btn-sm">Ver sus productos</a>
+      <a href="{% url 'administracion:pedidos' %}?tienda={{ tienda.pk }}" class="btn btn-outline-secondary btn-sm">Ver sus pedidos</a>
+      {% if tienda.estado == "activa" %}
+        <a href="{% url 'tiendas:perfil' tienda.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Ver perfil público ↗</a>
+      {% endif %}
+    </div>
+    {% if tienda.tiene_horario %}
+      <h4 class="h6 mt-4">Horario de atención</h4>
+      <table class="table table-sm bg-white shadow-sm">
+        <tbody>{% for dia, texto in tienda.horario_semana %}<tr><td>{{ dia }}</td><td class="text-end">{{ texto }}</td></tr>{% endfor %}</tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    {% if tienda.estado == "suspendida" %}
+      <div class="card border-danger shadow-sm"><div class="card-body">
+        <h4 class="h6 text-danger">Tienda suspendida</h4>
+        <p class="small mb-2"><strong>Motivo:</strong> {{ tienda.motivo_suspension|default:"(sin motivo registrado)"|linebreaksbr }}</p>
+        <form method="post" action="{% url 'administracion:tienda_reactivar' tienda.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success">Reactivar tienda</button>
+        </form>
+        <p class="small text-muted mt-2 mb-0">Si la tienda no verificó su correo, quedará pendiente hasta que lo haga.</p>
+      </div></div>
+    {% else %}
+      <div class="card shadow-sm"><div class="card-body">
+        <h4 class="h6">Suspender tienda</h4>
+        <p class="small text-muted">Sus productos dejan de verse en el catálogo y la tienda no puede gestionarlos hasta que la reactives.</p>
+        <form method="post" action="{% url 'administracion:tienda_suspender' tienda.pk %}" novalidate>
+          {% csrf_token %}
+          {% include "_campos_formulario.html" %}
+          <button type="submit" class="btn btn-danger">Suspender tienda</button>
+        </form>
+      </div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

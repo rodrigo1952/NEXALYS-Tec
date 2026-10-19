@@ -2,7 +2,12 @@
 {% block titulo %}Mi tienda | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-  <h2 class="mb-0">🏪 {{ tienda.nombre }}</h2>
+  <h2 class="mb-0 d-flex align-items-center gap-2">
+    {% if tienda.logo %}
+      <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" width="48" height="48" class="rounded-circle border bg-white" style="object-fit:cover">
+    {% else %}🏪{% endif %}
+    {{ tienda.nombre }}
+  </h2>
   {% if tienda.estado == "activa" %}
     <span class="badge text-bg-success fs-6">Activa</span>
   {% elif tienda.estado == "pendiente" %}
@@ -23,7 +28,11 @@
   </div>
 {% elif tienda.estado == "suspendida" %}
   <div class="alert alert-danger">
-    Tu tienda está <strong>suspendida</strong> y sus productos no aparecen en el catálogo. Comunícate con el administrador.
+    Tu tienda está <strong>suspendida</strong> y sus productos no aparecen en el catálogo.
+    {% if tienda.motivo_suspension %}
+      <div class="mt-2"><strong>Motivo:</strong> {{ tienda.motivo_suspension|linebreaksbr }}</div>
+    {% endif %}
+    <div class="mt-2 small">Cuando lo corrijas, comunícate con el administrador para que reactive tu tienda.</div>
   </div>
 {% else %}
   <div class="row g-3 mb-4">
@@ -61,10 +70,29 @@
   <a href="{% url 'tiendas:perfil' tienda.pk %}" class="btn btn-outline-secondary">Ver mi tienda pública</a>
 {% endif %}
 
-<h3 class="h6 mt-4">Datos de la tienda</h3>
-<ul class="list-group">
-  <li class="list-group-item"><strong>Dirección:</strong> {{ tienda.direccion }}</li>
-  <li class="list-group-item"><strong>WhatsApp:</strong> {{ tienda.whatsapp }}</li>
-  <li class="list-group-item"><strong>Descripción:</strong> {{ tienda.descripcion|default:"—" }}</li>
-</ul>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 mb-2">
+  <h3 class="h6 mb-0">Datos de la tienda</h3>
+  <a href="{% url 'tiendas:editar' %}" class="btn btn-sm btn-outline-primary">✏️ Editar datos, logo y horario</a>
+</div>
+<div class="row g-3">
+  <div class="col-md-7">
+    <ul class="list-group">
+      <li class="list-group-item"><strong>Dirección:</strong> {{ tienda.direccion }}</li>
+      <li class="list-group-item"><strong>WhatsApp:</strong> {{ tienda.whatsapp }}</li>
+      <li class="list-group-item"><strong>Descripción:</strong> {{ tienda.descripcion|default:"—" }}</li>
+    </ul>
+  </div>
+  <div class="col-md-5">
+    <ul class="list-group">
+      <li class="list-group-item"><strong>Horario de atención</strong></li>
+      {% if tienda.tiene_horario %}
+        {% for dia, texto in tienda.horario_semana %}
+          <li class="list-group-item d-flex justify-content-between small"><span>{{ dia }}</span><span>{{ texto }}</span></li>
+        {% endfor %}
+      {% else %}
+        <li class="list-group-item small text-muted">Aún no registraste tu horario. Con él, los clientes verán si estás abierto en este momento.</li>
+      {% endif %}
+    </ul>
+  </div>
+</div>
 {% endblock %}

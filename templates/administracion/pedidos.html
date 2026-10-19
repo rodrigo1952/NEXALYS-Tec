@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Pedidos | Administración | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "administracion/_menu.html" %}
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-lg-5"><input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por cliente o producto"></div>
+  <div class="col-sm-6 col-lg-3">
+    <select name="tienda" class="form-select" aria-label="Tienda">
+      <option value="">Todas las tiendas</option>
+      {% for t in tiendas %}<option value="{{ t.pk }}"{% if t.pk == tienda_id %} selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-sm-6 col-lg-2">
+    <select name="estado" class="form-select" aria-label="Estado">
+      <option value="">Todos los estados</option>
+      {% for valor, nombre in estados %}<option value="{{ valor }}"{% if valor == estado %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-lg-2 d-flex gap-2">
+    <button type="submit" class="btn btn-primary flex-grow-1">Filtrar</button>
+    <a href="{% url 'administracion:pedidos' %}" class="btn btn-outline-secondary" title="Quitar filtros">✕</a>
+  </div>
+</form>
+
+<div class="row g-3 mb-3">
+  <div class="col-sm-4"><div class="card text-center shadow-sm"><div class="card-body py-2">
+    <div class="h4 fw-bold mb-0">{{ total_pedidos }}</div><div class="text-muted small">Pedidos</div>
+  </div></div></div>
+  <div class="col-sm-4"><div class="card text-center shadow-sm"><div class="card-body py-2">
+    <div class="h4 fw-bold mb-0">{{ entregados }}</div><div class="text-muted small">Entregados</div>
+  </div></div></div>
+  <div class="col-sm-4"><div class="card text-center shadow-sm"><div class="card-body py-2">
+    <div class="h4 fw-bold mb-0">{{ ventas|soles }}</div><div class="text-muted small">Vendido (entregados)</div>
+  </div></div></div>
+</div>
+<p class="small text-muted">Solo consulta: cada tienda gestiona sus propios pedidos.</p>
+
+<div class="table-responsive bg-white rounded shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>#</th><th>Fecha</th><th>Tienda</th><th>Cliente</th><th>Producto</th><th class="text-end">Cant.</th><th class="text-end">Total</th><th>Estado</th></tr>
+    </thead>
+    <tbody>
+      {% for p in pagina %}
+        <tr>
+          <td>{{ p.pk }}</td>
+          <td class="small text-nowrap">{{ p.creado|date:"d/m/Y H:i" }}</td>
+          <td class="small"><a href="{% url 'administracion:tienda_detalle' p.tienda.pk %}">{{ p.tienda }}</a></td>
+          <td class="small">{{ p.cliente_nombre }}<br><span class="text-muted">{{ p.cliente_telefono }}</span></td>
+          <td class="small" style="max-width:260px">{{ p.producto.nombre|truncatechars:60 }}</td>
+          <td class="text-end">{{ p.cantidad }}</td>
+          <td class="text-end text-nowrap">{{ p.total|soles }}</td>
+          <td>{% include "pedidos/_estado.html" %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No hay pedidos con esos criterios.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "catalogo/_paginacion.html" %}
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Tiendas | Administración | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "administracion/_menu.html" %}
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-6"><input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por nombre, usuario, correo o WhatsApp"></div>
+  <div class="col-md-3">
+    <select name="estado" class="form-select" aria-label="Estado">
+      <option value="">Todos los estados</option>
+      {% for valor, nombre in estados %}<option value="{{ valor }}"{% if valor == estado %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3 d-flex gap-2">
+    <button type="submit" class="btn btn-primary flex-grow-1">Filtrar</button>
+    <a href="{% url 'administracion:tiendas' %}" class="btn btn-outline-secondary">Limpiar</a>
+  </div>
+</form>
+
+<div class="table-responsive bg-white rounded shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Tienda</th><th>Usuario</th><th>WhatsApp</th><th>Estado</th><th class="text-end">Productos</th><th class="text-end">Pedidos</th><th>Registrada</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for t in pagina %}
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              {% if t.logo %}<img src="{{ t.logo.url }}" alt="" width="32" height="32" class="rounded-circle border" style="object-fit:cover">{% endif %}
+              <strong>{{ t.nombre }}</strong>
+            </div>
+          </td>
+          <td class="small">{{ t.usuario.username }}<br><span class="text-muted">{{ t.usuario.email }}</span></td>
+          <td>{{ t.whatsapp }}</td>
+          <td>{% include "administracion/_estado_tienda.html" %}</td>
+          <td class="text-end">{{ t.num_productos }}</td>
+          <td class="text-end">{{ t.num_pedidos }}</td>
+          <td class="small text-nowrap">{{ t.creada_en|date:"d/m/Y" }}</td>
+          <td class="text-end"><a href="{% url 'administracion:tienda_detalle' t.pk %}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No hay tiendas con esos criterios.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "catalogo/_paginacion.html" %}
+{% endblock %}

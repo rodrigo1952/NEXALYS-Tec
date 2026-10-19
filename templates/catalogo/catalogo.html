@@ -36,7 +36,13 @@
       <label class="form-label small" for="{{ form.orden.id_for_label }}">Ordenar por</label>
       {{ form.orden }}
     </div>
-    <div class="col-md-5 d-flex gap-2">
+    <div class="col-md-2">
+      <div class="form-check mt-md-4">
+        {{ form.solo_ofertas }}
+        <label class="form-check-label" for="{{ form.solo_ofertas.id_for_label }}">🔥 Solo ofertas</label>
+      </div>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
       <button type="submit" class="btn btn-primary flex-grow-1">Buscar</button>
       <a href="{% url 'catalogo:catalogo' %}" class="btn btn-outline-secondary">Limpiar</a>
     </div>

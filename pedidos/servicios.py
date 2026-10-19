@@ -54,7 +54,7 @@ def registrar_pedido(pedido):
         raise StockInsuficiente(producto.stock)
     producto.stock -= pedido.cantidad
     _guardar_stock(producto)
-    pedido.precio_unitario = producto.precio
+    pedido.precio_unitario = producto.precio_final  # con la oferta, si hay una vigente
     pedido.estado = Pedido.Estado.PENDIENTE
     pedido.save()
     return pedido
@@ -80,7 +80,7 @@ def actualizar_pedido(pedido, producto_anterior_id, cantidad_anterior):
     _guardar_stock(nuevo)
 
     if pedido.producto_id != producto_anterior_id:
-        pedido.precio_unitario = nuevo.precio
+        pedido.precio_unitario = nuevo.precio_final
     pedido.estado = actual.estado
     pedido.save()
     return pedido

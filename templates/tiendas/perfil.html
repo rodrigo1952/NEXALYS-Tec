@@ -2,11 +2,37 @@
 {% block titulo %}{{ tienda.nombre }} | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <div class="p-4 bg-white rounded shadow-sm mb-4">
-  <h2 class="mb-1">🏪 {{ tienda.nombre }}</h2>
-  {% if tienda.descripcion %}<p class="text-muted">{{ tienda.descripcion }}</p>{% endif %}
-  <p class="mb-2">📍 {{ tienda.direccion }}</p>
-  <a href="{{ tienda.enlace_mapa }}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Ver en Google Maps</a>
-  <a href="{{ tienda.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-sm">Escribir por WhatsApp</a>
+  <div class="row g-4">
+    <div class="col-md-7">
+      <div class="d-flex align-items-center gap-3 mb-2">
+        {% if tienda.logo %}
+          <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" data-ampliar="{{ tienda.logo.url }}" title="Clic para ver el logo" width="72" height="72" class="rounded-circle border bg-white" style="object-fit:cover">
+        {% endif %}
+        <h2 class="mb-0">{% if not tienda.logo %}🏪 {% endif %}{{ tienda.nombre }}</h2>
+      </div>
+      {% with estado=tienda.estado_atencion %}
+        {% if estado %}
+          <p class="mb-2 fw-semibold {% if estado.abierto %}text-success{% else %}text-danger{% endif %}">🕒 {{ estado.texto }}</p>
+        {% endif %}
+      {% endwith %}
+      {% if tienda.descripcion %}<p class="text-muted">{{ tienda.descripcion }}</p>{% endif %}
+      <p class="mb-2">📍 {{ tienda.direccion }}</p>
+      <a href="{{ tienda.enlace_mapa }}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Ver en Google Maps</a>
+      <a href="{{ tienda.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-sm">Escribir por WhatsApp</a>
+    </div>
+    {% if tienda.tiene_horario %}
+      <div class="col-md-5">
+        <h3 class="h6">Horario de atención</h3>
+        <table class="table table-sm mb-0">
+          <tbody>
+            {% for dia, texto in tienda.horario_semana %}
+              <tr><td>{{ dia }}</td><td class="text-end{% if texto == 'Cerrado' %} text-muted{% endif %}">{{ texto }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
 </div>
 
 <h3 class="h5 mb-3">Productos de la tienda</h3>

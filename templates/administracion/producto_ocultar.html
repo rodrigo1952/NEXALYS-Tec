@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titulo %}Ocultar producto | Administración | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "administracion/_menu.html" %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <a href="{% url 'administracion:productos' %}" class="small">&larr; Volver a productos</a>
+    <div class="card border-danger shadow-sm mt-2"><div class="card-body p-4">
+      <h3 class="h5 text-danger">Ocultar producto del catálogo</h3>
+      <p class="mb-1"><strong>{{ producto.nombre }}</strong></p>
+      <p class="small text-muted">Tienda: {{ producto.tienda }}</p>
+      <p class="small">El producto dejará de verse en el catálogo y la tienda no podrá volver a publicarlo hasta que lo muestres de nuevo. La tienda verá el motivo.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "_campos_formulario.html" %}
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-danger">Ocultar producto</button>
+          <a href="{% url 'administracion:productos' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

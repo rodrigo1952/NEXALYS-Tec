@@ -10,7 +10,7 @@ class Favorito(models.Model):
     - Solo los usuarios con rol Cliente tienen favoritos.
     - Un producto aparece una sola vez en la lista de cada cliente.
     - Si la tienda elimina el producto, el favorito se borra solo (CASCADE).
-    - "Bajó de precio" compara el precio actual con el precio que tenía al guardarlo.
+    - "Bajó de precio" compara el precio actual (con oferta, si hay) con el que tenía al guardarlo.
     - Los avisos nuevos (contador del menú) comparan con lo que el cliente vio
       la última vez que abrió "Mis favoritos".
     """
@@ -50,8 +50,8 @@ class Favorito(models.Model):
             usuario=usuario,
             producto=producto,
             defaults={
-                "precio_guardado": producto.precio,
-                "precio_visto": producto.precio,
+                "precio_guardado": producto.precio_final,  # con la oferta, si hay una vigente
+                "precio_visto": producto.precio_final,
                 "agotado_visto": producto.agotado,
             },
         )
@@ -59,11 +59,12 @@ class Favorito(models.Model):
     @property
     def disponible(self):
         """El producto sigue publicado y su tienda está activa."""
-        return self.producto.activo and self.producto.tienda.esta_activa
+        producto = self.producto
+        return producto.activo and not producto.oculto_por_admin and producto.tienda.esta_activa
 
     @property
     def bajo_de_precio(self):
-        return self.disponible and self.producto.precio < self.precio_guardado
+        return self.disponible and self.producto.precio_final < self.precio_guardado
 
     @property
     def volvio_a_tener_stock(self):
@@ -71,5 +72,5 @@ class Favorito(models.Model):
 
     def marcar_revisado(self):
         """Recuerda lo que el cliente acaba de ver (no guarda en la base de datos)."""
-        self.precio_visto = self.producto.precio
+        self.precio_visto = self.producto.precio_final
         self.agotado_visto = self.producto.agotado

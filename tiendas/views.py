@@ -2,6 +2,7 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth import login
+from django.db import IntegrityError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -10,7 +11,7 @@ from catalogo.models import Producto
 from cuentas.concurrencia import validar_y_guardar
 
 from .decorators import tienda_requerida
-from .forms import RegistroTiendaForm
+from .forms import EditarTiendaForm, HorarioForm, RegistroTiendaForm
 from .models import Tienda
 from .verificacion import enviar_correo_verificacion, leer_token
 
@@ -105,9 +106,34 @@ def panel(request):
     return render(request, "tiendas/panel.html", contexto)
 
 
+@tienda_requerida(activa=False)
+def editar(request):
+    """La tienda edita sus datos, su logo y su horario de atención."""
+    tienda = request.tienda
+    form = EditarTiendaForm(request.POST or None, request.FILES or None, instance=tienda, prefix="datos")
+    horario = HorarioForm(request.POST or None, tienda=tienda, prefix="horario")
+    if request.method == "POST":
+        datos_validos = form.is_valid()  # se validan los dos para mostrar todos los errores
+        horario_valido = horario.is_valid()
+        if datos_validos and horario_valido:
+            try:
+                with transaction.atomic():  # datos y horario se guardan juntos o nada
+                    form.save()
+                    horario.save(tienda)
+            except IntegrityError:
+                # Concurrencia: otra tienda tomó el mismo nombre o WhatsApp en este instante.
+                form.add_error(None, "Otra tienda acaba de registrar ese nombre o WhatsApp. Revisa los datos.")
+            else:
+                messages.success(request, "Los datos de tu tienda se actualizaron correctamente.")
+                return redirect("tiendas:panel")
+    return render(request, "tiendas/editar.html", {"form": form, "horario": horario, "tienda": tienda})
+
+
 def perfil(request, pk):
     """CU-06 Consultar ubicación de tienda: perfil público con dirección y productos."""
-    tienda = get_object_or_404(Tienda, pk=pk, estado=Tienda.Estado.ACTIVA)
+    tienda = get_object_or_404(
+        Tienda.objects.prefetch_related("horarios"), pk=pk, estado=Tienda.Estado.ACTIVA
+    )
     productos = (
         Producto.objects.visibles()
         .filter(tienda=tienda)

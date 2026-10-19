@@ -32,9 +32,22 @@
           <td>{{ producto.nombre }}</td>
           <td>{{ producto.categoria }}</td>
           <td>{{ producto.marca }}</td>
-          <td class="text-end">{{ producto.precio|soles }}</td>
+          <td class="text-end text-nowrap">
+            {% if producto.en_oferta %}
+              <span class="text-danger fw-semibold">{{ producto.precio_oferta|soles }}</span><br>
+              <small class="text-muted text-decoration-line-through">{{ producto.precio|soles }}</small>
+              <span class="badge text-bg-danger">Oferta</span>
+            {% else %}
+              {{ producto.precio|soles }}
+            {% endif %}
+          </td>
           <td class="text-end">{% if producto.agotado %}<span class="badge text-bg-secondary">Agotado</span>{% else %}{{ producto.stock }}{% endif %}</td>
-          <td>{% if producto.activo %}<span class="badge text-bg-success">Publicado</span>{% else %}<span class="badge text-bg-light border">Oculto</span>{% endif %}</td>
+          <td>{% if producto.activo %}<span class="badge text-bg-success">Publicado</span>{% else %}<span class="badge text-bg-light border">Oculto</span>{% endif %}
+            {% if producto.destacado %}<span class="badge text-bg-warning">⭐ Destacado</span>{% endif %}
+            {% if producto.oculto_por_admin %}
+              <span class="badge text-bg-danger" title="{{ producto.motivo_ocultamiento }}">Oculto por el administrador</span>
+              {% if producto.motivo_ocultamiento %}<div class="small text-danger">{{ producto.motivo_ocultamiento }}</div>{% endif %}
+            {% endif %}</td>
           <td class="text-end">{{ producto.num_favoritos }}</td>
           <td class="text-end text-nowrap">
             <a href="{% url 'catalogo:editar' producto.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>

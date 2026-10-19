@@ -38,8 +38,8 @@ python manage.py test -v 2
 
 | Rol | Cómo se obtiene | Qué puede hacer |
 |---|---|---|
-| Administrador | `createsuperuser` | Gestionar tiendas (suspender / reactivar), categorías, marcas y usuarios |
-| Tienda | Registro en "Registrar mi tienda" + verificación del correo | Gestionar sus propios productos (CRUD) |
+| Administrador | `createsuperuser` | Panel propio en `/panel/admin/`: resumen, tiendas (suspender con motivo / reactivar), productos (ocultar con motivo), pedidos (consulta), usuarios (desactivar, reactivar, eliminar), categorías y marcas |
+| Tienda | Registro en "Registrar mi tienda" + verificación del correo | Gestionar sus productos (con ofertas, destacados y varias fotos), sus pedidos, sus datos, su logo y su horario |
 | Cliente | Registro en "Registrarse" | Guardar favoritos, editar sus datos, cambiar o recuperar su contraseña y eliminar su cuenta (el catálogo es público) |
 
 ## Módulos CRUD
@@ -78,6 +78,14 @@ Los tres están integrados: un producto pertenece a una categoría y una marca, 
 14. Si la tienda elimina el producto, el favorito **se borra**; si lo oculta, se agota o la tienda es suspendida, se muestra **"No disponible"** sin borrarlo.
 15. La tienda ve **cuántos** clientes guardaron cada producto, **nunca quiénes**.
 16. Para **cambiar el correo** se pide la contraseña actual; solo los clientes pueden **eliminar su cuenta** (se borran también sus favoritos).
+17. Una **oferta** vale si su precio es menor que el normal; si tiene fecha de fin, ese día es el último y luego vuelve sola al precio normal. Pedidos, WhatsApp, filtros y orden usan el precio con oferta.
+18. Cada tienda puede marcar hasta **3 productos destacados**, que aparecen en el inicio.
+19. Cada producto tiene una foto principal y hasta **5 fotos adicionales**.
+20. Las imágenes se **optimizan** al subirlas: se giran según la cámara, se reducen (máx. 1200 px; logos 400 px) y se guardan en WEBP.
+21. La **búsqueda** no distingue tildes ni mayúsculas, y con varias palabras deben estar todas.
+22. La tienda **edita sus datos**, su logo y su **horario** (con **refrigerio** opcional al mediodía); el perfil público muestra si está **abierta ahora**, en refrigerio o cerrada, con horas en formato de 12 horas (a. m. / p. m., hora de Perú).
+23. El administrador puede **suspender una tienda** u **ocultar un producto** escribiendo un **motivo** que la tienda ve en su panel; un producto oculto por el administrador no se puede volver a publicar hasta que él lo muestre.
+24. El administrador puede **desactivar, reactivar o eliminar** cuentas; no puede modificar su propia cuenta ni la de otros administradores, y una **tienda con pedidos no se elimina** (historial de ventas).
 
 ## Control de concurrencia
 
@@ -108,7 +116,8 @@ Las pruebas están en `pedidos/test_concurrencia.py`, `catalogo/test_concurrenci
 
 ## Administración de la base de datos
 
-- **Django Admin** (`/admin/`): consulta y gestión de todas las tablas para el Administrador.
+- **Panel de administración** (`/panel/admin/`): pantallas con el diseño de NEXALYS para el trabajo diario del Administrador.
+- **Django Admin** (`/admin/`): herramienta avanzada con todas las tablas, como respaldo.
 - **DB Browser for SQLite** (https://sqlitebrowser.org): abrir el archivo `db.sqlite3` para ver la estructura de las tablas y sus registros.
 
 En desarrollo, los correos se muestran en la consola donde corre `runserver`.

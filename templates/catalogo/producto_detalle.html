@@ -1,12 +1,40 @@
 {% extends "base.html" %}
-{% load formato %}
 {% block titulo %}{{ producto.nombre }} | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <a href="{% url 'catalogo:catalogo' %}" class="small">&larr; Volver al catálogo</a>
 <div class="row g-4 mt-1">
   <div class="col-md-5">
-    {% if producto.imagen %}
-      <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="img-fluid rounded bg-white p-3 shadow-sm w-100">
+    {% if fotos %}
+      {# Galería: se pasa de una foto a otra con las flechas o tocando las miniaturas. #}
+      <div id="galeria" class="carousel slide bg-white rounded shadow-sm" data-bs-ride="false">
+        <div class="carousel-inner">
+          {% for foto in fotos %}
+            <div class="carousel-item{% if forloop.first %} active{% endif %}">
+              <img src="{{ foto.url }}" alt="{{ producto.nombre }} — foto {{ forloop.counter }}" data-ampliar="{{ foto.url }}" title="Clic para ver en grande" class="d-block w-100 p-3" style="height:360px;object-fit:contain">
+            </div>
+          {% endfor %}
+        </div>
+        {% if fotos|length > 1 %}
+          <button class="carousel-control-prev" type="button" data-bs-target="#galeria" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon bg-dark rounded-circle" aria-hidden="true"></span>
+            <span class="visually-hidden">Foto anterior</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#galeria" data-bs-slide="next">
+            <span class="carousel-control-next-icon bg-dark rounded-circle" aria-hidden="true"></span>
+            <span class="visually-hidden">Foto siguiente</span>
+          </button>
+        {% endif %}
+      </div>
+      {% if fotos|length > 1 %}
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          {% for foto in fotos %}
+            <button type="button" class="btn p-0 border rounded bg-white" data-bs-target="#galeria" data-bs-slide-to="{{ forloop.counter0 }}" aria-label="Ver foto {{ forloop.counter }}">
+              <img src="{{ foto.url }}" alt="" width="64" height="64" style="object-fit:contain" loading="lazy">
+            </button>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <p class="small text-muted mt-1 mb-0">🔍 Toca la foto para verla en grande.</p>
     {% else %}
       <div class="foto-vacia rounded shadow-sm" style="height:320px">📦</div>
     {% endif %}
@@ -14,22 +42,51 @@
   <div class="col-md-7">
     <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
     <h2 class="mt-1">{{ producto.nombre }}</h2>
-    <p class="display-6 fw-bold">{{ producto.precio|soles }}</p>
+    <p class="display-6 mb-1">{% include "catalogo/_precio.html" %}</p>
+    {% if producto.en_oferta and producto.oferta_hasta %}
+      <p class="small text-danger mb-2">Oferta válida hasta el {{ producto.oferta_hasta|date:"d/m/Y" }}</p>
+    {% endif %}
     {% if producto.agotado %}
       <span class="badge text-bg-secondary mb-3">Agotado</span>
     {% else %}
       <p class="text-success mb-3">Stock disponible: {{ producto.stock }}</p>
     {% endif %}
-    {% if producto.descripcion %}<p>{{ producto.descripcion|linebreaksbr }}</p>{% endif %}
-
     <div class="card card-body bg-light mb-3">
-      <strong>🏪 <a href="{% url 'tiendas:perfil' producto.tienda.pk %}">{{ producto.tienda }}</a></strong>
-      <span class="small text-muted">📍 {{ producto.tienda.direccion }}</span>
+      <div class="d-flex align-items-center gap-2">
+        {% if producto.tienda.logo %}
+          <img src="{{ producto.tienda.logo.url }}" alt="Logo de {{ producto.tienda }}" data-ampliar="{{ producto.tienda.logo.url }}" title="Clic para ver el logo" width="40" height="40" class="rounded-circle border bg-white" style="object-fit:cover">
+        {% endif %}
+        <strong>🏪 <a href="{% url 'tiendas:perfil' producto.tienda.pk %}">{{ producto.tienda }}</a></strong>
+      </div>
+      <span class="small text-muted mt-1">📍 {{ producto.tienda.direccion }}</span>
+      {% with estado=producto.tienda.estado_atencion %}
+        {% if estado %}
+          <span class="small mt-1 {% if estado.abierto %}text-success{% else %}text-danger{% endif %}">🕒 {{ estado.texto }}</span>
+        {% endif %}
+      {% endwith %}
+      <div class="mt-2">
+        <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="btn btn-outline-primary btn-sm">
+          🏪 Ver tienda: horario, ubicación y más productos
+        </a>
+      </div>
     </div>
     <a href="{{ producto.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-lg">
       Consultar por WhatsApp
     </a>
     {% include "favoritos/_boton_corazon.html" with con_texto=True %}
+
+    {% if producto.descripcion %}
+      {# Descripción: si es larga se muestra solo el inicio y un botón para leerla completa. #}
+      <div class="mt-4">
+        <h3 class="h6 fw-semibold">Descripción</h3>
+        <div id="descripcion" class="descripcion descripcion-recortada">
+          {{ producto.descripcion|linebreaksbr }}
+        </div>
+        <button type="button" id="boton-descripcion" class="btn btn-link px-0 fw-semibold d-none" aria-expanded="false" aria-controls="descripcion">
+          Leer descripción completa ▾
+        </button>
+      </div>
+    {% endif %}
   </div>
 </div>
 
@@ -41,4 +98,26 @@
     {% endfor %}
   </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Si la descripción entra completa, se quita el recorte y no se muestra el botón.
+  (function () {
+    var texto = document.getElementById("descripcion");
+    var boton = document.getElementById("boton-descripcion");
+    if (!texto || !boton) return;
+    if (texto.scrollHeight <= texto.clientHeight + 4) {
+      texto.classList.remove("descripcion-recortada");
+      return;
+    }
+    boton.classList.remove("d-none");
+    boton.addEventListener("click", function () {
+      var abierta = !texto.classList.toggle("descripcion-recortada");
+      boton.setAttribute("aria-expanded", abierta);
+      boton.textContent = abierta ? "Mostrar menos ▴" : "Leer descripción completa ▾";
+      if (!abierta) texto.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+  })();
+</script>
 {% endblock %}

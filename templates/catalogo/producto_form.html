@@ -6,11 +6,41 @@
     <div class="card shadow-sm"><div class="card-body p-4">
       <h2 class="h4 mb-3">{{ titulo }}</h2>
       {% if producto and producto.imagen %}
+        <p class="small text-muted mb-1">Foto principal actual:</p>
         <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="mb-3 rounded border" style="max-height:120px">
+      {% endif %}
+      {% if producto.oculto_por_admin %}
+        <div class="alert alert-danger">
+          <strong>El administrador ocultó este producto del catálogo.</strong>
+          {% if producto.motivo_ocultamiento %}<div>Motivo: {{ producto.motivo_ocultamiento }}</div>{% endif %}
+          <div class="small mt-1">Puedes corregir los datos; cuando lo hagas, comunícate con el administrador para que lo vuelva a mostrar.</div>
+        </div>
       {% endif %}
       <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         {% include "_campos_formulario.html" %}
+
+        {% if producto and producto.fotos.all %}
+          {# Fotos adicionales actuales: se marcan las que se quieren quitar. #}
+          <div class="mb-3">
+            <label class="form-label">Fotos adicionales actuales</label>
+            <div class="row row-cols-3 row-cols-sm-5 g-2">
+              {% for foto in producto.fotos.all %}
+                <div class="col">
+                  <label class="d-block border rounded p-1 text-center bg-white small">
+                    <img src="{{ foto.imagen.url }}" alt="Foto {{ forloop.counter }}" class="img-fluid mb-1" style="height:70px;object-fit:contain">
+                    <span class="form-check justify-content-center d-flex gap-1">
+                      <input type="checkbox" name="{{ form.eliminar_fotos.html_name }}" value="{{ foto.pk }}" class="form-check-input">
+                      Quitar
+                    </span>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+            {% for error in form.eliminar_fotos.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+        {% endif %}
+
         <div class="d-flex gap-2">
           <button type="submit" class="btn btn-primary">Guardar</button>
           <a href="{% url 'catalogo:mis_productos' %}" class="btn btn-outline-secondary">Cancelar</a>

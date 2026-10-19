@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, ProtectedError, Q
+from django.db.models import Count, ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 
 from tiendas.decorators import tienda_requerida
@@ -11,8 +11,9 @@ from .models import Producto
 
 ORDENES = {
     "recientes": "-creado",
-    "precio_asc": "precio",
-    "precio_desc": "-precio",
+    # Se ordena por el precio que paga el cliente hoy (con la oferta, si hay una vigente).
+    "precio_asc": "precio_actual",
+    "precio_desc": "-precio_actual",
     "nombre": "nombre",
 }
 
@@ -23,17 +24,15 @@ ORDENES = {
 
 def catalogo(request):
     form = BusquedaForm(request.GET or None)
-    productos = Producto.objects.visibles().select_related("tienda", "categoria", "marca")
+    productos = Producto.objects.visibles().con_precio_actual().select_related("tienda", "categoria", "marca")
 
     if form.is_valid():
         datos = form.cleaned_data
         if datos["q"]:
-            texto = datos["q"].strip()
-            productos = productos.filter(
-                Q(nombre__icontains=texto)
-                | Q(descripcion__icontains=texto)
-                | Q(marca__nombre__icontains=texto)
-            )
+            # Sin tildes ni mayúsculas: "camara" encuentra "Cámara".
+            productos = productos.buscar(datos["q"])
+        if datos["solo_ofertas"]:
+            productos = productos.en_oferta()
         if datos["categoria"]:
             productos = productos.filter(categoria=datos["categoria"])
         if datos["marca"]:
@@ -41,9 +40,9 @@ def catalogo(request):
         if datos["tienda"]:
             productos = productos.filter(tienda=datos["tienda"])
         if datos["precio_min"] is not None:
-            productos = productos.filter(precio__gte=datos["precio_min"])
+            productos = productos.filter(precio_actual__gte=datos["precio_min"])
         if datos["precio_max"] is not None:
-            productos = productos.filter(precio__lte=datos["precio_max"])
+            productos = productos.filter(precio_actual__lte=datos["precio_max"])
         productos = productos.order_by(ORDENES.get(datos["orden"] or "recientes"))
 
     pagina = Paginator(productos, 12).get_page(request.GET.get("page"))
@@ -52,7 +51,10 @@ def catalogo(request):
 
 def producto_detalle(request, pk):
     producto = get_object_or_404(
-        Producto.objects.visibles().select_related("tienda", "categoria", "marca"), pk=pk
+        Producto.objects.visibles()
+        .select_related("tienda", "categoria", "marca")
+        .prefetch_related("fotos", "tienda__horarios"),
+        pk=pk,
     )
     relacionados = (
         Producto.objects.visibles()
@@ -60,10 +62,13 @@ def producto_detalle(request, pk):
         .exclude(pk=producto.pk)
         .select_related("tienda")[:4]
     )
+    # Galería: la foto principal primero y luego las adicionales.
+    fotos = [producto.imagen] if producto.imagen else []
+    fotos += [foto.imagen for foto in producto.fotos.all()]
     return render(
         request,
         "catalogo/producto_detalle.html",
-        {"producto": producto, "relacionados": relacionados},
+        {"producto": producto, "relacionados": relacionados, "fotos": fotos},
     )
 
 
@@ -83,7 +88,7 @@ def mis_productos(request):
     )
     texto = request.GET.get("q", "").strip()
     if texto:
-        productos = productos.filter(nombre__icontains=texto)
+        productos = productos.buscar(texto)
     pagina = Paginator(productos, 10).get_page(request.GET.get("page"))
     return render(request, "catalogo/mis_productos.html", {"pagina": pagina, "q": texto})
 

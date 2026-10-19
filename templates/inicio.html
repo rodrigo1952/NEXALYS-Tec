@@ -13,6 +13,27 @@
   {% endif %}
 </div>
 
+{% if destacados %}
+  <h2 class="h5 mb-3">⭐ Productos destacados</h2>
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mb-5">
+    {% for producto in destacados %}
+      <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if ofertas %}
+  <div class="d-flex justify-content-between align-items-baseline mb-3">
+    <h2 class="h5 mb-0">🔥 Ofertas</h2>
+    <a href="{% url 'catalogo:catalogo' %}?solo_ofertas=on" class="small">Ver todas las ofertas</a>
+  </div>
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mb-5">
+    {% for producto in ofertas %}
+      <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 {% if recientes %}
   <h2 class="h5 mb-3">Productos recientes</h2>
   <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">

@@ -36,8 +36,13 @@ def rol_requerido(*roles):
 
 
 def inicio(request):
-    recientes = Producto.objects.visibles().select_related("tienda", "marca")[:8]
-    return render(request, "inicio.html", {"recientes": recientes})
+    visibles = Producto.objects.visibles().select_related("tienda", "marca", "categoria")
+    return render(request, "inicio.html", {
+        # Cada tienda elige hasta 3 destacados; se muestran los últimos actualizados.
+        "destacados": visibles.filter(destacado=True).order_by("-actualizado")[:8],
+        "ofertas": visibles.en_oferta().order_by("-actualizado")[:8],
+        "recientes": visibles[:8],
+    })
 
 
 def registro(request):
@@ -100,7 +105,3 @@ def eliminar_cuenta(request):
         return redirect("inicio")
     return render(request, "cuentas/eliminar_cuenta.html", {"form": form})
 
-
-@rol_requerido("Administrador")
-def panel_admin(request):
-    return render(request, "cuentas/panel_admin.html")

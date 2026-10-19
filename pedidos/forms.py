@@ -12,7 +12,8 @@ from .models import Pedido
 
 class ProductoChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, producto):
-        return f"{producto.nombre} — S/ {producto.precio} (stock: {producto.stock})"
+        oferta = " (oferta)" if producto.en_oferta else ""
+        return f"{producto.nombre} — S/ {producto.precio_final}{oferta} (stock: {producto.stock})"
 
 
 class PedidoForm(EstiloBootstrapMixin, forms.ModelForm):

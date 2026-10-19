@@ -48,3 +48,22 @@ class MejorasInterfazTests(BaseCatalogo):
         self.assertEqual(respuesta.status_code, 404)
         self.assertTemplateUsed(respuesta, "404.html")
         self.assertContains(respuesta, "No encontramos esta página", status_code=404)
+
+
+class DescripcionLargaTests(BaseCatalogo):
+    def test_descripcion_recortada_con_boton_para_leer_completa(self):
+        producto = self.crear_producto(descripcion="Línea de especificación\n" * 40)
+        respuesta = self.client.get(reverse("catalogo:detalle", args=[producto.pk]))
+        self.assertContains(respuesta, 'class="descripcion descripcion-recortada"')
+        self.assertContains(respuesta, "Leer descripción completa")
+        # El texto completo sigue en la página (el navegador solo oculta una parte).
+        self.assertContains(respuesta, "Línea de especificación", count=40)
+
+    def test_whatsapp_aparece_antes_que_la_descripcion(self):
+        producto = self.crear_producto(descripcion="Texto de la descripción")
+        html = self.client.get(reverse("catalogo:detalle", args=[producto.pk])).content.decode()
+        self.assertLess(html.index("Consultar por WhatsApp"), html.index("Texto de la descripción"))
+
+    def test_sin_descripcion_no_hay_seccion(self):
+        producto = self.crear_producto(descripcion="")
+        self.assertNotContains(self.client.get(reverse("catalogo:detalle", args=[producto.pk])), 'id="descripcion"')

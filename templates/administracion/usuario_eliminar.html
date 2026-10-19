@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titulo %}Eliminar usuario | Administración | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "administracion/_menu.html" %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <a href="{% url 'administracion:usuarios' %}" class="small">&larr; Volver a usuarios</a>
+    <div class="card border-danger shadow-sm mt-2"><div class="card-body p-4">
+      <h3 class="h5 text-danger">Eliminar la cuenta «{{ usuario.username }}»</h3>
+      <p class="mb-2">Rol: <strong>{{ rol }}</strong> · Correo: {{ usuario.email|default:"—" }}</p>
+      <p class="mb-1">Se borrarán de forma permanente:</p>
+      <ul>
+        <li>La cuenta y sus datos personales.</li>
+        {% if num_favoritos %}<li>{{ num_favoritos }} favorito{{ num_favoritos|pluralize }}.</li>{% endif %}
+        {% if tienda %}
+          <li>La tienda <strong>{{ tienda.nombre }}</strong>, su logo y su horario.</li>
+          <li>{{ num_productos }} producto{{ num_productos|pluralize }} con sus fotos.</li>
+        {% endif %}
+      </ul>
+      <div class="alert alert-warning small">Si solo quieres impedir que entre a la página, es mejor <strong>desactivar</strong> la cuenta: se puede revertir.</div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "_campos_formulario.html" %}
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-danger">Eliminar definitivamente</button>
+          <a href="{% url 'administracion:usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

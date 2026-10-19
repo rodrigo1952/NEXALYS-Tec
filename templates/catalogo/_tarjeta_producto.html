@@ -1,19 +1,21 @@
-{% load formato %}
 <div class="card h-100 shadow-sm">
   {% include "favoritos/_boton_corazon.html" %}
+  {% if producto.en_oferta %}
+    <span class="badge text-bg-danger position-absolute top-0 start-0 m-2" style="z-index:2">Oferta</span>
+  {% endif %}
   {% if producto.imagen %}
-    <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}">
+    <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}" loading="lazy">
   {% else %}
     <div class="foto-vacia card-img-top">📦</div>
   {% endif %}
   <div class="card-body d-flex flex-column">
     <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
     <h3 class="h6 card-title mt-1">{{ producto.nombre }}</h3>
-    <p class="fw-bold fs-5 mb-1">{{ producto.precio|soles }}</p>
+    <p class="fs-5 mb-1">{% include "catalogo/_precio.html" %}</p>
     {% if producto.agotado %}
       <span class="badge text-bg-secondary align-self-start mb-2">Agotado</span>
     {% endif %}
-    <small class="text-muted mb-3">🏪 {{ producto.tienda }}</small>
+    <small class="text-muted mb-3">🏪 <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="link-secondary">{{ producto.tienda }}</a></small>
     <a href="{% url 'catalogo:detalle' producto.pk %}" class="btn btn-outline-primary btn-sm mt-auto">Ver detalle</a>
   </div>
 </div>

@@ -1,5 +1,7 @@
 from django.db.models import F, Q
 
+from catalogo.models import precio_actual_expr
+
 from .models import Favorito
 from .permisos import es_cliente
 
@@ -17,9 +19,10 @@ def favoritos(request):
 
     mios = Favorito.objects.filter(usuario=user)
     avisos = (
-        mios.filter(producto__activo=True, producto__tienda__estado="activa")
+        mios.filter(producto__activo=True, producto__oculto_por_admin=False, producto__tienda__estado="activa")
+        .annotate(precio_actual=precio_actual_expr("producto__"))  # incluye las ofertas
         .filter(
-            Q(producto__precio__lt=F("precio_visto"))
+            Q(precio_actual__lt=F("precio_visto"))
             | Q(agotado_visto=True, producto__stock__gt=0)
         )
         .count()

@@ -54,7 +54,7 @@
           </h3>
 
           <p class="fw-bold fs-5 mb-1">
-            {{ producto.precio|soles }}
+            {{ producto.precio_final|soles }}
             {% if favorito.bajo_de_precio %}
               <small class="text-muted fw-normal text-decoration-line-through fs-6">{{ favorito.precio_guardado|soles }}</small>
             {% endif %}

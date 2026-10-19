@@ -9,5 +9,6 @@ urlpatterns = [
     path("verificar/<str:token>/", views.verificar, name="verificar"),
     path("reenviar-verificacion/", views.reenviar_verificacion, name="reenviar"),
     path("panel/", views.panel, name="panel"),
+    path("panel/editar/", views.editar, name="editar"),
     path("<int:pk>/", views.perfil, name="perfil"),
 ]
