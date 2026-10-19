@@ -10,6 +10,7 @@ from django.shortcuts import redirect, render
 from catalogo.models import Producto
 from favoritos.permisos import es_cliente
 
+from .concurrencia import validar_y_guardar
 from .forms import EliminarCuentaForm, PerfilForm, RegistroForm
 
 
@@ -45,8 +46,8 @@ def registro(request):
 
     if request.method == "POST":
         form = RegistroForm(request.POST)
-        if form.is_valid():
-            usuario = form.save()
+        usuario = validar_y_guardar(form)
+        if usuario:
             grupo, _ = Group.objects.get_or_create(name="Cliente")
             usuario.groups.add(grupo)
             login(request, usuario)

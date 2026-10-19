@@ -11,6 +11,12 @@ from .models import PRECIO_MINIMO, Categoria, Marca, Producto
 class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
     """Formulario del CRUD de productos (CU-03). La tienda la asigna el sistema, no el usuario."""
 
+    # Control de concurrencia (bloqueo optimista): guarda la fecha de la última
+    # modificación del producto cuando se abrió el formulario. Si al guardar ya no
+    # coincide (otra pestaña lo editó o un pedido cambió su stock), se avisa en vez
+    # de sobrescribir los datos nuevos con los viejos.
+    version = forms.CharField(widget=forms.HiddenInput, required=False)
+
     class Meta:
         model = Producto
         fields = ["nombre", "categoria", "marca", "precio", "stock", "descripcion", "imagen", "activo"]
@@ -33,6 +39,26 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         )
         self.fields["categoria"].empty_label = "Selecciona una categoría"
         self.fields["marca"].empty_label = "Selecciona una marca"
+        if self.instance.pk:
+            self.fields["version"].initial = self.instance.actualizado.isoformat()
+
+    def clean(self):
+        datos = super().clean()
+        version = datos.get("version")
+        if self.instance.pk and version:
+            actual = Producto.objects.filter(pk=self.instance.pk).first()
+            if actual is None or actual.actualizado.isoformat() != version:
+                # La próxima vez que guarde, ya sabiendo los datos actuales, se acepta.
+                self.data = self.data.copy()
+                self.data["version"] = actual.actualizado.isoformat() if actual else ""
+                datos_actuales = (
+                    f" Datos actuales: precio S/ {actual.precio}, stock {actual.stock}." if actual else ""
+                )
+                raise ValidationError(
+                    "Este producto cambió mientras lo editabas (otra pestaña o un pedido modificó sus datos)."
+                    f"{datos_actuales} Corrige lo que necesites y vuelve a guardar."
+                )
+        return datos
 
     def clean_nombre(self):
         nombre = " ".join(self.cleaned_data["nombre"].split())

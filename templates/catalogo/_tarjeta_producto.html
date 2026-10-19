@@ -1,3 +1,4 @@
+{% load formato %}
 <div class="card h-100 shadow-sm">
   {% include "favoritos/_boton_corazon.html" %}
   {% if producto.imagen %}
@@ -8,7 +9,7 @@
   <div class="card-body d-flex flex-column">
     <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
     <h3 class="h6 card-title mt-1">{{ producto.nombre }}</h3>
-    <p class="fw-bold fs-5 mb-1">S/ {{ producto.precio }}</p>
+    <p class="fw-bold fs-5 mb-1">{{ producto.precio|soles }}</p>
     {% if producto.agotado %}
       <span class="badge text-bg-secondary align-self-start mb-2">Agotado</span>
     {% endif %}

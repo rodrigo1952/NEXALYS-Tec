@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formato %}
 {% block titulo %}Mis favoritos | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <h2 class="mb-3">❤️ Mis favoritos</h2>
@@ -53,9 +54,9 @@
           </h3>
 
           <p class="fw-bold fs-5 mb-1">
-            S/ {{ producto.precio }}
+            {{ producto.precio|soles }}
             {% if favorito.bajo_de_precio %}
-              <small class="text-muted fw-normal text-decoration-line-through fs-6">S/ {{ favorito.precio_guardado }}</small>
+              <small class="text-muted fw-normal text-decoration-line-through fs-6">{{ favorito.precio_guardado|soles }}</small>
             {% endif %}
           </p>
 

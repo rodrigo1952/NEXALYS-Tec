@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db import transaction
+from django.db.models import Count, ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from tiendas.decorators import tienda_requerida
@@ -105,8 +106,13 @@ def producto_editar(request, pk):
     producto = get_object_or_404(Producto, pk=pk, tienda=request.tienda)
     if request.method == "POST":
         form = ProductoForm(request.POST, request.FILES, instance=producto, tienda=request.tienda)
-        if form.is_valid():
-            form.save()
+        # La validación (incluida la versión) y el guardado van en una sola transacción,
+        # para que nadie cambie el producto entre la comprobación y el guardado.
+        with transaction.atomic():
+            guardado = form.is_valid()
+            if guardado:
+                form.save()
+        if guardado:
             messages.success(request, f"Producto \"{producto.nombre}\" actualizado.")
             return redirect("catalogo:mis_productos")
     else:
@@ -131,9 +137,17 @@ def producto_eliminar(request, pk):
         return redirect("catalogo:mis_productos")
     if request.method == "POST":
         nombre = producto.nombre
-        if producto.imagen:
-            producto.imagen.delete(save=False)
-        producto.delete()
+        try:
+            with transaction.atomic():
+                producto.delete()  # el modelo borra la imagen solo si la eliminación se confirma
+        except ProtectedError:
+            # Concurrencia: se registró un pedido de este producto mientras se confirmaba la eliminación.
+            messages.error(
+                request,
+                f"No se puede eliminar \"{nombre}\" porque se le acaba de registrar un pedido. "
+                "Puedes ocultarlo desmarcando \"publicado\".",
+            )
+            return redirect("catalogo:mis_productos")
         messages.success(request, f"Producto \"{nombre}\" eliminado.")
         return redirect("catalogo:mis_productos")
     return render(request, "catalogo/producto_confirmar_eliminar.html", {"producto": producto})

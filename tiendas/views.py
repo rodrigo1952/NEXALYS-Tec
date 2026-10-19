@@ -2,12 +2,12 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth import login
-from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from catalogo.models import Producto
+from cuentas.concurrencia import validar_y_guardar
 
 from .decorators import tienda_requerida
 from .forms import RegistroTiendaForm
@@ -39,9 +39,8 @@ def registro_tienda(request):
 
     if request.method == "POST":
         form = RegistroTiendaForm(request.POST)
-        if form.is_valid():
-            with transaction.atomic():
-                usuario = form.save()
+        usuario = validar_y_guardar(form)  # usuario y tienda se guardan juntos o no se guarda nada
+        if usuario:
             login(request, usuario)
             if _enviar_verificacion(request, usuario.tienda):
                 messages.success(

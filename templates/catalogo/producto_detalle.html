@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formato %}
 {% block titulo %}{{ producto.nombre }} | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <a href="{% url 'catalogo:catalogo' %}" class="small">&larr; Volver al catálogo</a>
@@ -13,7 +14,7 @@
   <div class="col-md-7">
     <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
     <h2 class="mt-1">{{ producto.nombre }}</h2>
-    <p class="display-6 fw-bold">S/ {{ producto.precio }}</p>
+    <p class="display-6 fw-bold">{{ producto.precio|soles }}</p>
     {% if producto.agotado %}
       <span class="badge text-bg-secondary mb-3">Agotado</span>
     {% else %}

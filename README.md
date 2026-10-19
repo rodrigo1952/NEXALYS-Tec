@@ -79,6 +79,21 @@ Los tres están integrados: un producto pertenece a una categoría y una marca, 
 15. La tienda ve **cuántos** clientes guardaron cada producto, **nunca quiénes**.
 16. Para **cambiar el correo** se pide la contraseña actual; solo los clientes pueden **eliminar su cuenta** (se borran también sus favoritos).
 
+## Control de concurrencia
+
+Situaciones en las que dos personas (o dos pestañas) actúan sobre el mismo dato a la vez, y cómo se controlan:
+
+| Escenario | Control |
+|---|---|
+| Dos pedidos a la vez por las últimas unidades | Transacción atómica + bloqueo de fila; SQLite con `transaction_mode = IMMEDIATE` |
+| Cancelar, confirmar, editar o eliminar el mismo pedido a la vez | El pedido se vuelve a leer y se bloquea dentro de la transacción |
+| Editar un producto que otra pestaña o un pedido acaba de cambiar | Bloqueo optimista con la versión del producto (campo oculto `version`) |
+| Registro simultáneo con el mismo usuario, correo, tienda o WhatsApp | Validar y guardar en una transacción; el duplicado se muestra como error del formulario |
+| Eliminar un producto justo cuando se le registra un pedido | Eliminación en transacción; se avisa en vez de mostrar error 500 |
+| Doble clic en un botón de enviar | Los botones se desactivan al enviar ("Procesando…") |
+
+Las pruebas están en `pedidos/test_concurrencia.py`, `catalogo/test_concurrencia.py` y `cuentas/test_concurrencia.py`.
+
 ## Permisos por rol
 
 | Acción | Visitante | Cliente | Tienda | Administrador |

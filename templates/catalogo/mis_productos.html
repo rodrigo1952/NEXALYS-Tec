@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formato %}
 {% block titulo %}Mis productos | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
@@ -31,7 +32,7 @@
           <td>{{ producto.nombre }}</td>
           <td>{{ producto.categoria }}</td>
           <td>{{ producto.marca }}</td>
-          <td class="text-end">S/ {{ producto.precio }}</td>
+          <td class="text-end">{{ producto.precio|soles }}</td>
           <td class="text-end">{% if producto.agotado %}<span class="badge text-bg-secondary">Agotado</span>{% else %}{{ producto.stock }}{% endif %}</td>
           <td>{% if producto.activo %}<span class="badge text-bg-success">Publicado</span>{% else %}<span class="badge text-bg-light border">Oculto</span>{% endif %}</td>
           <td class="text-end">{{ producto.num_favoritos }}</td>

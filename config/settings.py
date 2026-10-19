@@ -83,6 +83,15 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            # Control de concurrencia: SQLite no soporta SELECT ... FOR UPDATE.
+            # Con IMMEDIATE, cada transacción reserva la escritura al empezar:
+            # si dos usuarios registran un pedido a la vez, el segundo espera
+            # a que termine el primero y lee el stock ya actualizado.
+            'transaction_mode': 'IMMEDIATE',
+            # Segundos que una petición espera su turno antes de dar error.
+            'timeout': 20,
+        },
     }
 }
 

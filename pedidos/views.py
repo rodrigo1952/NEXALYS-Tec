@@ -123,7 +123,12 @@ def eliminar(request, pk):
         return redirect("pedidos:detalle", pk=pedido.pk)
     if request.method == "POST":
         numero = pedido.pk
-        eliminar_pedido(pedido)
+        try:
+            eliminar_pedido(pedido)
+        except OperacionNoPermitida as error:
+            # Concurrencia: otra pestaña confirmó o eliminó el pedido mientras se veía esta página.
+            messages.error(request, str(error))
+            return redirect("pedidos:lista")
         messages.success(request, f"Pedido #{numero} eliminado.")
         return redirect("pedidos:lista")
     return render(request, "pedidos/confirmar_eliminar.html", {"pedido": pedido})

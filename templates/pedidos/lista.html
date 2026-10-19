@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formato %}
 {% block titulo %}Pedidos | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
@@ -11,7 +12,7 @@
     <div class="h3 fw-bold mb-0">{{ resumen.num_pedidos|default:0 }}</div><div class="text-muted small">Pedidos entregados</div>
   </div></div></div>
   <div class="col-sm-6"><div class="card text-center shadow-sm"><div class="card-body">
-    <div class="h3 fw-bold mb-0">S/ {{ resumen.ventas|default:"0.00" }}</div><div class="text-muted small">Total vendido (entregados)</div>
+    <div class="h3 fw-bold mb-0">{{ resumen.ventas|default:0|soles }}</div><div class="text-muted small">Total vendido (entregados)</div>
   </div></div></div>
 </div>
 
@@ -46,7 +47,7 @@
           <td>{{ p.cliente_nombre }}</td>
           <td>{{ p.producto.nombre }}</td>
           <td class="text-end">{{ p.cantidad }}</td>
-          <td class="text-end text-nowrap">S/ {{ p.total }}</td>
+          <td class="text-end text-nowrap">{{ p.total|soles }}</td>
           <td>{% include "pedidos/_estado.html" %}</td>
           <td class="text-end text-nowrap">
             <a href="{% url 'pedidos:detalle' p.pk %}" class="btn btn-sm btn-outline-primary">Ver</a>

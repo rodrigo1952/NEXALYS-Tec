@@ -15,38 +15,55 @@
     .boton-favorito { position: absolute; top: .5rem; right: .5rem; z-index: 2; }
     .foto-vacia { height: 180px; display: flex; align-items: center; justify-content: center;
                   background: #e9ecef; color: #6c757d; font-size: 2.5rem; }
+    /* Sección actual del menú */
+    .navbar-dark .nav-link.active { color: #fff; font-weight: 600; border-bottom: 2px solid #0d6efd; }
   </style>
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
+{% with ns=request.resolver_match.namespace vista=request.resolver_match.url_name %}
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container">
     <a class="navbar-brand fw-bold" href="{% url 'inicio' %}">NEXALYS Tec</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu" aria-controls="menu" aria-expanded="false" aria-label="Abrir menú">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="menu">
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="{% url 'inicio' %}">Inicio</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'catalogo:catalogo' %}">Catálogo</a></li>
+        <li class="nav-item">
+          <a class="nav-link{% if vista == 'inicio' %} active" aria-current="page{% endif %}" href="{% url 'inicio' %}">Inicio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link{% if ns == 'catalogo' and vista == 'catalogo' or ns == 'catalogo' and vista == 'detalle' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}">Catálogo</a>
+        </li>
         {% if es_tienda %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'tiendas:panel' %}">Mi tienda</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'catalogo:mis_productos' %}">Mis productos</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'pedidos:lista' %}">Pedidos</a></li>
+          <li class="nav-item">
+            <a class="nav-link{% if ns == 'tiendas' and vista == 'panel' %} active" aria-current="page{% endif %}" href="{% url 'tiendas:panel' %}">Mi tienda</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}">Mis productos</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if ns == 'pedidos' %} active" aria-current="page{% endif %}" href="{% url 'pedidos:lista' %}">Pedidos</a>
+          </li>
         {% endif %}
         {% if es_cliente %}
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'favoritos:lista' %}">❤️ Mis favoritos
+            <a class="nav-link{% if ns == 'favoritos' %} active" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}">❤️ Mis favoritos
               {% if avisos_favoritos %}<span class="badge rounded-pill text-bg-danger" title="Favoritos con novedades">{{ avisos_favoritos }}</span>{% endif %}
             </a>
           </li>
         {% endif %}
         {% if es_admin %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'panel_admin' %}">Administración</a></li>
+          <li class="nav-item">
+            <a class="nav-link{% if vista == 'panel_admin' or ns == 'catalogo' and 'gestion' in vista %} active" aria-current="page{% endif %}" href="{% url 'panel_admin' %}">Administración</a>
+          </li>
         {% endif %}
       </ul>
       <ul class="navbar-nav align-items-lg-center">
         {% if user.is_authenticated %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'mi_cuenta' %}">👤 {{ user.username }}</a></li>
+          <li class="nav-item">
+            <a class="nav-link{% if not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta password_change' %} active" aria-current="page{% endif %}" href="{% url 'mi_cuenta' %}">👤 {{ user.username }}</a>
+          </li>
           <li class="nav-item">
             <form method="post" action="{% url 'logout' %}">
               {% csrf_token %}
@@ -54,22 +71,80 @@
             </form>
           </li>
         {% else %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Iniciar sesión</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'registro' %}">Registrarse</a></li>
+          <li class="nav-item"><a class="nav-link{% if vista == 'login' %} active{% endif %}" href="{% url 'login' %}">Iniciar sesión</a></li>
+          <li class="nav-item"><a class="nav-link{% if vista == 'registro' and not ns %} active{% endif %}" href="{% url 'registro' %}">Registrarse</a></li>
           <li class="nav-item"><a class="btn btn-primary btn-sm ms-lg-2" href="{% url 'tiendas:registro' %}">Registrar mi tienda</a></li>
         {% endif %}
       </ul>
     </div>
   </div>
 </nav>
+{% endwith %}
 
-<main class="container py-4">
+<main class="container py-4 flex-grow-1">
   {% for m in messages %}
-    <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %}">{{ m }}</div>
+    {# Los mensajes se pueden cerrar con la X; los de éxito e información se ocultan solos. #}
+    <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show" role="alert"
+         {% if m.tags == 'success' or m.tags == 'info' %}data-autocierre{% endif %}>
+      {{ m }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
   {% endfor %}
   {% block contenido %}{% endblock %}
 </main>
 
+<footer class="bg-dark text-white-50 py-4 mt-auto">
+  <div class="container d-flex flex-column flex-md-row justify-content-between gap-2 small">
+    <div>
+      <strong class="text-white">NEXALYS Tec</strong> · Productos tecnológicos de las tiendas de tu ciudad
+    </div>
+    <div class="d-flex flex-wrap gap-3">
+      <a href="{% url 'catalogo:catalogo' %}" class="link-light link-underline-opacity-0">Catálogo</a>
+      <a href="{% url 'tiendas:registro' %}" class="link-light link-underline-opacity-0">Registrar mi tienda</a>
+      <span>Proyecto IV ciclo · IESPP Urusayhua · 2026</span>
+    </div>
+  </div>
+</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Evita el doble clic: al enviar un formulario POST, sus botones se desactivan y
+  // muestran "Procesando…". Así no se registra dos veces el mismo pedido o producto.
+  document.addEventListener("submit", function (evento) {
+    var form = evento.target;
+    if ((form.getAttribute("method") || "get").toLowerCase() !== "post") return;
+    if (form.dataset.enviando === "1") { evento.preventDefault(); return; }
+    form.dataset.enviando = "1";
+    // Se espera un instante para que el navegador alcance a enviar el botón presionado.
+    setTimeout(function () {
+      form.querySelectorAll("button[type=submit], button:not([type])").forEach(function (boton) {
+        boton.dataset.textoOriginal = boton.innerHTML;
+        boton.disabled = true;
+        if (!boton.classList.contains("rounded-circle")) {
+          boton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Procesando…';
+        }
+      });
+    }, 0);
+  });
+
+  // Si se vuelve a la página con el botón "Atrás", los botones se reactivan.
+  window.addEventListener("pageshow", function (evento) {
+    if (!evento.persisted) return;
+    document.querySelectorAll("form[data-enviando]").forEach(function (form) {
+      delete form.dataset.enviando;
+      form.querySelectorAll("button[data-texto-original]").forEach(function (boton) {
+        boton.innerHTML = boton.dataset.textoOriginal;
+        boton.disabled = false;
+      });
+    });
+  });
+
+  // Los mensajes de éxito e información desaparecen solos a los 6 segundos.
+  setTimeout(function () {
+    document.querySelectorAll(".alert[data-autocierre]").forEach(function (alerta) {
+      bootstrap.Alert.getOrCreateInstance(alerta).close();
+    });
+  }, 6000);
+</script>
 </body>
 </html>

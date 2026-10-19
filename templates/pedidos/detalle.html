@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formato %}
 {% block titulo %}Pedido #{{ pedido.pk }} | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <a href="{% url 'pedidos:lista' %}" class="small">&larr; Volver a pedidos</a>
@@ -14,8 +15,8 @@
       <li class="list-group-item"><strong>Celular:</strong> {{ pedido.cliente_telefono }}</li>
       <li class="list-group-item"><strong>Producto:</strong> {{ pedido.producto.nombre }}</li>
       <li class="list-group-item"><strong>Cantidad:</strong> {{ pedido.cantidad }}</li>
-      <li class="list-group-item"><strong>Precio unitario:</strong> S/ {{ pedido.precio_unitario }}</li>
-      <li class="list-group-item fs-5"><strong>Total:</strong> S/ {{ pedido.total }}</li>
+      <li class="list-group-item"><strong>Precio unitario:</strong> {{ pedido.precio_unitario|soles }}</li>
+      <li class="list-group-item fs-5"><strong>Total:</strong> {{ pedido.total|soles }}</li>
       <li class="list-group-item"><strong>Registrado:</strong> {{ pedido.creado|date:"d/m/Y H:i" }}</li>
       <li class="list-group-item"><strong>Observación:</strong> {{ pedido.observacion|default:"—" }}</li>
     </ul>
