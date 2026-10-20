@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }} | Administración | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "administracion/_menu.html" %}
+{% comment %}
+Paso 2 de las acciones delicadas (suspender, reactivar, desactivar).
+Nada cambia hasta que se presiona el botón de este formulario.
+{% endcomment %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <a href="{{ cancelar }}" class="small">&larr; Volver</a>
+    <div class="card border-{{ color }} shadow-sm mt-2"><div class="card-body p-4">
+      <h3 class="h5 {% if color == 'warning' %}text-body{% else %}text-{{ color }}{% endif %}">{{ titulo }}</h3>
+      {% if aviso %}<p class="small text-muted mb-3">{{ aviso }}</p>{% endif %}
+      <p class="mb-1 fw-semibold">Esto es lo que va a pasar:</p>
+      <ul class="mb-3">
+        {% for texto in consecuencias %}<li>{{ texto }}</li>{% endfor %}
+      </ul>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "_campos_formulario.html" %}
+        <div class="d-flex flex-wrap gap-2">
+          <button type="submit" class="btn btn-{{ color }}">{{ boton }}</button>
+          <a href="{{ cancelar }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

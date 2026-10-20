@@ -1,6 +1,7 @@
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import (
+    AuthenticationForm,
     PasswordChangeForm,
     PasswordResetForm,
     SetPasswordForm,
@@ -11,6 +12,34 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from .estilos import EstiloBootstrapMixin
+
+
+class IngresoForm(AuthenticationForm):
+    """
+    Inicio de sesión que explica por qué una cuenta desactivada no puede entrar.
+
+    Django rechaza las cuentas desactivadas con el mismo mensaje que una contraseña
+    incorrecta. Aquí, SOLO si la contraseña es correcta, se avisa que la cuenta fue
+    desactivada y se muestra el motivo que escribió el administrador. Con una
+    contraseña incorrecta no se revela nada sobre la cuenta.
+    """
+
+    cuenta_desactivada = False
+    motivo_desactivacion = ""
+
+    def clean(self):
+        try:
+            return super().clean()
+        except ValidationError:
+            nombre = self.cleaned_data.get("username")
+            clave = self.cleaned_data.get("password")
+            usuario = User.objects.filter(username=nombre).first() if nombre else None
+            if usuario is not None and not usuario.is_active and clave and usuario.check_password(clave):
+                from administracion.acciones import motivo_desactivacion
+
+                self.cuenta_desactivada = True
+                self.motivo_desactivacion = motivo_desactivacion(usuario) or ""
+            raise
 
 
 class RegistroForm(EstiloBootstrapMixin, UserCreationForm):

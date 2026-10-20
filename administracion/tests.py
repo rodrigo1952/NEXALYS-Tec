@@ -15,6 +15,8 @@ from pedidos.models import Pedido
 from tiendas.models import Tienda
 from tiendas.tests import crear_tienda
 
+from .models import AccionAdmin
+
 CLAVE = "ClaveSegura#2026"
 
 
@@ -201,20 +203,19 @@ class UsuariosAdminTests(BaseAdministracion):
 
     def test_desactivar_y_reactivar(self):
         cliente = crear_cliente()
-        url = reverse("administracion:usuario_estado", args=[cliente.pk])
-        self.client.post(url)
+        self.client.post(reverse("administracion:usuario_desactivar", args=[cliente.pk]), {"motivo": "Comentarios ofensivos"})
         cliente.refresh_from_db()
         self.assertFalse(cliente.is_active)
         # Una cuenta desactivada no puede iniciar sesión.
         self.client.logout()
         self.assertFalse(self.client.login(username="cliente1", password=CLAVE))
         self.client.force_login(self.admin)
-        self.client.post(url)
+        self.client.post(reverse("administracion:usuario_reactivar", args=[cliente.pk]))
         cliente.refresh_from_db()
         self.assertTrue(cliente.is_active)
 
     def test_no_puede_desactivarse_a_si_mismo(self):
-        self.client.post(reverse("administracion:usuario_estado", args=[self.admin.pk]))
+        self.client.post(reverse("administracion:usuario_desactivar", args=[self.admin.pk]), {"motivo": "Prueba de seguridad"})
         self.admin.refresh_from_db()
         self.assertTrue(self.admin.is_active)
 
@@ -223,13 +224,15 @@ class UsuariosAdminTests(BaseAdministracion):
         url = reverse("administracion:usuario_eliminar", args=[cliente.pk])
         self.client.post(url, {})  # sin marcar la confirmación
         self.assertTrue(User.objects.filter(pk=cliente.pk).exists())
-        self.client.post(url, {"confirmar": "on"})
+        self.client.post(url, {"confirmar": "on"})  # sin motivo
+        self.assertTrue(User.objects.filter(pk=cliente.pk).exists())
+        self.client.post(url, {"confirmar": "on", "motivo": "Cuenta duplicada"})
         self.assertFalse(User.objects.filter(pk=cliente.pk).exists())
 
     def test_eliminar_tienda_sin_pedidos_borra_sus_productos(self):
         url = reverse("administracion:usuario_eliminar", args=[self.tienda.usuario.pk])
         self.assertContains(self.client.get(url), "1 producto")
-        self.client.post(url, {"confirmar": "on"})
+        self.client.post(url, {"confirmar": "on", "motivo": "La tienda cerró"})
         self.assertFalse(Tienda.objects.exists())
         self.assertFalse(Producto.objects.exists())
 
@@ -243,3 +246,122 @@ class UsuariosAdminTests(BaseAdministracion):
     def test_no_puede_eliminarse_a_si_mismo(self):
         self.client.post(reverse("administracion:usuario_eliminar", args=[self.admin.pk]), {"confirmar": "on"})
         self.assertTrue(User.objects.filter(pk=self.admin.pk).exists())
+
+
+class ConfirmacionEnDosPasosTests(BaseAdministracion):
+    """Suspender, reactivar, desactivar y eliminar: el botón lleva a una confirmación con motivo."""
+
+    def test_el_primer_paso_no_cambia_nada(self):
+        cliente = crear_cliente()
+        urls = [
+            reverse("administracion:tienda_suspender", args=[self.tienda.pk]),
+            reverse("administracion:usuario_desactivar", args=[cliente.pk]),
+            reverse("administracion:usuario_eliminar", args=[cliente.pk]),
+        ]
+        for url in urls:
+            with self.subTest(url):
+                respuesta = self.client.get(url)
+                self.assertEqual(respuesta.status_code, 200)
+                self.assertContains(respuesta, 'name="motivo"')
+        self.tienda.refresh_from_db()
+        cliente.refresh_from_db()
+        self.assertEqual(self.tienda.estado, Tienda.Estado.ACTIVA)
+        self.assertTrue(cliente.is_active)
+
+    def test_la_confirmacion_resume_lo_que_pasara(self):
+        respuesta = self.client.get(reverse("administracion:tienda_suspender", args=[self.tienda.pk]))
+        self.assertContains(respuesta, "1 producto publicado dejará de verse")
+
+    def test_desactivar_sin_motivo_no_se_permite(self):
+        cliente = crear_cliente()
+        respuesta = self.client.post(reverse("administracion:usuario_desactivar", args=[cliente.pk]), {"motivo": ""})
+        self.assertEqual(respuesta.status_code, 400)
+        cliente.refresh_from_db()
+        self.assertTrue(cliente.is_active)
+
+    def test_reactivar_tambien_pide_confirmacion(self):
+        self.tienda.suspender("Motivo de prueba")
+        respuesta = self.client.get(reverse("administracion:tienda_reactivar", args=[self.tienda.pk]))
+        self.assertContains(respuesta, "Motivo de la suspensión: Motivo de prueba")
+        self.tienda.refresh_from_db()
+        self.assertEqual(self.tienda.estado, Tienda.Estado.SUSPENDIDA)
+
+    def test_la_lista_de_usuarios_ya_no_desactiva_con_un_clic(self):
+        cliente = crear_cliente()
+        respuesta = self.client.get(reverse("administracion:usuarios"))
+        self.assertContains(respuesta, f'href="{reverse("administracion:usuario_desactivar", args=[cliente.pk])}"')
+
+
+class CuentaDeTiendaTests(BaseAdministracion):
+    """Etapa 3: desactivar la cuenta de una tienda también la suspende."""
+
+    def test_desactivar_cuenta_suspende_la_tienda_y_oculta_productos(self):
+        self.client.post(
+            reverse("administracion:usuario_desactivar", args=[self.tienda.usuario.pk]),
+            {"motivo": "Precios falsos reiterados"},
+        )
+        self.tienda.refresh_from_db()
+        self.assertFalse(self.tienda.usuario.is_active)
+        self.assertEqual(self.tienda.estado, Tienda.Estado.SUSPENDIDA)
+        self.assertEqual(self.tienda.motivo_suspension, "Precios falsos reiterados")
+        self.assertFalse(Producto.objects.visibles().exists())
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse("tiendas:perfil", args=[self.tienda.pk])).status_code, 404)
+
+    def test_reactivar_cuenta_reactiva_la_tienda(self):
+        self.tienda.verificada_en = self.tienda.creada_en
+        self.tienda.save()
+        usuario = self.tienda.usuario
+        self.client.post(reverse("administracion:usuario_desactivar", args=[usuario.pk]), {"motivo": "Revisión de datos"})
+        self.client.post(reverse("administracion:usuario_reactivar", args=[usuario.pk]))
+        self.tienda.refresh_from_db()
+        self.assertTrue(self.tienda.usuario.is_active)
+        self.assertEqual(self.tienda.estado, Tienda.Estado.ACTIVA)
+        self.assertTrue(Producto.objects.visibles().exists())
+
+    def test_reactivar_tienda_reactiva_la_cuenta(self):
+        self.tienda.verificada_en = self.tienda.creada_en
+        self.tienda.save()
+        self.client.post(reverse("administracion:usuario_desactivar", args=[self.tienda.usuario.pk]), {"motivo": "Revisión de datos"})
+        self.client.post(reverse("administracion:tienda_reactivar", args=[self.tienda.pk]))
+        self.tienda.refresh_from_db()
+        self.assertTrue(self.tienda.usuario.is_active)
+        self.assertEqual(self.tienda.estado, Tienda.Estado.ACTIVA)
+
+
+class HistorialTests(BaseAdministracion):
+    def test_cada_accion_queda_registrada_con_su_motivo(self):
+        cliente = crear_cliente()
+        self.client.post(reverse("administracion:tienda_suspender", args=[self.tienda.pk]), {"motivo": "Precios falsos"})
+        self.client.post(reverse("administracion:usuario_desactivar", args=[cliente.pk]), {"motivo": "Spam en reseñas"})
+        self.client.post(reverse("administracion:usuario_eliminar", args=[cliente.pk]), {"confirmar": "on", "motivo": "Cuenta falsa"})
+        tipos = list(AccionAdmin.objects.order_by("id").values_list("tipo", flat=True))
+        self.assertEqual(tipos, ["suspender_tienda", "desactivar_cuenta", "eliminar_cuenta"])
+
+        respuesta = self.client.get(reverse("administracion:historial"))
+        self.assertContains(respuesta, "Cuenta falsa")  # el motivo de la cuenta eliminada se conserva
+        self.assertContains(respuesta, "cliente1")
+        self.assertContains(respuesta, "admin")
+
+    def test_filtrar_por_tipo(self):
+        self.client.post(reverse("administracion:tienda_suspender", args=[self.tienda.pk]), {"motivo": "Precios falsos"})
+        respuesta = self.client.get(reverse("administracion:historial"), {"tipo": "eliminar_cuenta"})
+        self.assertNotContains(respuesta, "Precios falsos")
+
+    def test_solo_el_administrador_ve_el_historial(self):
+        self.client.force_login(crear_cliente())
+        self.assertEqual(self.client.get(reverse("administracion:historial")).status_code, 403)
+
+
+class IngresoCuentaDesactivadaTests(BaseAdministracion):
+    def test_ve_el_motivo_solo_con_la_clave_correcta(self):
+        cliente = crear_cliente()
+        self.client.post(reverse("administracion:usuario_desactivar", args=[cliente.pk]), {"motivo": "Uso indebido de la página"})
+        self.client.logout()
+        respuesta = self.client.post(reverse("login"), {"username": "cliente1", "password": CLAVE})
+        self.assertContains(respuesta, "Tu cuenta fue desactivada")
+        self.assertContains(respuesta, "Uso indebido de la página")
+
+        respuesta = self.client.post(reverse("login"), {"username": "cliente1", "password": "otra-clave"})
+        self.assertNotContains(respuesta, "desactivada")
+        self.assertContains(respuesta, "Usuario o contraseña incorrectos")

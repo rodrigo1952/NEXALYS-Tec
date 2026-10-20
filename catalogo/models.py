@@ -1,13 +1,19 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models, transaction
-from django.db.models import BooleanField, Case, DecimalField, F, IntegerField, Q, Value, When
+from django.db.models import (
+    BooleanField, Case, Count, DecimalField, ExpressionWrapper, F, FloatField, IntegerField, OuterRef, Q, Subquery,
+    Value, When,
+)
+from django.db.models.functions import Coalesce
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils import timezone
 
+from .archivos import ruta_foto_producto, ruta_imagen_producto
 from .busqueda import normalizar
 from .imagenes import LADO_MAXIMO_PRODUCTO, optimizar_campo
 
@@ -114,6 +120,47 @@ class ProductoQuerySet(models.QuerySet):
             resultado = resultado.filter(texto_busqueda__contains=palabra)
         return resultado
 
+    # --- Orden de las secciones de Inicio ------------------------------------------
+    def destacados_inicio(self, dias=30):
+        """
+        Destacados ordenados por popularidad de los últimos `dias` días:
+            puntaje = vistas + favoritos × 5
+        (guardar un producto muestra más interés que solo mirarlo). Si empatan,
+        primero el que se destacó antes. Cada tienda destaca como máximo 3.
+        """
+        from favoritos.models import Favorito  # aquí para no crear un import circular
+
+        desde = timezone.now() - timedelta(days=dias)
+        vistas = (
+            VistaProducto.objects.filter(producto=OuterRef("pk"), fecha__gte=desde.date())
+            .order_by().values("producto").annotate(n=Count("id")).values("n")
+        )
+        favoritos = (
+            Favorito.objects.filter(producto=OuterRef("pk"), creado__gte=desde)
+            .order_by().values("producto").annotate(n=Count("id")).values("n")
+        )
+        return (
+            self.filter(destacado=True)
+            .annotate(
+                vistas_recientes=Coalesce(Subquery(vistas, output_field=IntegerField()), 0),
+                favoritos_recientes=Coalesce(Subquery(favoritos, output_field=IntegerField()), 0),
+            )
+            .annotate(puntaje=F("vistas_recientes") + F("favoritos_recientes") * 5)
+            .order_by("-puntaje", F("destacado_desde").asc(nulls_last=True), "-pk")
+        )
+
+    def ofertas_inicio(self):
+        """Ofertas vigentes: primero el mayor descuento (%)."""
+        return (
+            self.en_oferta()
+            .annotate(descuento=ExpressionWrapper(
+                # 100.0 (con decimales) para que SQLite no redondee la división a enteros.
+                (F("precio") - F("precio_oferta")) * Value(100.0) / F("precio"),
+                output_field=FloatField(),
+            ))
+            .order_by("-descuento", "-actualizado")
+        )
+
     def con_relevancia(self, texto):
         """
         Agrega dos datos a cada producto encontrado con buscar():
@@ -205,7 +252,7 @@ class Producto(models.Model):
     stock = models.PositiveIntegerField("stock", default=0)
     imagen = models.ImageField(
         "imagen",
-        upload_to="productos/",
+        upload_to=ruta_imagen_producto,
         blank=True,
         validators=[
             FileExtensionValidator(allowed_extensions=EXTENSIONES_IMAGEN),
@@ -229,6 +276,7 @@ class Producto(models.Model):
         help_text="El administrador lo ocultó del catálogo; la tienda no puede volver a publicarlo.",
     )
     motivo_ocultamiento = models.TextField("motivo del ocultamiento", blank=True)
+    destacado_desde = models.DateTimeField("destacado desde", null=True, blank=True, editable=False)
     texto_busqueda = models.TextField("texto de búsqueda", blank=True, editable=False)
     # Partes separadas del texto de búsqueda, para ordenar por relevancia.
     nombre_busqueda = models.TextField("nombre para buscar", blank=True, editable=False)
@@ -310,16 +358,29 @@ class Producto(models.Model):
         if kwargs.get("update_fields") is None:
             for campo, valor in self.campos_busqueda().items():
                 setattr(self, campo, valor)
+            # Fecha en que se marcó como destacado (desempata el orden en Inicio).
+            if self.destacado and self.destacado_desde is None:
+                self.destacado_desde = timezone.now()
+            elif not self.destacado:
+                self.destacado_desde = None
             optimizar_campo(self.imagen, LADO_MAXIMO_PRODUCTO)
         # Regla: al cambiar o quitar la imagen, se borra el archivo anterior
         # para no acumular imágenes que ya nadie usa.
-        anterior = None
+        anterior = nombre_anterior = None
         if self.pk:
-            anterior = Producto.objects.filter(pk=self.pk).values_list("imagen", flat=True).first()
+            fila = Producto.objects.filter(pk=self.pk).values_list("imagen", "nombre").first()
+            if fila:
+                anterior, nombre_anterior = fila
         super().save(*args, **kwargs)
         if anterior and anterior != (self.imagen.name or ""):
             almacenamiento = self.imagen.storage
             transaction.on_commit(lambda: almacenamiento.delete(anterior))
+        # Si cambió el nombre, su imagen y sus fotos se renombran (cuando el guardado terminó bien).
+        if nombre_anterior is not None and nombre_anterior != self.nombre:
+            from .reubicar import reubicar_producto
+
+            producto_id = self.pk
+            transaction.on_commit(lambda: reubicar_producto(producto_id))
 
     def delete(self, *args, **kwargs):
         # Al eliminar el producto, también se borra su imagen
@@ -343,7 +404,7 @@ class FotoProducto(models.Model):
     )
     imagen = models.ImageField(
         "imagen",
-        upload_to="productos/fotos/",
+        upload_to=ruta_foto_producto,
         validators=[
             FileExtensionValidator(allowed_extensions=EXTENSIONES_IMAGEN),
             validar_tamano_imagen,
@@ -368,3 +429,44 @@ class FotoProducto(models.Model):
 def borrar_archivo_de_foto(sender, instance, **kwargs):
     # La señal también se ejecuta cuando se elimina el producto completo (CASCADE).
     borrar_archivo_al_confirmar(instance.imagen)
+
+
+class VistaProducto(models.Model):
+    """
+    Una visita al detalle de un producto, para ordenar los destacados por popularidad.
+
+    Regla: cuenta 1 por visitante al día (aunque recargue la página 20 veces) y no
+    cuentan las visitas de la propia tienda ni del administrador. El número no se
+    muestra a nadie: solo se usa para ordenar.
+    """
+
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="vistas")
+    visitante = models.CharField("visitante", max_length=64)  # "u<id>" si inició sesión; si no, su sesión
+    fecha = models.DateField("fecha", default=timezone.localdate)
+
+    class Meta:
+        verbose_name = "vista de producto"
+        verbose_name_plural = "vistas de productos"
+        constraints = [
+            models.UniqueConstraint(fields=["producto", "visitante", "fecha"], name="una_vista_por_visitante_al_dia"),
+        ]
+        indexes = [models.Index(fields=["producto", "fecha"], name="vista_producto_fecha")]
+
+    @classmethod
+    def registrar(cls, request, producto):
+        usuario = request.user
+        if usuario.is_authenticated:
+            if usuario.is_superuser or usuario.groups.filter(name="Administrador").exists():
+                return
+            if producto.tienda.usuario_id == usuario.pk:
+                return
+            visitante = f"u{usuario.pk}"
+        else:
+            if not request.session.session_key:
+                # Crea la sesión del visitante anónimo; al marcarla como modificada,
+                # el navegador recibe su cookie y las siguientes visitas se reconocen.
+                request.session["visitante"] = True
+                request.session.save()
+            visitante = f"s{request.session.session_key}"
+        # get_or_create tolera dos visitas simultáneas del mismo visitante (no duplica).
+        cls.objects.get_or_create(producto=producto, visitante=visitante, fecha=timezone.localdate())

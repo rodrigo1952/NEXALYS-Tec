@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from tiendas.decorators import tienda_requerida
 
 from .forms import BusquedaForm, ProductoForm
-from .models import Producto
+from .models import Producto, VistaProducto
 
 ORDENES = {
     "recientes": ("-creado",),
@@ -67,6 +67,8 @@ def producto_detalle(request, pk):
         .exclude(pk=producto.pk)
         .select_related("tienda")[:4]
     )
+    # Se cuenta la visita para ordenar los destacados (1 por visitante al día).
+    VistaProducto.registrar(request, producto)
     # Galería: la foto principal primero y luego las adicionales.
     fotos = [producto.imagen] if producto.imagen else []
     fotos += [foto.imagen for foto in producto.fotos.all()]
@@ -90,6 +92,7 @@ def mis_productos(request):
         .select_related("categoria", "marca")
         # Privacidad: la tienda solo ve cuántos clientes guardaron el producto, no quiénes.
         .annotate(num_favoritos=Count("favoritos"))
+        .order_by("-creado")  # orden fijo: así la paginación no repite ni salta productos
     )
     texto = request.GET.get("q", "").strip()
     if texto:

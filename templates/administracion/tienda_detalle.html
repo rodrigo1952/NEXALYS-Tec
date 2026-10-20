@@ -42,23 +42,17 @@
       <div class="card border-danger shadow-sm"><div class="card-body">
         <h4 class="h6 text-danger">Tienda suspendida</h4>
         <p class="small mb-2"><strong>Motivo:</strong> {{ tienda.motivo_suspension|default:"(sin motivo registrado)"|linebreaksbr }}</p>
-        <form method="post" action="{% url 'administracion:tienda_reactivar' tienda.pk %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-success">Reactivar tienda</button>
-        </form>
-        <p class="small text-muted mt-2 mb-0">Si la tienda no verificó su correo, quedará pendiente hasta que lo haga.</p>
+        <a href="{% url 'administracion:tienda_reactivar' tienda.pk %}" class="btn btn-success">Reactivar tienda…</a>
+        <p class="small text-muted mt-2 mb-0">Te pediremos confirmar.{% if not tienda.usuario.is_active %} Su cuenta también se reactivará.{% endif %}</p>
       </div></div>
     {% else %}
       <div class="card shadow-sm"><div class="card-body">
         <h4 class="h6">Suspender tienda</h4>
-        <p class="small text-muted">Sus productos dejan de verse en el catálogo y la tienda no puede gestionarlos hasta que la reactives.</p>
-        <form method="post" action="{% url 'administracion:tienda_suspender' tienda.pk %}" novalidate>
-          {% csrf_token %}
-          {% include "_campos_formulario.html" %}
-          <button type="submit" class="btn btn-danger">Suspender tienda</button>
-        </form>
+        <p class="small text-muted">Sus productos dejan de verse en el catálogo hasta que la reactives. En el siguiente paso escribirás el motivo y confirmarás.</p>
+        <a href="{% url 'administracion:tienda_suspender' tienda.pk %}" class="btn btn-danger">Suspender tienda…</a>
       </div></div>
     {% endif %}
+    <p class="small mt-3 mb-0"><a href="{% url 'administracion:historial' %}?q={{ tienda.nombre|urlencode }}">Ver su historial de acciones</a></p>
   </div>
 </div>
 {% endblock %}

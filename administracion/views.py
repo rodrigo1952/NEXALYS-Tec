@@ -12,6 +12,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, ProtectedError, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
@@ -21,7 +22,9 @@ from cuentas.views import rol_requerido
 from pedidos.models import Pedido
 from tiendas.models import Tienda
 
-from .forms import EliminarUsuarioForm, MotivoForm
+from . import acciones
+from .forms import EliminarUsuarioForm, FiltroHistorialForm, MotivoForm, MotivoOpcionalForm
+from .models import AccionAdmin
 
 solo_admin = rol_requerido("Administrador")
 
@@ -36,6 +39,26 @@ def _entero(valor):
         return int(valor)
     except (TypeError, ValueError):
         return None
+
+
+def _datos(request):
+    """
+    Datos del formulario solo si se envió (POST). Ojo: "request.POST or None" falla cuando
+    el POST llega vacío (p. ej. reactivar sin escribir motivo): un POST vacío es "falso"
+    y el formulario se trataría como no enviado.
+    """
+    return request.POST if request.method == "POST" else None
+
+
+def _confirmar(request, *, titulo, color, consecuencias, form, boton, cancelar, aviso=""):
+    """
+    Paso 2 de toda acción delicada: página que resume lo que va a pasar y pide el motivo.
+    El paso 1 es el botón (un enlace) que trae hasta aquí; la acción se hace al enviar este formulario.
+    """
+    return render(request, "administracion/confirmar.html", {
+        "titulo": titulo, "color": color, "consecuencias": consecuencias, "form": form,
+        "boton": boton, "cancelar": cancelar, "aviso": aviso,
+    }, status=400 if request.method == "POST" else 200)
 
 
 def _volver(request, por_defecto):
@@ -79,7 +102,7 @@ def tiendas(request):
     lista = Tienda.objects.select_related("usuario").annotate(
         num_productos=Count("productos", distinct=True),
         num_pedidos=Count("pedidos", distinct=True),
-    )
+    ).order_by("nombre")
     estado = request.GET.get("estado", "")
     texto = request.GET.get("q", "").strip()
     if estado in Tienda.Estado.values:
@@ -101,7 +124,6 @@ def tienda_detalle(request, pk):
     productos = tienda.productos.all()
     return render(request, "administracion/tienda_detalle.html", {
         "tienda": tienda,
-        "form": MotivoForm(),
         "total_productos": productos.count(),
         "publicados": productos.filter(activo=True, oculto_por_admin=False).count(),
         "ocultos_admin": productos.filter(oculto_por_admin=True).count(),
@@ -109,36 +131,70 @@ def tienda_detalle(request, pk):
     })
 
 
-@require_POST
 @solo_admin
 def tienda_suspender(request, pk):
-    tienda = get_object_or_404(Tienda, pk=pk)
-    form = MotivoForm(request.POST)
-    if form.is_valid():
-        tienda.suspender(form.cleaned_data["motivo"])
-        messages.warning(request, f"La tienda \"{tienda}\" fue suspendida; sus productos ya no se ven en el catálogo.")
-        return redirect("administracion:tienda_detalle", pk=tienda.pk)
-    # Se vuelve a mostrar el detalle con el error del motivo.
-    productos = tienda.productos.all()
-    return render(request, "administracion/tienda_detalle.html", {
-        "tienda": tienda, "form": form,
-        "total_productos": productos.count(),
-        "publicados": productos.filter(activo=True, oculto_por_admin=False).count(),
-        "ocultos_admin": productos.filter(oculto_por_admin=True).count(),
-        "total_pedidos": tienda.pedidos.count(),
-    }, status=400)
+    tienda = get_object_or_404(Tienda.objects.select_related("usuario"), pk=pk)
+    detalle = reverse("administracion:tienda_detalle", args=[tienda.pk])
+    if tienda.estado == Tienda.Estado.SUSPENDIDA:
+        messages.info(request, f"La tienda \"{tienda}\" ya está suspendida.")
+        return redirect(detalle)
+    form = MotivoForm(_datos(request))
+    if request.method == "POST" and form.is_valid():
+        if acciones.suspender_tienda(request.user, tienda, form.cleaned_data["motivo"]):
+            messages.warning(request, f"La tienda \"{tienda}\" fue suspendida; sus productos ya no se ven en el catálogo.")
+        else:
+            messages.info(request, f"La tienda \"{tienda}\" ya había sido suspendida.")
+        return redirect(detalle)
+    publicados = tienda.productos.filter(activo=True, oculto_por_admin=False).count()
+    return _confirmar(
+        request,
+        titulo=f"Suspender la tienda «{tienda.nombre}»",
+        color="danger",
+        consecuencias=[
+            f"{publicados} producto{'s' if publicados != 1 else ''} publicado{'s' if publicados != 1 else ''} dejará{'n' if publicados != 1 else ''} de verse en el catálogo, en Inicio y en los favoritos de los clientes.",
+            "Su perfil público dejará de mostrarse.",
+            "La tienda podrá iniciar sesión y verá el motivo en su panel.",
+        ],
+        form=form,
+        boton="Suspender tienda",
+        cancelar=detalle,
+    )
 
 
-@require_POST
 @solo_admin
 def tienda_reactivar(request, pk):
-    tienda = get_object_or_404(Tienda, pk=pk)
-    tienda.reactivar()
-    if tienda.estado == Tienda.Estado.ACTIVA:
-        messages.success(request, f"La tienda \"{tienda}\" fue reactivada.")
-    else:
-        messages.info(request, f"\"{tienda}\" quedó pendiente: aún debe verificar su correo para activarse.")
-    return redirect("administracion:tienda_detalle", pk=tienda.pk)
+    tienda = get_object_or_404(Tienda.objects.select_related("usuario"), pk=pk)
+    detalle = reverse("administracion:tienda_detalle", args=[tienda.pk])
+    if tienda.estado != Tienda.Estado.SUSPENDIDA:
+        messages.info(request, f"La tienda \"{tienda}\" no está suspendida.")
+        return redirect(detalle)
+    form = MotivoOpcionalForm(_datos(request))
+    if request.method == "POST" and form.is_valid():
+        tienda = acciones.reactivar_tienda(request.user, tienda, form.cleaned_data["motivo"])
+        if tienda is None:
+            messages.info(request, "La tienda ya había sido reactivada.")
+        elif tienda.estado == Tienda.Estado.ACTIVA:
+            messages.success(request, f"La tienda \"{tienda}\" fue reactivada.")
+        else:
+            messages.info(request, f"\"{tienda}\" quedó pendiente: aún debe verificar su correo para activarse.")
+        return redirect(detalle)
+    consecuencias = [
+        "Sus productos publicados vuelven a verse en el catálogo." if tienda.verificada_en
+        else "Como aún no verificó su correo, quedará PENDIENTE hasta que lo haga.",
+        "Se borra el motivo de la suspensión de su panel.",
+    ]
+    if not tienda.usuario.is_active:
+        consecuencias.append(f"Su cuenta «{tienda.usuario.username}» también se reactiva y podrá iniciar sesión.")
+    return _confirmar(
+        request,
+        titulo=f"Reactivar la tienda «{tienda.nombre}»",
+        color="success",
+        consecuencias=consecuencias,
+        form=form,
+        boton="Reactivar tienda",
+        cancelar=detalle,
+        aviso=f"Motivo de la suspensión: {tienda.motivo_suspension or '(sin motivo registrado)'}",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -182,11 +238,15 @@ def productos(request):
 @solo_admin
 def producto_ocultar(request, pk):
     producto = get_object_or_404(Producto.objects.select_related("tienda"), pk=pk)
-    form = MotivoForm(request.POST or None)
+    form = MotivoForm(_datos(request))
     if request.method == "POST" and form.is_valid():
         producto.oculto_por_admin = True
         producto.motivo_ocultamiento = form.cleaned_data["motivo"].strip()
         producto.save(update_fields=["oculto_por_admin", "motivo_ocultamiento", "actualizado"])
+        acciones.registrar(
+            request.user, AccionAdmin.Tipo.OCULTAR_PRODUCTO,
+            f"Producto «{producto.nombre}» de {producto.tienda}", producto.motivo_ocultamiento, producto.tienda.usuario,
+        )
         messages.warning(request, f"\"{producto}\" ya no se ve en el catálogo. La tienda verá el motivo.")
         return redirect("administracion:productos")
     return render(request, "administracion/producto_ocultar.html", {"producto": producto, "form": form})
@@ -195,10 +255,14 @@ def producto_ocultar(request, pk):
 @require_POST
 @solo_admin
 def producto_mostrar(request, pk):
-    producto = get_object_or_404(Producto, pk=pk)
+    producto = get_object_or_404(Producto.objects.select_related("tienda"), pk=pk)
     producto.oculto_por_admin = False
     producto.motivo_ocultamiento = ""
     producto.save(update_fields=["oculto_por_admin", "motivo_ocultamiento", "actualizado"])
+    acciones.registrar(
+        request.user, AccionAdmin.Tipo.MOSTRAR_PRODUCTO,
+        f"Producto «{producto.nombre}» de {producto.tienda}", usuario=producto.tienda.usuario,
+    )
     messages.success(request, f"\"{producto}\" vuelve a mostrarse (si la tienda lo tiene publicado).")
     return _volver(request, "administracion:productos")
 
@@ -286,25 +350,95 @@ def usuarios(request):
     })
 
 
-@require_POST
-@solo_admin
-def usuario_estado(request, pk):
-    """Activa o desactiva una cuenta. Una cuenta desactivada no puede iniciar sesión."""
-    usuario = get_object_or_404(User, pk=pk)
+def _usuario_modificable(request, pk):
+    """Devuelve (usuario, None) o (None, respuesta de error) según las reglas de protección."""
+    usuario = get_object_or_404(User.objects.select_related("tienda"), pk=pk)
     motivo = _motivo_no_se_puede_modificar(request.user, usuario)
     if motivo:
         messages.error(request, motivo)
-        return _volver(request, "administracion:usuarios")
-    usuario.is_active = not usuario.is_active
-    usuario.save(update_fields=["is_active"])
+        return None, redirect("administracion:usuarios")
+    return usuario, None
+
+
+@solo_admin
+def usuario_desactivar(request, pk):
+    """Desactiva una cuenta: no puede iniciar sesión. Si es una tienda, también se suspende."""
+    usuario, error = _usuario_modificable(request, pk)
+    if error:
+        return error
+    lista = reverse("administracion:usuarios")
+    if not usuario.is_active:
+        messages.info(request, f"La cuenta \"{usuario}\" ya está desactivada.")
+        return redirect(lista)
+    tienda = getattr(usuario, "tienda", None)
+    form = MotivoForm(_datos(request))
+    if request.method == "POST" and form.is_valid():
+        if acciones.desactivar_cuenta(request.user, usuario, form.cleaned_data["motivo"]):
+            texto = f"La cuenta \"{usuario}\" fue desactivada: ya no puede iniciar sesión."
+            if tienda is not None:
+                texto += f" La tienda \"{tienda}\" también fue suspendida y sus productos ya no se ven."
+            messages.warning(request, texto)
+        else:
+            messages.info(request, f"La cuenta \"{usuario}\" ya había sido desactivada.")
+        return redirect(lista)
+    consecuencias = [
+        "No podrá iniciar sesión. Al intentarlo verá el motivo que escribas.",
+        "Sus datos se conservan y la puedes reactivar cuando quieras.",
+    ]
+    if tienda is not None:
+        publicados = tienda.productos.filter(activo=True, oculto_por_admin=False).count()
+        if tienda.estado == Tienda.Estado.SUSPENDIDA:
+            consecuencias.append(f"Su tienda «{tienda.nombre}» ya está suspendida y seguirá así.")
+        else:
+            consecuencias.append(
+                f"Su tienda «{tienda.nombre}» también se suspende: {publicados} producto{'s' if publicados != 1 else ''} "
+                f"dejará{'n' if publicados != 1 else ''} de verse y su perfil público se oculta."
+            )
+    return _confirmar(
+        request,
+        titulo=f"Desactivar la cuenta «{usuario.username}»",
+        color="warning",
+        consecuencias=consecuencias,
+        form=form,
+        boton="Desactivar cuenta",
+        cancelar=lista,
+    )
+
+
+@solo_admin
+def usuario_reactivar(request, pk):
+    usuario, error = _usuario_modificable(request, pk)
+    if error:
+        return error
+    lista = reverse("administracion:usuarios")
     if usuario.is_active:
-        messages.success(request, f"La cuenta \"{usuario}\" fue reactivada.")
-    else:
-        texto = f"La cuenta \"{usuario}\" fue desactivada: ya no puede iniciar sesión."
-        if getattr(usuario, "tienda", None) is not None:
-            texto += " Sus productos siguen visibles; si quieres ocultarlos, suspende también la tienda."
-        messages.warning(request, texto)
-    return _volver(request, "administracion:usuarios")
+        messages.info(request, f"La cuenta \"{usuario}\" ya está activa.")
+        return redirect(lista)
+    tienda = getattr(usuario, "tienda", None)
+    form = MotivoOpcionalForm(_datos(request))
+    if request.method == "POST" and form.is_valid():
+        if acciones.reactivar_cuenta(request.user, usuario, form.cleaned_data["motivo"]):
+            messages.success(request, f"La cuenta \"{usuario}\" fue reactivada.")
+        else:
+            messages.info(request, f"La cuenta \"{usuario}\" ya había sido reactivada.")
+        return redirect(lista)
+    consecuencias = ["Podrá volver a iniciar sesión."]
+    if tienda is not None and tienda.estado == Tienda.Estado.SUSPENDIDA:
+        consecuencias.append(
+            f"Su tienda «{tienda.nombre}» también se reactiva"
+            + (" y sus productos vuelven a verse." if tienda.verificada_en else " (quedará pendiente hasta que verifique su correo).")
+        )
+    motivo_anterior = acciones.motivo_desactivacion(usuario)
+    return _confirmar(
+        request,
+        titulo=f"Reactivar la cuenta «{usuario.username}»",
+        color="success",
+        consecuencias=consecuencias,
+        form=form,
+        boton="Reactivar cuenta",
+        cancelar=lista,
+        aviso=f"Motivo de la desactivación: {motivo_anterior}" if motivo_anterior else "",
+    )
 
 
 @solo_admin
@@ -322,11 +456,14 @@ def usuario_eliminar(request, pk):
         messages.error(request, motivo)
         return redirect("administracion:usuarios")
 
-    form = EliminarUsuarioForm(request.POST or None)
+    form = EliminarUsuarioForm(_datos(request))
     if request.method == "POST" and form.is_valid():
         nombre = str(usuario)
+        objetivo = f"{acciones.texto_cuenta(usuario)} ({rol_de(usuario)}{', tienda «' + tienda.nombre + '»' if tienda else ''})"
         try:
             with transaction.atomic():
+                # Se registra primero: si algo falla, la transacción deshace también el registro.
+                acciones.registrar(request.user, AccionAdmin.Tipo.ELIMINAR_CUENTA, objetivo, form.cleaned_data["motivo"])
                 if tienda is not None:
                     for producto in tienda.productos.all():
                         producto.delete()  # así también se borran sus imágenes
@@ -345,4 +482,28 @@ def usuario_eliminar(request, pk):
         "num_productos": tienda.productos.count() if tienda else 0,
         "num_favoritos": usuario.favoritos.count(),
         "form": form,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Historial de acciones del administrador
+# ---------------------------------------------------------------------------
+
+@solo_admin
+def historial(request):
+    form = FiltroHistorialForm(request.GET or None)
+    lista = AccionAdmin.objects.all()
+    tipo = texto = ""
+    if form.is_valid():
+        tipo = form.cleaned_data["tipo"]
+        texto = form.cleaned_data["q"].strip()
+        if tipo:
+            lista = lista.filter(tipo=tipo)
+        if texto:
+            lista = lista.filter(
+                Q(objetivo__icontains=texto) | Q(motivo__icontains=texto) | Q(admin_nombre__icontains=texto)
+            )
+    pagina = Paginator(lista, 25).get_page(request.GET.get("page"))
+    return render(request, "administracion/historial.html", {
+        "pagina": pagina, "tipo": tipo, "q": texto, "tipos": AccionAdmin.Tipo.choices,
     })

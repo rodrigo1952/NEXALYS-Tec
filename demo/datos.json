@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "exportado": "2026-10-20T00:47:00+00:00",
+  "tiendas": [
+    {
+      "usuario": "Prueba_Tienda",
+      "nombres": "",
+      "apellidos": "",
+      "nombre": "Nexalys_prueba_tienda",
+      "direccion": "Av. Francisco Bolognesi N°438",
+      "whatsapp": "959203883",
+      "descripcion": "Esta es la primera tienda virtual, creada para las pruebas de desarrollo de nuestra pagina web del grupo NEXALYS Tec.",
+      "estado": "activa",
+      "motivo_suspension": "",
+      "verificada": true,
+      "logo": "tiendas/1-nexalys_prueba_tienda/logo/logo.webp",
+      "horarios": [
+        {
+          "dia": 0,
+          "abre": "08:00:00",
+          "cierra": "21:00:00",
+          "descanso_inicio": "13:00:00",
+          "descanso_fin": "15:00:00"
+        },
+        {
+          "dia": 1,
+          "abre": "08:00:00",
+          "cierra": "21:00:00",
+          "descanso_inicio": "13:30:00",
+          "descanso_fin": "15:00:00"
+        },
+        {
+          "dia": 2,
+          "abre": "08:00:00",
+          "cierra": "21:00:00",
+          "descanso_inicio": null,
+          "descanso_fin": null
+        },
+        {
+          "dia": 3,
+          "abre": null,
+          "cierra": null,
+          "descanso_inicio": null,
+          "descanso_fin": null
+        },
+        {
+          "dia": 4,
+          "abre": null,
+          "cierra": null,
+          "descanso_inicio": null,
+          "descanso_fin": null
+        },
+        {
+          "dia": 5,
+          "abre": null,
+          "cierra": null,
+          "descanso_inicio": null,
+          "descanso_fin": null
+        },
+        {
+          "dia": 6,
+          "abre": null,
+          "cierra": null,
+          "descanso_inicio": null,
+          "descanso_fin": null
+        }
+      ]
+    }
+  ],
+  "productos": [
+    {
+      "tienda": "Nexalys_prueba_tienda",
+      "nombre": "Laptop HP OmniBook 3 14-hu0052la, Intel Core 5, 8 GB RAM, 512 GB SSD, 14\" Táctil 2K, Windows 11 Home",
+      "categoria": "Laptops",
+      "marca": "HP",
+      "descripcion": "Vendido y despachado por\tOechsle\r\nResolución de pantalla\t1920 x 1200\r\nTamaño de la pantalla cómputo\t14\"\r\nIncluye Inteligencia Artificial\tNo\r\nRango pantalla cómputo\t13 - 14 pulgadas\r\nLector de tarjetas\tNo\r\nEntrada de audio\tDos altavoces\r\nProcesador de cómputo\tIntel® Core™ 5\r\nTeclado iluminado\tNo\r\nLector de huellas\tNo\r\nCámara web\tSí\r\nConectividad\tTarjeta inalámbrica Realtek Wi-Fi 6 (2x2) y Bluetooth® 5.4\r\nConexión Bluetooth\tSí\r\nConexión Wi Fi\tSí\r\nCapacidad del disco duro\t512 SSD\r\nNúmero de entradas HDMI\t1\r\nNúmero de entradas USB\t3\r\nGarantía\t1 año de garantía limitada de hardware con soporte técnico telefónico gratuito. 90 días de soporte técnico limitado para software (a partir de la fecha de compra).\r\nMemoria interna\t512GB\r\nModelo\tD70RTLA\r\nVelocidad del procesador\tHasta 5.0 GHz con Tecnología Intel® Turbo Boost\r\nTarjeta de video\tIntegrada\r\nCapacidad tarjeta de video\tIntegrada\r\nTipo de pantalla\t35.6 cm (14\") diagonal, 2K (1920 x 1200), touch, IPS, micro-edge, anti-glare, 300 nits, low power, 62.5% sRGB\r\nPantalla touch\tSí\r\nBatería\tPolímero de iones de litio de 3 celdas y 60 Wh\r\nDuración de batería\t9,5 horas aproximadamente\r\nMedidas del empaque\t31,45x22,6x1,48cm\r\nAlto\t31,45 cm\r\nAncho\t22,6 cm\r\nPeso\t1,4 kg\r\nIncluye\tLaptop + cargador",
+      "precio": "2749.00",
+      "precio_oferta": null,
+      "oferta_hasta": null,
+      "stock": 3,
+      "activo": true,
+      "destacado": false,
+      "oculto_por_admin": false,
+      "motivo_ocultamiento": "",
+      "imagen": "tiendas/1-nexalys_prueba_tienda/productos/laptop-hp-omnibook-3-14-hu0052la-intel-core-5-8-gb-ram-512-g.webp",
+      "fotos": [
+        {
+          "imagen": "tiendas/1-nexalys_prueba_tienda/productos/fotos/laptop-hp-omnibook-3-14-hu0052la-intel-core-5-8-gb-ram-512-g-foto-1.webp",
+          "orden": 1
+        },
+        {
+          "imagen": "tiendas/1-nexalys_prueba_tienda/productos/fotos/laptop-hp-omnibook-3-14-hu0052la-intel-core-5-8-gb-ram-512-g-foto-2.webp",
+          "orden": 2
+        },
+        {
+          "imagen": "tiendas/1-nexalys_prueba_tienda/productos/fotos/laptop-hp-omnibook-3-14-hu0052la-intel-core-5-8-gb-ram-512-g-foto-3.webp",
+          "orden": 3
+        }
+      ]
+    },
+    {
+      "tienda": "Nexalys_prueba_tienda",
+      "nombre": "Teclado Genius Smart Kb-100 Usb Black",
+      "categoria": "Accesorios",
+      "marca": "Genius",
+      "descripcion": "Marca  Genius\r\nModelo Kb-100\r\nNúmero De Parte           31300005401\r\nEspecificaciones\r\nIdioma: Español.\r\nTipo de Teclas: Cóncavas\r\nLongitud de Cable:         1.5 M\r\nSoporte de Tecla             Si\r\nTeclas de Función Personalizables:          F1 - F12\r\nMotor Inteligente (Smart Genius):           Si\r\nBarra Virtual de Teclas de Función:          Si\r\nTecla de Función:            Si\r\nSoporte de Perfil de Aplicaciones:            Si\r\nPeso:    Aprox. 450 g\r\nDimensiones:    (AA 440.51 x 139,67 x 20.07 mm (17.34 x5.50 x 0.79 x A x P) Pulgadas)\r\nColor    Negro\r\nINFORMACIÓN ADICIONAL\r\nPersonaliza tus necesidades:      Puedes personalizar cualquiera de las 12 teclas de función para accionar aplicaciones, visitar sitios web, habilitar multimedia, enviar emojis, crear accesos directos internos de aplicaciones. Con solo presionar una tecla, también puede insertar las palabras o frases que usas con más frecuencia.\r\nVisualiza tu configuración:           Te recuerda en caso de que olvides la configuración, también es divertido observar visualmente los cambios inteligentes de la asignación cuando cambias de aplicación Teclado de Jugador:           Asigna accesos directos a funciones específicas para jugadores, establece la posición de teclas multimedia a tu elección Más divertido:              Imagina un teclado de Emoticonos, o crea un teclado para tus Aplicaciones. ¡Descarga algunos perfiles muestra precompilados para probar lo que puedes hacer! Es hora de presumir con tus amigos tu Teclado Inteligente.\r\nCompatible:       Windows 7, 8, 8.1, 10 o superior, Mac OS X 10.8 o superior, Puerto USB",
+      "precio": "34.90",
+      "precio_oferta": "30.00",
+      "oferta_hasta": "2026-10-31",
+      "stock": 4,
+      "activo": true,
+      "destacado": false,
+      "oculto_por_admin": false,
+      "motivo_ocultamiento": "",
+      "imagen": "tiendas/1-nexalys_prueba_tienda/productos/teclado-genius-smart-kb-100-usb-black.png",
+      "fotos": [
+        {
+          "imagen": "tiendas/1-nexalys_prueba_tienda/productos/fotos/teclado-genius-smart-kb-100-usb-black-foto-1.webp",
+          "orden": 1
+        },
+        {
+          "imagen": "tiendas/1-nexalys_prueba_tienda/productos/fotos/teclado-genius-smart-kb-100-usb-black-foto-2.webp",
+          "orden": 2
+        }
+      ]
+    },
+    {
+      "tienda": "Nexalys_prueba_tienda",
+      "nombre": "MOUSE LOGITECH G PRO X SUPERLIGHT WIRELESS LIGHTSPEED HERO 25K NEGRO Negro",
+      "categoria": "Accesorios",
+      "marca": "Logitech",
+      "descripcion": "zxcczxcasd",
+      "precio": "499.00",
+      "precio_oferta": null,
+      "oferta_hasta": null,
+      "stock": 2,
+      "activo": true,
+      "destacado": false,
+      "oculto_por_admin": false,
+      "motivo_ocultamiento": "",
+      "imagen": "tiendas/1-nexalys_prueba_tienda/productos/mouse-logitech-g-pro-x-superlight-wireless-lightspeed-hero-2.png",
+      "fotos": []
+    },
+    {
+      "tienda": "Nexalys_prueba_tienda",
+      "nombre": "Mouse Gamer VSG AQUILA AIR Negro Brillante VG-M550-BLK-GLO 16000 dpi 6 Botones USB RGB 400 Ips",
+      "categoria": "Accesorios",
+      "marca": "VSG",
+      "descripcion": "Mouse de buena sensibilidad exclusivo para jugadores de alto nivel.",
+      "precio": "65.00",
+      "precio_oferta": null,
+      "oferta_hasta": null,
+      "stock": 0,
+      "activo": true,
+      "destacado": false,
+      "oculto_por_admin": false,
+      "motivo_ocultamiento": "",
+      "imagen": "tiendas/1-nexalys_prueba_tienda/productos/mouse-gamer-vsg-aquila-air-negro-brillante-vg-m550-blk-glo-1.png",
+      "fotos": []
+    },
+    {
+      "tienda": "Nexalys_prueba_tienda",
+      "nombre": "Laptop Asus Tuf Gaming A15 15.6 FHD Ryzen 7 7445HS 16GB DDR5 SSD 512GB RTX 3050 4GB Negro FreeDos. 90NR0JF7-M00P70",
+      "categoria": "Laptops",
+      "marca": "Asus",
+      "descripcion": "Una laptop de gama alta, perfecta para trabajos pesados como: edición de videos, modelamiento 3D, Photoshop, etc. y además soporta juegos en alta calidad.",
+      "precio": "3790.00",
+      "precio_oferta": null,
+      "oferta_hasta": null,
+      "stock": 5,
+      "activo": true,
+      "destacado": true,
+      "oculto_por_admin": false,
+      "motivo_ocultamiento": "",
+      "imagen": "tiendas/1-nexalys_prueba_tienda/productos/laptop-asus-tuf-gaming-a15-156-fhd-ryzen-7-7445hs-16gb-ddr5.png",
+      "fotos": []
+    }
+  ]
+}

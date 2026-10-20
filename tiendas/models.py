@@ -5,6 +5,7 @@ from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models, transaction
 from django.utils import timezone
 
+from catalogo.archivos import ruta_logo_tienda
 from catalogo.imagenes import LADO_MAXIMO_LOGO, optimizar_campo
 from catalogo.models import EXTENSIONES_IMAGEN, validar_tamano_imagen
 
@@ -41,7 +42,7 @@ class Tienda(models.Model):
     descripcion = models.TextField("descripción", blank=True)
     logo = models.ImageField(
         "logo",
-        upload_to="tiendas/logos/",
+        upload_to=ruta_logo_tienda,
         blank=True,
         validators=[
             FileExtensionValidator(allowed_extensions=EXTENSIONES_IMAGEN),
@@ -119,13 +120,21 @@ class Tienda(models.Model):
         if kwargs.get("update_fields") is None:
             optimizar_campo(self.logo, LADO_MAXIMO_LOGO)
         # Al cambiar o quitar el logo, se borra el archivo anterior.
-        anterior = None
+        anterior = nombre_anterior = None
         if self.pk:
-            anterior = Tienda.objects.filter(pk=self.pk).values_list("logo", flat=True).first()
+            fila = Tienda.objects.filter(pk=self.pk).values_list("logo", "nombre").first()
+            if fila:
+                anterior, nombre_anterior = fila
         super().save(*args, **kwargs)
         if anterior and anterior != (self.logo.name or ""):
             almacenamiento = self.logo.storage
             transaction.on_commit(lambda: almacenamiento.delete(anterior))
+        # Si cambió el nombre, su carpeta de imágenes también (cuando el guardado terminó bien).
+        if nombre_anterior is not None and nombre_anterior != self.nombre:
+            from catalogo.reubicar import reubicar_tienda
+
+            tienda_id = self.pk
+            transaction.on_commit(lambda: reubicar_tienda(tienda_id, nombre_anterior))
 
     # --- Horario de atención ------------------------------------------------------
     def horario_semana(self):

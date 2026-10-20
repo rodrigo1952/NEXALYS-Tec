@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Historial | Administración | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "administracion/_menu.html" %}
+<form method="get" class="row g-2 mb-3" role="search">
+  <div class="col-md-6">
+    <label for="historial-q" class="visually-hidden">Buscar</label>
+    <input id="historial-q" type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por tienda, cuenta, motivo o administrador">
+  </div>
+  <div class="col-md-4">
+    <label for="historial-tipo" class="visually-hidden">Acción</label>
+    <select id="historial-tipo" name="tipo" class="form-select">
+      <option value="">Todas las acciones</option>
+      {% for valor, nombre in tipos %}<option value="{{ valor }}"{% if valor == tipo %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2 d-flex gap-2">
+    <button type="submit" class="btn btn-primary flex-grow-1">Filtrar</button>
+    <a href="{% url 'administracion:historial' %}" class="btn btn-outline-secondary" aria-label="Limpiar filtros">✕</a>
+  </div>
+</form>
+
+<div class="table-responsive bg-white rounded shadow-sm">
+  <table class="table align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Fecha</th><th>Administrador</th><th>Acción</th><th>Sobre</th><th>Motivo</th></tr>
+    </thead>
+    <tbody>
+      {% for accion in pagina %}
+        <tr>
+          <td class="small text-nowrap">{{ accion.fecha|date:"d/m/Y H:i" }}</td>
+          <td class="small">{{ accion.admin_nombre|default:"—" }}</td>
+          <td class="small text-nowrap">{{ accion.get_tipo_display }}</td>
+          <td class="small">{{ accion.objetivo }}</td>
+          <td class="small">{{ accion.motivo|default:"—"|linebreaksbr }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">Todavía no hay acciones registradas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="small text-muted mt-2">Aquí queda cada suspensión, reactivación, desactivación, eliminación y producto ocultado, con su motivo.</p>
+{% include "catalogo/_paginacion.html" %}
+{% endblock %}

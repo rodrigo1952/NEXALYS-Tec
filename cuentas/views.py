@@ -38,9 +38,11 @@ def rol_requerido(*roles):
 def inicio(request):
     visibles = Producto.objects.visibles().select_related("tienda", "marca", "categoria")
     return render(request, "inicio.html", {
-        # Cada tienda elige hasta 3 destacados; se muestran los últimos actualizados.
-        "destacados": visibles.filter(destacado=True).order_by("-actualizado")[:8],
-        "ofertas": visibles.en_oferta().order_by("-actualizado")[:8],
+        # Cada tienda elige hasta 3 destacados; primero los más populares de los últimos
+        # 30 días (vistas + favoritos × 5) y, si empatan, el que se destacó antes.
+        "destacados": visibles.destacados_inicio()[:8],
+        # Ofertas: primero el mayor descuento.
+        "ofertas": visibles.ofertas_inicio()[:8],
         "recientes": visibles[:8],
     })
 

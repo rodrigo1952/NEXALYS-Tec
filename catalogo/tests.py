@@ -110,7 +110,9 @@ class CrudProductoTests(BaseCatalogo):
 
     def test_imagen_valida_se_guarda(self):
         self.client.post(reverse("catalogo:crear"), self.datos_formulario(imagen=imagen_png()))
-        self.assertTrue(Producto.objects.get().imagen.name.startswith("productos/"))
+        # Etapa 1: carpeta de la tienda y nombre del producto.
+        nombre = Producto.objects.get().imagen.name
+        self.assertTrue(nombre.startswith(f"tiendas/{self.tienda.pk}-tienda-uno/productos/"), nombre)
 
     def test_archivo_que_no_es_imagen_se_rechaza(self):
         archivo = SimpleUploadedFile("virus.png", b"no soy una imagen", content_type="image/png")

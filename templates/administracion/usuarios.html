@@ -50,15 +50,12 @@
             {% if u.protegido %}
               <span class="small text-muted">—</span>
             {% else %}
-              <form method="post" action="{% url 'administracion:usuario_estado' u.pk %}" class="d-inline">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                {% if u.is_active %}
-                  <button type="submit" class="btn btn-sm btn-outline-warning">Desactivar</button>
-                {% else %}
-                  <button type="submit" class="btn btn-sm btn-outline-success">Reactivar</button>
-                {% endif %}
-              </form>
+              {# Paso 1: estos botones llevan a la página de confirmación con el motivo (paso 2). #}
+              {% if u.is_active %}
+                <a href="{% url 'administracion:usuario_desactivar' u.pk %}" class="btn btn-sm btn-outline-warning">Desactivar</a>
+              {% else %}
+                <a href="{% url 'administracion:usuario_reactivar' u.pk %}" class="btn btn-sm btn-outline-success">Reactivar</a>
+              {% endif %}
               <a href="{% url 'administracion:usuario_eliminar' u.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
             {% endif %}
           </td>
@@ -69,6 +66,6 @@
     </tbody>
   </table>
 </div>
-<p class="small text-muted mt-2">Una cuenta desactivada no puede iniciar sesión, pero conserva sus datos. Eliminar borra la cuenta de forma permanente.</p>
+<p class="small text-muted mt-2">Una cuenta desactivada no puede iniciar sesión, pero conserva sus datos; si es una tienda, también se suspende. Eliminar borra la cuenta de forma permanente. Todo pide confirmación y motivo, y queda en el <a href="{% url 'administracion:historial' %}">historial</a>.</p>
 {% include "catalogo/_paginacion.html" %}
 {% endblock %}

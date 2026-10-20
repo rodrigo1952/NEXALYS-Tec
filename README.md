@@ -86,6 +86,10 @@ Los tres están integrados: un producto pertenece a una categoría y una marca, 
 22. La tienda **edita sus datos**, su logo y su **horario** (con **refrigerio** opcional al mediodía); el perfil público muestra si está **abierta ahora**, en refrigerio o cerrada, con horas en formato de 12 horas (a. m. / p. m., hora de Perú).
 23. El administrador puede **suspender una tienda** u **ocultar un producto** escribiendo un **motivo** que la tienda ve en su panel; un producto oculto por el administrador no se puede volver a publicar hasta que él lo muestre.
 24. El administrador puede **desactivar, reactivar o eliminar** cuentas; no puede modificar su propia cuenta ni la de otros administradores, y una **tienda con pedidos no se elimina** (historial de ventas).
+25. **Desactivar la cuenta de una tienda también suspende su tienda** (con el mismo motivo) y oculta sus productos; reactivar la cuenta reactiva la tienda, y reactivar la tienda reactiva la cuenta.
+26. Suspender, reactivar, desactivar y eliminar se hacen en **2 pasos**: el botón lleva a una página de confirmación que resume lo que pasará y pide el **motivo** (opcional solo al reactivar). Todo queda en el **Historial** del administrador; una cuenta desactivada ve el motivo al intentar iniciar sesión.
+27. **Destacados en Inicio**: primero los más populares de los últimos 30 días (puntaje = vistas + favoritos × 5; 1 vista por visitante al día, sin contar a la propia tienda ni al administrador). Si empatan, primero el que se destacó antes. **Ofertas**: primero el mayor descuento.
+28. Las imágenes se guardan en **una carpeta por tienda** (`media/tiendas/<número>-<nombre>/`) con el nombre del producto. Para ordenar las antiguas: `python manage.py ordenar_imagenes`.
 
 ## Control de concurrencia
 
@@ -113,6 +117,17 @@ Las pruebas están en `pedidos/test_concurrencia.py`, `catalogo/test_concurrenci
 | Gestionar sus productos y pedidos | | | ✅ | |
 | Gestionar categorías y marcas | | | | ✅ |
 | Suspender tiendas / Django Admin | | | | ✅ |
+
+## Datos de demostración
+
+GitHub guarda el código, pero no la base de datos (`db.sqlite3`) ni las imágenes (`media/`). Para tener las mismas tiendas y productos en otra PC:
+
+```
+python manage.py exportar_demo    # en la PC que tiene los datos; luego git add demo, commit y push
+python manage.py cargar_demo      # en la otra PC, después de git pull y migrate
+```
+
+No se exportan clientes, pedidos, favoritos ni contraseñas. Las cuentas de tienda cargadas usan la contraseña `Demo#2026`.
 
 ## Administración de la base de datos
 

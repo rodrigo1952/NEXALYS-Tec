@@ -9,6 +9,7 @@
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and 'producto' in vista %} active{% endif %}" href="{% url 'administracion:productos' %}">📦 Productos</a></li>
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and vista == 'pedidos' %} active{% endif %}" href="{% url 'administracion:pedidos' %}">🧾 Pedidos</a></li>
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and 'usuario' in vista %} active{% endif %}" href="{% url 'administracion:usuarios' %}">👥 Usuarios</a></li>
+  <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and vista == 'historial' %} active{% endif %}" href="{% url 'administracion:historial' %}">🕓 Historial</a></li>
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'catalogo' and tipo == 'categorias' %} active{% endif %}" href="{% url 'catalogo:gestion_lista' 'categorias' %}">🗂️ Categorías</a></li>
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'catalogo' and tipo == 'marcas' %} active{% endif %}" href="{% url 'catalogo:gestion_lista' 'marcas' %}">🏷️ Marcas</a></li>
 </ul>

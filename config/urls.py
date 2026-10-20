@@ -4,12 +4,17 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
-from cuentas.forms import CambiarClaveForm, NuevaClaveForm, RecuperarClaveForm
+from cuentas.forms import CambiarClaveForm, IngresoForm, NuevaClaveForm, RecuperarClaveForm
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     # Vistas de contraseña de Django con nuestros formularios (van antes del include
     # de django.contrib.auth.urls para reemplazar a las de Django).
+    path(
+        "cuentas/login/",
+        auth_views.LoginView.as_view(authentication_form=IngresoForm),
+        name="login",
+    ),
     path(
         "cuentas/password_change/",
         auth_views.PasswordChangeView.as_view(form_class=CambiarClaveForm),
