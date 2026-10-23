@@ -7,10 +7,31 @@
   <a href="{% url 'catalogo:crear' %}" class="btn btn-primary">+ Agregar producto</a>
 </div>
 
-<form method="get" class="d-flex gap-2 mb-3">
-  <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por nombre">
+<form method="get" class="d-flex flex-wrap gap-2 mb-3">
+  {% if categoria_id %}<input type="hidden" name="categoria" value="{{ categoria_id }}">{% endif %}
+  <label for="buscar-mis-productos" class="visually-hidden">Buscar por nombre</label>
+  <input id="buscar-mis-productos" type="search" name="q" value="{{ q }}" class="form-control flex-grow-1" style="flex-basis: 16rem; width: auto" placeholder="Buscar por nombre">
+  {% if marcas %}
+    <label for="filtro-marca" class="visually-hidden">Marca</label>
+    <select id="filtro-marca" name="marca" class="form-select" style="width: auto" onchange="this.form.submit()">
+      <option value="">Todas las marcas</option>
+      {% for m in marcas %}
+        <option value="{{ m.marca_id }}"{% if m.marca_id == marca_id %} selected{% endif %}>{{ m.marca__nombre }} ({{ m.cantidad }})</option>
+      {% endfor %}
+    </select>
+  {% endif %}
   <button type="submit" class="btn btn-outline-secondary">Buscar</button>
 </form>
+
+{% if categorias %}
+  {# Cantidad de productos por categoría; al tocar una, la tabla se filtra. #}
+  <nav class="filtro-categorias d-flex flex-wrap gap-2 mb-3" aria-label="Filtrar por categoría">
+    <a href="{% querystring categoria=None marca=None page=None %}" class="btn btn-sm {% if not categoria_id %}btn-primary{% else %}btn-outline-secondary{% endif %}"{% if not categoria_id %} aria-current="true"{% endif %}>Todas ({{ total_productos }})</a>
+    {% for c in categorias %}
+      <a href="{% querystring categoria=c.categoria_id marca=None page=None %}" class="btn btn-sm {% if c.categoria_id == categoria_id %}btn-primary{% else %}btn-outline-secondary{% endif %}"{% if c.categoria_id == categoria_id %} aria-current="true"{% endif %}>{{ c.categoria__nombre }} ({{ c.cantidad }})</a>
+    {% endfor %}
+  </nav>
+{% endif %}
 
 <div class="table-responsive bg-white rounded shadow-sm">
   <table class="table table-hover align-middle mb-0">
@@ -56,7 +77,7 @@
         </tr>
       {% empty %}
         <tr><td colspan="8" class="text-center text-muted py-4">
-          {% if q %}No hay productos que coincidan con "{{ q }}".{% else %}Aún no registraste productos.{% endif %}
+          {% if q or categoria_id or marca_id %}No hay productos con esos filtros.{% else %}Aún no registraste productos.{% endif %}
         </td></tr>
       {% endfor %}
     </tbody>

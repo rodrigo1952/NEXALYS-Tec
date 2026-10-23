@@ -20,6 +20,13 @@ ORDENES = {
 }
 
 
+def _entero(valor):
+    try:
+        return int(valor)
+    except (TypeError, ValueError):
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Catálogo público (CU-04 y CU-05): no requiere iniciar sesión
 # ---------------------------------------------------------------------------
@@ -97,8 +104,29 @@ def mis_productos(request):
     texto = request.GET.get("q", "").strip()
     if texto:
         productos = productos.buscar(texto)
+
+    # Cuántos productos tiene la tienda en cada categoría y marca (para los filtros).
+    propios = Producto.objects.filter(tienda=request.tienda).order_by()
+    categorias = (
+        propios.values("categoria_id", "categoria__nombre")
+        .annotate(cantidad=Count("id")).order_by("categoria__nombre")
+    )
+    categoria_id = _entero(request.GET.get("categoria"))
+    if categoria_id:
+        productos = productos.filter(categoria_id=categoria_id)
+        propios = propios.filter(categoria_id=categoria_id)  # las marcas se cuentan dentro de la categoría elegida
+    marcas = propios.values("marca_id", "marca__nombre").annotate(cantidad=Count("id")).order_by("marca__nombre")
+    marca_id = _entero(request.GET.get("marca"))
+    if marca_id:
+        productos = productos.filter(marca_id=marca_id)
+
     pagina = Paginator(productos, 10).get_page(request.GET.get("page"))
-    return render(request, "catalogo/mis_productos.html", {"pagina": pagina, "q": texto})
+    return render(request, "catalogo/mis_productos.html", {
+        "pagina": pagina, "q": texto,
+        "categorias": categorias, "marcas": marcas,
+        "categoria_id": categoria_id, "marca_id": marca_id,
+        "total_productos": sum(c["cantidad"] for c in categorias),
+    })
 
 
 @tienda_requerida()

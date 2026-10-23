@@ -1,0 +1,3 @@
+{% comment %}
+Círculo del usuario en el menú: el logo de la tienda si tiene uno; si no, la inicial del usuario.
+{% endcomment %}<span class="avatar-menu" aria-hidden="true">{% if tienda_actual and tienda_actual.logo %}<img src="{{ tienda_actual.logo.url }}" alt="" width="30" height="30">{% else %}{{ user.get_username|first|upper }}{% endif %}</span>
