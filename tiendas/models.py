@@ -1,3 +1,4 @@
+from datetime import timedelta
 from urllib.parse import quote
 
 from django.conf import settings
@@ -14,6 +15,10 @@ validar_whatsapp = RegexValidator(
     regex=r"^9\d{8}$",
     message="Ingresa un número de celular peruano de 9 dígitos que empiece con 9.",
 )
+
+
+# Regla de negocio: una tienda suspendida que no se reactiva en este plazo se elimina sola.
+DIAS_PARA_ELIMINAR_SUSPENDIDA = 90
 
 
 class Tienda(models.Model):
@@ -61,6 +66,7 @@ class Tienda(models.Model):
         blank=True,
         help_text="La tienda lo ve en su panel para saber qué corregir.",
     )
+    suspendida_en = models.DateTimeField("suspendida el", null=True, blank=True)
     verificada_en = models.DateTimeField("correo verificado el", null=True, blank=True)
     creada_en = models.DateTimeField("registrada el", auto_now_add=True)
 
@@ -94,7 +100,8 @@ class Tienda(models.Model):
         """El administrador suspende la tienda: sus productos se ocultan del catálogo."""
         self.estado = self.Estado.SUSPENDIDA
         self.motivo_suspension = motivo.strip()
-        self.save(update_fields=["estado", "motivo_suspension"])
+        self.suspendida_en = timezone.now()  # desde aquí corren los 90 días
+        self.save(update_fields=["estado", "motivo_suspension", "suspendida_en"])
 
     def reactivar(self):
         """
@@ -103,7 +110,22 @@ class Tienda(models.Model):
         """
         self.estado = self.Estado.ACTIVA if self.verificada_en else self.Estado.PENDIENTE
         self.motivo_suspension = ""
-        self.save(update_fields=["estado", "motivo_suspension"])
+        self.suspendida_en = None  # se cancela la cuenta regresiva
+        self.save(update_fields=["estado", "motivo_suspension", "suspendida_en"])
+
+    @property
+    def fecha_eliminacion(self):
+        """Fecha en que se eliminará sola si sigue suspendida (None si no está suspendida)."""
+        if self.estado != self.Estado.SUSPENDIDA or self.suspendida_en is None:
+            return None
+        return self.suspendida_en + timedelta(days=DIAS_PARA_ELIMINAR_SUSPENDIDA)
+
+    @property
+    def dias_para_eliminacion(self):
+        fecha = self.fecha_eliminacion
+        if fecha is None:
+            return None
+        return max(0, (timezone.localdate(fecha) - timezone.localdate()).days)
 
     def enlace_whatsapp(self, mensaje=""):
         """Enlace wa.me con el código de Perú (+51) y un mensaje predeterminado."""

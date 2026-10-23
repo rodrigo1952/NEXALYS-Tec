@@ -33,6 +33,9 @@
       <div class="mt-2"><strong>Motivo:</strong> {{ tienda.motivo_suspension|linebreaksbr }}</div>
     {% endif %}
     <div class="mt-2 small">Cuando lo corrijas, comunícate con el administrador para que reactive tu tienda.</div>
+    {% if tienda.fecha_eliminacion %}
+      <div class="mt-2"><strong>Importante:</strong> si la suspensión no se resuelve, tu tienda, sus productos y sus imágenes se eliminarán automáticamente el <strong>{{ tienda.fecha_eliminacion|date:"d/m/Y" }}</strong> (faltan {{ tienda.dias_para_eliminacion }} día{{ tienda.dias_para_eliminacion|pluralize }}).</div>
+    {% endif %}
   </div>
 {% else %}
   <div class="row g-3 mb-4">

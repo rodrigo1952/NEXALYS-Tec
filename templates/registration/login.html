@@ -11,6 +11,11 @@
           <strong>Tu cuenta fue desactivada por el administrador.</strong>
           {% if form.motivo_desactivacion %}<br>Motivo: {{ form.motivo_desactivacion }}{% endif %}
         </div>
+      {% elif form.correo_sin_confirmar %}
+        <div class="alert alert-info">
+          <strong>Primero confirma tu correo.</strong> Abre el enlace que te enviamos al registrarte.
+          <a href="{% url 'confirmacion_pendiente' %}" class="alert-link">¿No te llegó? Pide uno nuevo</a>.
+        </div>
       {% elif form.errors %}
         <div class="alert alert-danger">Usuario o contraseña incorrectos.</div>
       {% endif %}

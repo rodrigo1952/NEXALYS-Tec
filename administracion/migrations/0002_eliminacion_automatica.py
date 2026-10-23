@@ -1,0 +1,29 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("administracion", "0001_initial"),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name="accionadmin",
+            name="tipo",
+            field=models.CharField(
+                choices=[
+                    ("suspender_tienda", "Suspendió una tienda"),
+                    ("reactivar_tienda", "Reactivó una tienda"),
+                    ("desactivar_cuenta", "Desactivó una cuenta"),
+                    ("reactivar_cuenta", "Reactivó una cuenta"),
+                    ("eliminar_cuenta", "Eliminó una cuenta"),
+                    ("ocultar_producto", "Ocultó un producto"),
+                    ("mostrar_producto", "Volvió a mostrar un producto"),
+                    ("eliminacion_auto", "Eliminación automática (90 días suspendida)"),
+                ],
+                max_length=20,
+                verbose_name="acción",
+            ),
+        ),
+    ]

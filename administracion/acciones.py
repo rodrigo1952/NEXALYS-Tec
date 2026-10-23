@@ -26,7 +26,7 @@ Tipo = AccionAdmin.Tipo
 def registrar(admin, tipo, objetivo, motivo="", usuario=None):
     return AccionAdmin.objects.create(
         admin=admin,
-        admin_nombre=admin.get_username() if admin else "",
+        admin_nombre=admin.get_username() if admin else "Sistema (automático)",
         tipo=tipo,
         objetivo=objetivo[:250],
         usuario_afectado=usuario,
@@ -91,6 +91,10 @@ def reactivar_cuenta(admin, usuario, motivo=""):
             return False
         usuario.is_active = True
         usuario.save(update_fields=["is_active"])
+        # Si era un cliente que no había confirmado su correo, el administrador lo da por confirmado.
+        from cuentas.models import CorreoPendiente
+
+        CorreoPendiente.objects.filter(usuario=usuario).delete()
         tienda = Tienda.objects.select_for_update().filter(usuario=usuario).first()
         if tienda is not None and tienda.estado == Tienda.Estado.SUSPENDIDA:
             tienda.reactivar()

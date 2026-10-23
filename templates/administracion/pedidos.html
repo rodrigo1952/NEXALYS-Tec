@@ -47,9 +47,9 @@
         <tr>
           <td>{{ p.pk }}</td>
           <td class="small text-nowrap">{{ p.creado|date:"d/m/Y H:i" }}</td>
-          <td class="small"><a href="{% url 'administracion:tienda_detalle' p.tienda.pk %}">{{ p.tienda }}</a></td>
+          <td class="small">{% if p.tienda %}<a href="{% url 'administracion:tienda_detalle' p.tienda.pk %}">{{ p.tienda }}</a>{% else %}<span class="text-muted">{{ p.tienda_nombre|default:"Tienda eliminada" }}</span>{% endif %}</td>
           <td class="small">{{ p.cliente_nombre }}<br><span class="text-muted">{{ p.cliente_telefono }}</span></td>
-          <td class="small" style="max-width:260px">{{ p.producto.nombre|truncatechars:60 }}</td>
+          <td class="small" style="max-width:260px">{{ p.producto_nombre|truncatechars:60 }}</td>
           <td class="text-end">{{ p.cantidad }}</td>
           <td class="text-end text-nowrap">{{ p.total|soles }}</td>
           <td>{% include "pedidos/_estado.html" %}</td>

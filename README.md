@@ -90,6 +90,8 @@ Los tres están integrados: un producto pertenece a una categoría y una marca, 
 26. Suspender, reactivar, desactivar y eliminar se hacen en **2 pasos**: el botón lleva a una página de confirmación que resume lo que pasará y pide el **motivo** (opcional solo al reactivar). Todo queda en el **Historial** del administrador; una cuenta desactivada ve el motivo al intentar iniciar sesión.
 27. **Destacados en Inicio**: primero los más populares de los últimos 30 días (puntaje = vistas + favoritos × 5; 1 vista por visitante al día, sin contar a la propia tienda ni al administrador). Si empatan, primero el que se destacó antes. **Ofertas**: primero el mayor descuento.
 28. Las imágenes se guardan en **una carpeta por tienda** (`media/tiendas/<número>-<nombre>/`) con el nombre del producto. Para ordenar las antiguas: `python manage.py ordenar_imagenes`.
+29. Una **tienda suspendida que no se reactiva en 90 días se elimina automáticamente** (cuenta, productos e imágenes). La tienda ve la fecha límite en su panel desde el primer día; el administrador ve la lista en el Resumen. Sus ventas se conservan **anónimas** ("Tienda eliminada", sin datos del cliente) y queda registrado en el Historial. La limpieza se ejecuta al entrar al panel del administrador o con `python manage.py limpiar_cuentas`.
+30. Los **clientes confirman su correo** antes de poder iniciar sesión (igual que las tiendas). Pueden pedir un enlace nuevo; si no confirman en 7 días, la cuenta se elimina sola. Los clientes registrados antes de esta regla ya cuentan como confirmados.
 
 ## Control de concurrencia
 

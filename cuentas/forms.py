@@ -26,6 +26,7 @@ class IngresoForm(AuthenticationForm):
 
     cuenta_desactivada = False
     motivo_desactivacion = ""
+    correo_sin_confirmar = False
 
     def clean(self):
         try:
@@ -37,8 +38,13 @@ class IngresoForm(AuthenticationForm):
             if usuario is not None and not usuario.is_active and clave and usuario.check_password(clave):
                 from administracion.acciones import motivo_desactivacion
 
-                self.cuenta_desactivada = True
-                self.motivo_desactivacion = motivo_desactivacion(usuario) or ""
+                from .models import CorreoPendiente
+
+                if CorreoPendiente.objects.filter(usuario=usuario).exists():
+                    self.correo_sin_confirmar = True  # todavía no abrió el enlace del correo
+                else:
+                    self.cuenta_desactivada = True
+                    self.motivo_desactivacion = motivo_desactivacion(usuario) or ""
             raise
 
 

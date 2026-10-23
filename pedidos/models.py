@@ -21,18 +21,24 @@ class Pedido(models.Model):
         Estado.CANCELADO: [],
     }
 
+    # Pueden quedar vacíos solo cuando una tienda se elimina automáticamente (90 días suspendida):
+    # sus ventas se conservan anónimas para las estadísticas. Por eso se guardan también los nombres.
     tienda = models.ForeignKey(
         "tiendas.Tienda",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name="pedidos",
         verbose_name="tienda",
     )
+    tienda_nombre = models.CharField("tienda (nombre)", max_length=100, blank=True)
     producto = models.ForeignKey(
         "catalogo.Producto",
         on_delete=models.PROTECT,
+        null=True,
         related_name="pedidos",
         verbose_name="producto",
     )
+    producto_nombre = models.CharField("producto (nombre)", max_length=200, blank=True)
     cliente_nombre = models.CharField("nombre del cliente", max_length=100)
     cliente_telefono = models.CharField(
         "celular del cliente",
@@ -62,6 +68,13 @@ class Pedido(models.Model):
 
     def __str__(self):
         return f"Pedido #{self.pk} - {self.cliente_nombre}"
+
+    def save(self, *args, **kwargs):
+        if self.tienda_id and not self.tienda_nombre:
+            self.tienda_nombre = self.tienda.nombre
+        if self.producto_id and (not self.producto_nombre or kwargs.get("update_fields") is None):
+            self.producto_nombre = self.producto.nombre
+        super().save(*args, **kwargs)
 
     @property
     def total(self):

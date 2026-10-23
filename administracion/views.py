@@ -20,9 +20,9 @@ from django.views.decorators.http import require_POST
 from catalogo.models import Categoria, Marca, Producto, borrar_archivo_al_confirmar
 from cuentas.views import rol_requerido
 from pedidos.models import Pedido
-from tiendas.models import Tienda
+from tiendas.models import DIAS_PARA_ELIMINAR_SUSPENDIDA, Tienda
 
-from . import acciones
+from . import acciones, limpieza
 from .forms import EliminarUsuarioForm, FiltroHistorialForm, MotivoForm, MotivoOpcionalForm
 from .models import AccionAdmin
 
@@ -73,8 +73,22 @@ def _volver(request, por_defecto):
 # Resumen
 # ---------------------------------------------------------------------------
 
+def _limpiar(request):
+    """Elimina las tiendas suspendidas hace 90 días y las cuentas sin confirmar hace 7 (ver limpieza.py)."""
+    tiendas, cuentas = limpieza.ejecutar()
+    if tiendas:
+        messages.info(
+            request,
+            f"Se eliminaron automáticamente {tiendas} tienda(s) que estuvieron suspendidas más de 90 días. "
+            "Quedó registrado en el Historial.",
+        )
+    if cuentas:
+        messages.info(request, f"Se eliminaron {cuentas} cuenta(s) de cliente que no confirmaron su correo en 7 días.")
+
+
 @solo_admin
 def resumen(request):
+    _limpiar(request)
     inicio_mes = timezone.localdate().replace(day=1)
     estados = dict(Tienda.objects.order_by().values_list("estado").annotate(n=Count("id")))
     pedidos_mes = Pedido.objects.filter(creado__date__gte=inicio_mes)
@@ -90,6 +104,7 @@ def resumen(request):
         "ventas_mes": ventas_mes or 0,
         "categorias": Categoria.objects.count(),
         "marcas": Marca.objects.count(),
+        "por_eliminarse": limpieza.por_eliminarse_pronto()[:10],
     })
 
 
@@ -99,6 +114,7 @@ def resumen(request):
 
 @solo_admin
 def tiendas(request):
+    _limpiar(request)
     lista = Tienda.objects.select_related("usuario").annotate(
         num_productos=Count("productos", distinct=True),
         num_pedidos=Count("pedidos", distinct=True),
@@ -154,6 +170,8 @@ def tienda_suspender(request, pk):
             f"{publicados} producto{'s' if publicados != 1 else ''} publicado{'s' if publicados != 1 else ''} dejará{'n' if publicados != 1 else ''} de verse en el catálogo, en Inicio y en los favoritos de los clientes.",
             "Su perfil público dejará de mostrarse.",
             "La tienda podrá iniciar sesión y verá el motivo en su panel.",
+            f"Si no la reactivas en {DIAS_PARA_ELIMINAR_SUSPENDIDA} días, se eliminará automáticamente "
+            "(cuenta, productos e imágenes); sus ventas se conservan anónimas.",
         ],
         form=form,
         boton="Suspender tienda",
@@ -282,7 +300,10 @@ def pedidos(request):
     if estado in Pedido.Estado.values:
         lista = lista.filter(estado=estado)
     if texto:
-        lista = lista.filter(Q(cliente_nombre__icontains=texto) | Q(producto__nombre__icontains=texto))
+        lista = lista.filter(
+            Q(cliente_nombre__icontains=texto) | Q(producto__nombre__icontains=texto)
+            | Q(producto_nombre__icontains=texto)
+        )
     entregados = lista.filter(estado=Pedido.Estado.ENTREGADO)
     resumen_ventas = entregados.aggregate(num_entregados=Count("id"), total=Sum(TOTAL_PEDIDO))
     pagina = Paginator(lista, 20).get_page(request.GET.get("page"))
@@ -321,7 +342,9 @@ def _motivo_no_se_puede_modificar(admin, usuario):
 
 @solo_admin
 def usuarios(request):
-    lista = User.objects.select_related("tienda").prefetch_related("groups").order_by("-date_joined")
+    lista = (
+        User.objects.select_related("tienda", "correo_pendiente").prefetch_related("groups").order_by("-date_joined")
+    )
     rol = request.GET.get("rol", "")
     estado = request.GET.get("estado", "")
     texto = request.GET.get("q", "").strip()
@@ -344,6 +367,7 @@ def usuarios(request):
     pagina.object_list = list(pagina.object_list)
     for usuario in pagina.object_list:
         usuario.rol = rol_de(usuario)
+        usuario.sin_confirmar = hasattr(usuario, "correo_pendiente")
         usuario.protegido = _motivo_no_se_puede_modificar(request.user, usuario) is not None
     return render(request, "administracion/usuarios.html", {
         "pagina": pagina, "q": texto, "rol": rol, "estado": estado,

@@ -61,6 +61,26 @@
   </div>
 </div>
 
+{% if por_eliminarse %}
+  <h3 class="h6 text-muted text-uppercase mb-3">Tiendas suspendidas · se eliminan solas a los 90 días</h3>
+  <div class="table-responsive bg-white rounded shadow-sm mb-4">
+    <table class="table align-middle mb-0">
+      <thead class="table-light"><tr><th>Tienda</th><th>Suspendida el</th><th>Se elimina el</th><th class="text-end">Faltan</th><th></th></tr></thead>
+      <tbody>
+        {% for t in por_eliminarse %}
+          <tr>
+            <td><strong>{{ t.nombre }}</strong><div class="small text-muted">{{ t.motivo_suspension|truncatechars:80 }}</div></td>
+            <td class="small text-nowrap">{{ t.suspendida_en|date:"d/m/Y" }}</td>
+            <td class="small text-nowrap">{{ t.fecha_eliminacion|date:"d/m/Y" }}</td>
+            <td class="text-end text-nowrap"><span class="badge {% if t.dias_para_eliminacion <= 7 %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{{ t.dias_para_eliminacion }} día{{ t.dias_para_eliminacion|pluralize }}</span></td>
+            <td class="text-end"><a href="{% url 'administracion:tienda_detalle' t.pk %}" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
 <p class="small text-muted mb-0 mt-5 border-top pt-3">
   Herramientas avanzadas:
   <a href="{% url 'admin:index' %}" class="link-secondary">Django Admin</a>

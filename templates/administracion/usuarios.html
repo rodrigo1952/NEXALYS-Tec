@@ -43,7 +43,7 @@
             {% elif u.rol == "Administrador" %}<span class="badge text-bg-dark">Administrador</span>
             {% else %}<span class="badge text-bg-light border">Sin rol</span>{% endif %}
           </td>
-          <td>{% if u.is_active %}<span class="badge text-bg-success">Activa</span>{% else %}<span class="badge text-bg-secondary">Desactivada</span>{% endif %}</td>
+          <td>{% if u.is_active %}<span class="badge text-bg-success">Activa</span>{% elif u.sin_confirmar %}<span class="badge text-bg-warning" title="Todavía no abrió el enlace del correo">Sin confirmar correo</span>{% else %}<span class="badge text-bg-secondary">Desactivada</span>{% endif %}</td>
           <td class="small text-nowrap">{{ u.date_joined|date:"d/m/Y" }}</td>
           <td class="small text-nowrap">{{ u.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</td>
           <td class="text-end text-nowrap">

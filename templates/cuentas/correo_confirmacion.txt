@@ -1,0 +1,13 @@
+{% autoescape off %}Hola {{ usuario.first_name|default:usuario.username }},
+
+Creaste tu cuenta de cliente en NEXALYS Tec con el usuario "{{ usuario.username }}".
+
+Para confirmar tu correo y activar tu cuenta, abre este enlace:
+
+{{ enlace }}
+
+El enlace vence en {{ horas }} horas. Si no confirmas tu correo en 7 días, la cuenta se elimina sola.
+Si no creaste esta cuenta, ignora este mensaje.
+
+Equipo NEXALYS Tec
+{% endautoescape %}
