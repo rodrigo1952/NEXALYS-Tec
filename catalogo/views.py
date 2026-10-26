@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, ProtectedError
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, ProtectedError, Q, Sum, Value
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 
 from tiendas.decorators import tienda_requerida
@@ -94,13 +95,28 @@ def producto_detalle(request, pk):
 
 @tienda_requerida()
 def mis_productos(request):
+    """
+    "Mis productos" = catálogo + inventario en una sola sección (pestaña Productos).
+    Muestra lo que ven los clientes (precio, publicado, destacado) junto con el stock,
+    las alertas y los datos privados de la ficha de inventario.
+    """
+    bajo = Q(stock__gt=0, ficha__stock_minimo__gt=0, stock__lte=F("ficha__stock_minimo"))
     productos = (
         Producto.objects.filter(tienda=request.tienda)
         .select_related("categoria", "marca")
         # Privacidad: la tienda solo ve cuántos clientes guardaron el producto, no quiénes.
-        .annotate(num_favoritos=Count("favoritos"))
+        .annotate(
+            num_favoritos=Count("favoritos"),
+            stock_minimo=Coalesce("ficha__stock_minimo", 0),
+            costo=F("ficha__costo"),
+            codigo=Coalesce("ficha__codigo", Value("")),
+        )
         .order_by("-creado")  # orden fijo: así la paginación no repite ni salta productos
     )
+    resumen = _resumen_inventario(request.tienda, bajo)
+    solo_alertas = request.GET.get("alerta") == "1"
+    if solo_alertas:
+        productos = productos.filter(Q(stock=0) | bajo)
     texto = request.GET.get("q", "").strip()
     if texto:
         productos = productos.buscar(texto)
@@ -122,11 +138,25 @@ def mis_productos(request):
 
     pagina = Paginator(productos, 10).get_page(request.GET.get("page"))
     return render(request, "catalogo/mis_productos.html", {
-        "pagina": pagina, "q": texto,
+        "pagina": pagina, "q": texto, "resumen": resumen, "solo_alertas": solo_alertas,
         "categorias": categorias, "marcas": marcas,
         "categoria_id": categoria_id, "marca_id": marca_id,
         "total_productos": sum(c["cantidad"] for c in categorias),
     })
+
+
+def _resumen_inventario(tienda, bajo):
+    """Tarjetas de arriba: unidades, valor del inventario a costo, stock bajo y agotados."""
+    datos = Producto.objects.filter(tienda=tienda).aggregate(
+        productos=Count("id"),
+        unidades=Coalesce(Sum("stock"), 0),
+        valor=Sum(ExpressionWrapper(F("stock") * F("ficha__costo"), output_field=DecimalField(max_digits=14, decimal_places=2))),
+        sin_costo=Count("id", filter=Q(stock__gt=0, ficha__costo__isnull=True)),
+        agotados=Count("id", filter=Q(stock=0)),
+        stock_bajo=Count("id", filter=bajo),
+    )
+    datos["valor"] = datos["valor"] or 0
+    return datos
 
 
 @tienda_requerida()
@@ -134,6 +164,7 @@ def producto_crear(request):
     if request.method == "POST":
         form = ProductoForm(request.POST, request.FILES, tienda=request.tienda)
         if form.is_valid():
+            form.instance._usuario_cambio = request.user  # autor del "inventario inicial" en el kardex
             producto = form.save()
             messages.success(request, f"Producto \"{producto.nombre}\" registrado correctamente.")
             return redirect("catalogo:mis_productos")
@@ -152,6 +183,7 @@ def producto_editar(request, pk):
         with transaction.atomic():
             guardado = form.is_valid()
             if guardado:
+                form.instance._usuario_cambio = request.user  # por si cambió el stock (kardex)
                 form.save()
         if guardado:
             messages.success(request, f"Producto \"{producto.nombre}\" actualizado.")

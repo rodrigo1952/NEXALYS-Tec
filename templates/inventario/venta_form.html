@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block titulo %}Nueva venta | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "inventario/_menu.html" %}
+<a href="{% url 'inventario:ventas' %}" class="small">&larr; Volver a ventas</a>
+<h3 class="h5 my-2">Nueva venta</h3>
+<p class="text-muted small">Elige los productos vendidos. El precio se sugiere solo; cámbialo si hiciste un descuento. Al guardar, el stock se descuenta.</p>
+
+<form method="post" novalidate id="form-venta">
+  {% csrf_token %}
+  {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+  {% for e in lineas.non_form_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+  {{ lineas.management_form }}
+
+  <div class="card shadow-sm mb-3"><div class="card-body">
+    <h4 class="h6">Productos</h4>
+    <div class="row g-2 small text-muted d-none d-md-flex">
+      <div class="col-md-6">Producto</div><div class="col-md-2">Cantidad</div><div class="col-md-2">Precio unit. (S/)</div><div class="col-md-2 text-end">Subtotal</div>
+    </div>
+    {% for f in lineas %}
+      <div class="row g-2 align-items-start py-2 border-bottom linea-venta{% if forloop.counter > visibles and not f.producto.value %} d-none{% endif %}">
+        <div class="col-12 col-md-6">
+          <label class="visually-hidden" for="{{ f.producto.id_for_label }}">Producto {{ forloop.counter }}</label>
+          {{ f.producto }}
+          {% for e in f.producto.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-4 col-md-2">
+          <label class="visually-hidden" for="{{ f.cantidad.id_for_label }}">Cantidad</label>
+          {{ f.cantidad }}
+          {% for e in f.cantidad.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-4 col-md-2">
+          <label class="visually-hidden" for="{{ f.precio.id_for_label }}">Precio unitario</label>
+          {{ f.precio }}
+          {% for e in f.precio.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-4 col-md-2 text-end pt-2 fw-semibold subtotal">—</div>
+      </div>
+    {% endfor %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="agregar-linea">+ Agregar otro producto</button>
+      <div class="fs-5">Total: <strong id="total-venta">S/ 0.00</strong></div>
+    </div>
+    <div class="form-text">Puedes registrar hasta {{ lineas.max_num }} productos distintos por venta. Precio vacío = precio publicado (con oferta si tiene).</div>
+  </div></div>
+
+  <div class="card shadow-sm mb-3"><div class="card-body">
+    <h4 class="h6">Pago y cliente</h4>
+    <div class="row g-3">
+      {% for campo in form %}
+        <div class="{% if campo.name == 'nota' %}col-12{% else %}col-md-4{% endif %}">
+          <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+          {{ campo }}
+          {% for e in campo.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div></div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Registrar venta</button>
+    <a href="{% url 'inventario:ventas' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+
+<script>
+(function () {
+  const filas = Array.from(document.querySelectorAll("#form-venta .linea-venta"));
+  const totalEl = document.getElementById("total-venta");
+  const soles = (n) => "S/ " + n.toFixed(2);
+
+  function calcular() {
+    let total = 0;
+    filas.forEach((fila) => {
+      const select = fila.querySelector("select");
+      const [cantidad, precio] = fila.querySelectorAll("input[type=number]");
+      const opcion = select.selectedOptions[0];
+      const sugerido = opcion && opcion.dataset.precio ? parseFloat(opcion.dataset.precio) : null;
+      // El precio sugerido se muestra como texto de ayuda dentro del campo.
+      precio.placeholder = sugerido !== null ? sugerido.toFixed(2) : "Precio actual";
+      if (opcion && opcion.dataset.stock) { cantidad.max = opcion.dataset.stock; } else { cantidad.removeAttribute("max"); }
+      const unitario = precio.value !== "" ? parseFloat(precio.value) : sugerido;
+      const n = parseInt(cantidad.value, 10);
+      const celda = fila.querySelector(".subtotal");
+      if (select.value && unitario !== null && n > 0) {
+        celda.textContent = soles(unitario * n);
+        total += unitario * n;
+      } else {
+        celda.textContent = "—";
+      }
+    });
+    totalEl.textContent = soles(total);
+  }
+
+  filas.forEach((fila) => {
+    fila.querySelector("select").addEventListener("change", (e) => {
+      const cantidad = fila.querySelector("input[type=number]");
+      if (e.target.value && !cantidad.value) cantidad.value = 1;
+      calcular();
+    });
+    fila.addEventListener("input", calcular);
+  });
+
+  const boton = document.getElementById("agregar-linea");
+  function actualizarBoton() {
+    boton.disabled = !filas.some((f) => f.classList.contains("d-none"));
+  }
+  boton.addEventListener("click", () => {
+    const oculta = filas.find((f) => f.classList.contains("d-none"));
+    if (oculta) { oculta.classList.remove("d-none"); oculta.querySelector("select").focus(); }
+    actualizarBoton();
+  });
+  actualizarBoton();
+  calcular();
+})();
+</script>
+{% endblock %}

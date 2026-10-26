@@ -1,0 +1,14 @@
+{% comment %}
+Pestañas de "Mis productos" (catálogo + inventario de la tienda).
+En las próximas etapas se agregan Ingresos, Ajustes y Reportes.
+{% endcomment %}
+{% with ns=request.resolver_match.namespace vista=request.resolver_match.url_name %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h2 class="mb-0">Mis productos</h2>
+</div>
+<ul class="nav nav-pills flex-nowrap overflow-auto mb-4 pb-1 border-bottom">
+  <li class="nav-item"><a class="nav-link text-nowrap{% if vista == 'mis_productos' or vista == 'ficha' or vista == 'kardex' %} active{% endif %}" href="{% url 'catalogo:mis_productos' %}">Productos</a></li>
+  <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'inventario' and 'venta' in vista %} active{% endif %}" href="{% url 'inventario:ventas' %}">Ventas</a></li>
+  <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'inventario' and 'proveedor' in vista %} active{% endif %}" href="{% url 'inventario:proveedores' %}">Proveedores</a></li>
+</ul>
+{% endwith %}

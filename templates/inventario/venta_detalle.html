@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Nota de venta N.° {{ venta.numero|stringformat:"05d" }} | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="no-imprimir">
+  {% include "inventario/_menu.html" %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <a href="{% url 'inventario:ventas' %}" class="small">&larr; Volver a ventas</a>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
+      {% if not venta.anulada %}<a href="{% url 'inventario:venta_anular' venta.pk %}" class="btn btn-outline-danger">Anular venta</a>{% endif %}
+    </div>
+  </div>
+  {% if venta.anulada %}
+    <div class="alert alert-danger">
+      <strong>Venta anulada</strong> el {{ venta.anulada_en|date:"d/m/Y H:i" }}. Motivo: {{ venta.motivo_anulacion }}.
+      El stock de sus productos ya volvió al inventario.
+    </div>
+  {% endif %}
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm nota-venta"><div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between gap-3 border-bottom pb-3 mb-3">
+        <div>
+          <div class="fs-5 fw-bold">{{ venta.tienda_nombre }}</div>
+          {% if tienda.direccion %}<div class="small">{{ tienda.direccion }}</div>{% endif %}
+          {% if tienda.whatsapp %}<div class="small">WhatsApp: {{ tienda.whatsapp }}</div>{% endif %}
+        </div>
+        <div class="text-end">
+          <div class="fw-bold">NOTA DE VENTA</div>
+          <div class="fs-5">N.° {{ venta.numero|stringformat:"05d" }}</div>
+          {% if venta.anulada %}<div class="badge text-bg-danger">ANULADA</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="row small mb-3">
+        <div class="col-sm-6"><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</div>
+        <div class="col-sm-6"><strong>Pago:</strong> {{ venta.get_metodo_pago_display }}</div>
+        <div class="col-sm-6"><strong>Cliente:</strong> {{ venta.cliente_nombre|default:"Cliente varios" }}</div>
+        {% if venta.cliente_documento %}<div class="col-sm-6"><strong>DNI/RUC:</strong> {{ venta.cliente_documento }}</div>{% endif %}
+        {% if venta.origen %}<div class="col-sm-6"><strong>Origen:</strong> {{ venta.origen }}</div>{% endif %}
+      </div>
+
+      <table class="table table-sm align-middle">
+        <thead><tr><th>Cant.</th><th>Producto</th><th class="text-end text-nowrap">P. unit.</th><th class="text-end">Subtotal</th></tr></thead>
+        <tbody>
+          {% for l in venta.lineas.all %}
+            <tr><td>{{ l.cantidad }}</td><td>{{ l.producto_nombre }}</td><td class="text-end text-nowrap">{{ l.precio_unitario|soles }}</td><td class="text-end text-nowrap">{{ l.subtotal|soles }}</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot><tr><th colspan="3" class="text-end">TOTAL</th><th class="text-end text-nowrap fs-5">{{ venta.total|soles }}</th></tr></tfoot>
+      </table>
+      {% if venta.nota %}<p class="small"><strong>Nota:</strong> {{ venta.nota }}</p>{% endif %}
+      <p class="small text-muted text-center border-top pt-3 mb-0">
+        Documento interno de control. No válido como comprobante de pago (boleta o factura).
+      </p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

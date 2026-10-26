@@ -2,13 +2,31 @@
 {% load formato %}
 {% block titulo %}Mis productos | NEXALYS Tec{% endblock %}
 {% block contenido %}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-  <h2 class="mb-0">Mis productos</h2>
-  <a href="{% url 'catalogo:crear' %}" class="btn btn-primary">+ Agregar producto</a>
+{% comment %}
+"Mis productos" reúne el catálogo (lo que ven los clientes) y el inventario (lo interno de la tienda).
+Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ventas, Ingresos y Reportes.
+{% endcomment %}
+{% include "inventario/_menu.html" %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="card text-center shadow-sm h-100"><div class="card-body">
+    <div class="h3 fw-bold mb-0">{{ resumen.unidades }}</div><div class="text-muted small">Unidades en stock ({{ resumen.productos }} producto{{ resumen.productos|pluralize }})</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card text-center shadow-sm h-100"><div class="card-body">
+    <div class="h3 fw-bold mb-0">{{ resumen.valor|soles }}</div>
+    <div class="text-muted small">Valor del inventario (a costo){% if resumen.sin_costo %}<br><span class="text-warning-emphasis">{{ resumen.sin_costo }} sin costo en su ficha</span>{% endif %}</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><a href="{% url 'catalogo:mis_productos' %}?alerta=1" class="card text-center shadow-sm h-100 text-decoration-none"><div class="card-body">
+    <div class="h3 fw-bold mb-0 {% if resumen.stock_bajo %}text-warning{% endif %}">{{ resumen.stock_bajo }}</div><div class="text-muted small">Con stock bajo</div>
+  </div></a></div>
+  <div class="col-6 col-lg-3"><a href="{% url 'catalogo:mis_productos' %}?alerta=1" class="card text-center shadow-sm h-100 text-decoration-none"><div class="card-body">
+    <div class="h3 fw-bold mb-0 {% if resumen.agotados %}text-danger{% endif %}">{{ resumen.agotados }}</div><div class="text-muted small">Agotados</div>
+  </div></a></div>
 </div>
 
 <form method="get" class="d-flex flex-wrap gap-2 mb-3">
   {% if categoria_id %}<input type="hidden" name="categoria" value="{{ categoria_id }}">{% endif %}
+  {% if solo_alertas %}<input type="hidden" name="alerta" value="1">{% endif %}
   <label for="buscar-mis-productos" class="visually-hidden">Buscar por nombre</label>
   <input id="buscar-mis-productos" type="search" name="q" value="{{ q }}" class="form-control flex-grow-1" style="flex-basis: 16rem; width: auto" placeholder="Buscar por nombre">
   {% if marcas %}
@@ -21,6 +39,7 @@
     </select>
   {% endif %}
   <button type="submit" class="btn btn-outline-secondary">Buscar</button>
+  <a href="{% url 'catalogo:crear' %}" class="btn btn-primary">+ Agregar producto</a>
 </form>
 
 {% if categorias %}
@@ -32,27 +51,29 @@
     {% endfor %}
   </nav>
 {% endif %}
+{% if solo_alertas %}<p class="small text-muted">Mostrando solo productos agotados o con stock bajo. <a href="{% url 'catalogo:mis_productos' %}">Ver todos</a></p>{% endif %}
 
 <div class="table-responsive bg-white rounded shadow-sm">
   <table class="table table-hover align-middle mb-0">
     <thead class="table-light">
       <tr>
         <th>Producto</th>
-        <th>Categoría</th>
-        <th>Marca</th>
+        <th class="d-none d-lg-table-cell">Categoría</th>
+        <th class="d-none d-lg-table-cell">Marca</th>
         <th class="text-end">Precio</th>
         <th class="text-end">Stock</th>
-        <th>Estado</th>
-        <th class="text-end" title="Cuántos clientes lo guardaron en favoritos">❤️ Guardado</th>
+        <th class="d-none d-xl-table-cell text-end" title="Costo de compra (privado)">Costo</th>
+        <th class="d-none d-md-table-cell">Estado</th>
+        <th class="d-none d-md-table-cell text-end" title="Cuántos clientes lo guardaron en favoritos">❤️ Guardado</th>
         <th class="text-end">Acciones</th>
       </tr>
     </thead>
     <tbody>
       {% for producto in pagina %}
         <tr>
-          <td>{{ producto.nombre }}</td>
-          <td>{{ producto.categoria }}</td>
-          <td>{{ producto.marca }}</td>
+          <td>{{ producto.nombre }}{% if producto.codigo %}<div class="small text-muted">Código: {{ producto.codigo }}</div>{% endif %}</td>
+          <td class="d-none d-lg-table-cell">{{ producto.categoria }}</td>
+          <td class="d-none d-lg-table-cell">{{ producto.marca }}</td>
           <td class="text-end text-nowrap">
             {% if producto.en_oferta %}
               <span class="text-danger fw-semibold">{{ producto.precio_oferta|soles }}</span><br>
@@ -62,27 +83,42 @@
               {{ producto.precio|soles }}
             {% endif %}
           </td>
-          <td class="text-end">{% if producto.agotado %}<span class="badge text-bg-secondary">Agotado</span>{% else %}{{ producto.stock }}{% endif %}</td>
-          <td>{% if producto.activo %}<span class="badge text-bg-success">Publicado</span>{% else %}<span class="badge text-bg-light border">Oculto</span>{% endif %}
+          <td class="text-end text-nowrap">
+            {% if producto.agotado %}<span class="badge text-bg-secondary">Agotado</span>
+            {% else %}<span class="fw-semibold">{{ producto.stock }}</span>
+              {% if producto.stock_minimo and producto.stock <= producto.stock_minimo %}<br><span class="badge text-bg-warning" title="Mínimo: {{ producto.stock_minimo }}">Stock bajo</span>{% endif %}
+            {% endif %}
+          </td>
+          <td class="d-none d-xl-table-cell text-end text-nowrap">{% if producto.costo is not None %}{{ producto.costo|soles }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="d-none d-md-table-cell">{% if producto.activo %}<span class="badge text-bg-success">Publicado</span>{% else %}<span class="badge text-bg-light border">Oculto</span>{% endif %}
             {% if producto.destacado %}<span class="badge text-bg-warning">⭐ Destacado</span>{% endif %}
             {% if producto.oculto_por_admin %}
               <span class="badge text-bg-danger" title="{{ producto.motivo_ocultamiento }}">Oculto por el administrador</span>
               {% if producto.motivo_ocultamiento %}<div class="small text-danger">{{ producto.motivo_ocultamiento }}</div>{% endif %}
             {% endif %}</td>
-          <td class="text-end">{{ producto.num_favoritos }}</td>
+          <td class="d-none d-md-table-cell text-end">{{ producto.num_favoritos }}</td>
           <td class="text-end text-nowrap">
             <a href="{% url 'catalogo:editar' producto.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
-            <a href="{% url 'catalogo:eliminar' producto.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+            <div class="btn-group">
+              <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Más opciones de {{ producto.nombre }}">Más</button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{% url 'inventario:ficha' producto.pk %}">Ficha de inventario (costo, mínimo, código)</a></li>
+                <li><a class="dropdown-item" href="{% url 'inventario:kardex' producto.pk %}">Kardex (historia del stock)</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'catalogo:eliminar' producto.pk %}">Eliminar</a></li>
+              </ul>
+            </div>
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="8" class="text-center text-muted py-4">
-          {% if q or categoria_id or marca_id %}No hay productos con esos filtros.{% else %}Aún no registraste productos.{% endif %}
+        <tr><td colspan="9" class="text-center text-muted py-4">
+          {% if q or categoria_id or marca_id or solo_alertas %}No hay productos con esos filtros.{% else %}Aún no registraste productos.{% endif %}
         </td></tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+<p class="small text-muted mt-2">El costo, el stock mínimo y el código son privados: solo tú los ves. Cada cambio de stock queda anotado en el kardex.</p>
 
 {% include "catalogo/_paginacion.html" %}
 {% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }} | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "inventario/_menu.html" %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <a href="{% url 'inventario:proveedores' %}" class="small">&larr; Volver a proveedores</a>
+    <div class="card shadow-sm mt-2"><div class="card-body p-4">
+      <h3 class="h5 mb-3">{{ titulo }}</h3>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "_campos_formulario.html" %}
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <a href="{% url 'inventario:proveedores' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

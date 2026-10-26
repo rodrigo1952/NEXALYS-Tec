@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'pedidos',
     'favoritos',
     'administracion',
+    'inventario',
 ]
 
 MIDDLEWARE = [

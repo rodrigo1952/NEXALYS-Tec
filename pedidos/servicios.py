@@ -14,6 +14,7 @@ mismo pedido o producto al mismo tiempo. Por eso cada operación:
 from django.db import transaction
 
 from catalogo.models import Producto
+from inventario.kardex import Tipo, registrar
 
 from .models import Pedido
 
@@ -57,6 +58,7 @@ def registrar_pedido(pedido):
     pedido.precio_unitario = producto.precio_final  # con la oferta, si hay una vigente
     pedido.estado = Pedido.Estado.PENDIENTE
     pedido.save()
+    registrar(producto, Tipo.VENTA, -pedido.cantidad, nota=f"Pedido #{pedido.pk}")  # kardex
     return pedido
 
 
@@ -72,12 +74,14 @@ def actualizar_pedido(pedido, producto_anterior_id, cantidad_anterior):
     anterior = _bloquear(producto_anterior_id)
     anterior.stock += cantidad_anterior
     _guardar_stock(anterior)
+    registrar(anterior, Tipo.ANULACION, cantidad_anterior, nota=f"Pedido #{pedido.pk} editado")
 
     nuevo = _bloquear(pedido.producto_id)  # si es el mismo producto, ya tiene el stock devuelto
     if nuevo.stock < pedido.cantidad:
         raise StockInsuficiente(nuevo.stock)  # la transacción deshace la devolución anterior
     nuevo.stock -= pedido.cantidad
     _guardar_stock(nuevo)
+    registrar(nuevo, Tipo.VENTA, -pedido.cantidad, nota=f"Pedido #{pedido.pk} editado")
 
     if pedido.producto_id != producto_anterior_id:
         pedido.precio_unitario = nuevo.precio_final
@@ -98,6 +102,7 @@ def cambiar_estado(pedido, nuevo_estado):
         producto = _bloquear(actual.producto_id)
         producto.stock += actual.cantidad  # al cancelar se restituye el stock
         _guardar_stock(producto)
+        registrar(producto, Tipo.ANULACION, actual.cantidad, nota=f"Pedido #{actual.pk} cancelado")
     actual.estado = nuevo_estado
     actual.save(update_fields=["estado", "actualizado"])
     pedido.estado = actual.estado  # la vista muestra el estado nuevo
@@ -115,4 +120,5 @@ def eliminar_pedido(pedido):
         producto = _bloquear(actual.producto_id)
         producto.stock += actual.cantidad
         _guardar_stock(producto)
+        registrar(producto, Tipo.ANULACION, actual.cantidad, nota=f"Pedido #{actual.pk} eliminado")
     actual.delete()

@@ -92,6 +92,8 @@ Los tres están integrados: un producto pertenece a una categoría y una marca, 
 28. Las imágenes se guardan en **una carpeta por tienda** (`media/tiendas/<número>-<nombre>/`) con el nombre del producto. Para ordenar las antiguas: `python manage.py ordenar_imagenes`.
 29. Una **tienda suspendida que no se reactiva en 90 días se elimina automáticamente** (cuenta, productos e imágenes). La tienda ve la fecha límite en su panel desde el primer día; el administrador ve la lista en el Resumen. Sus ventas se conservan **anónimas** ("Tienda eliminada", sin datos del cliente) y queda registrado en el Historial. La limpieza se ejecuta al entrar al panel del administrador o con `python manage.py limpiar_cuentas`.
 30. Los **clientes confirman su correo** antes de poder iniciar sesión (igual que las tiendas). Pueden pedir un enlace nuevo; si no confirman en 7 días, la cuenta se elimina sola. Los clientes registrados antes de esta regla ya cuentan como confirmados.
+31. **Mis productos = catálogo + inventario** en una sola sección (reemplazará a Pedidos): la lista muestra precio, publicación, stock y alertas de stock bajo; cada producto tiene una **ficha** privada (costo, stock mínimo, código) y un **kardex** con toda la historia de su stock. El formulario de productos no cambia: si la tienda cambia el stock al editar, queda anotado en el kardex. La tienda guarda su lista de **proveedores**. Costos y proveedores solo los ve la tienda.
+32. **Ventas** (pestaña de Mis productos): una venta puede tener varios productos; el precio se sugiere y se puede cambiar (descuentos); se elige el método de pago y, si se quiere, el cliente. El stock se descuenta y queda en el kardex. Cada venta tiene un número correlativo por tienda y una **nota de venta** imprimible (documento interno, no es boleta ni factura). Una venta registrada por error se **anula** con un motivo: no se borra y el stock vuelve. Las anuladas no suman en los totales.
 
 ## Control de concurrencia
 
@@ -104,9 +106,12 @@ Situaciones en las que dos personas (o dos pestañas) actúan sobre el mismo dat
 | Editar un producto que otra pestaña o un pedido acaba de cambiar | Bloqueo optimista con la versión del producto (campo oculto `version`) |
 | Registro simultáneo con el mismo usuario, correo, tienda o WhatsApp | Validar y guardar en una transacción; el duplicado se muestra como error del formulario |
 | Eliminar un producto justo cuando se le registra un pedido | Eliminación en transacción; se avisa en vez de mostrar error 500 |
+| Dos ventas a la vez por las últimas unidades, o el mismo producto en dos líneas | Productos bloqueados en orden por id y stock releído en la transacción; las cantidades del mismo producto se suman |
+| Dos ventas a la vez en la misma tienda (número de venta) | La tienda se bloquea al numerar: el número no se repite |
+| Anular la misma venta dos veces | La venta se relee bloqueada; la segunda anulación se rechaza |
 | Doble clic en un botón de enviar | Los botones se desactivan al enviar ("Procesando…") |
 
-Las pruebas están en `pedidos/test_concurrencia.py`, `catalogo/test_concurrencia.py` y `cuentas/test_concurrencia.py`.
+Las pruebas están en `pedidos/test_concurrencia.py`, `catalogo/test_concurrencia.py`, `cuentas/test_concurrencia.py` e `inventario/test_ventas.py`.
 
 ## Permisos por rol
 

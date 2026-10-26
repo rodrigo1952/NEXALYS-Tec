@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Anular venta | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "inventario/_menu.html" %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card border-danger shadow-sm"><div class="card-body p-4">
+      <h3 class="h5 text-danger">Anular la venta N.° {{ venta.numero|stringformat:"05d" }}</h3>
+      <p class="small mb-2">{{ venta.fecha|date:"d/m/Y H:i" }} · {{ venta.total|soles }}</p>
+      <ul class="small">
+        {% for l in venta.lineas.all %}<li>{{ l.cantidad }} × {{ l.producto_nombre }}</li>{% endfor %}
+      </ul>
+      <p>El stock de estos productos <strong>volverá al inventario</strong> y quedará registrado en el kardex. La venta no se borra: queda marcada como anulada con el motivo.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.motivo.id_for_label }}">{{ form.motivo.label }}</label>
+          {{ form.motivo }}
+          {% for e in form.motivo.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-danger">Anular venta</button>
+          <a href="{% url 'inventario:venta_detalle' venta.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

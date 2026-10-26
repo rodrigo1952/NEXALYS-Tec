@@ -366,12 +366,14 @@ class Producto(models.Model):
             optimizar_campo(self.imagen, LADO_MAXIMO_PRODUCTO)
         # Regla: al cambiar o quitar la imagen, se borra el archivo anterior
         # para no acumular imágenes que ya nadie usa.
-        anterior = nombre_anterior = None
+        anterior = nombre_anterior = stock_anterior = None
+        creando = self._state.adding
         if self.pk:
-            fila = Producto.objects.filter(pk=self.pk).values_list("imagen", "nombre").first()
+            fila = Producto.objects.filter(pk=self.pk).values_list("imagen", "nombre", "stock").first()
             if fila:
-                anterior, nombre_anterior = fila
+                anterior, nombre_anterior, stock_anterior = fila
         super().save(*args, **kwargs)
+        self._anotar_en_kardex(creando, stock_anterior, kwargs.get("update_fields"))
         if anterior and anterior != (self.imagen.name or ""):
             almacenamiento = self.imagen.storage
             transaction.on_commit(lambda: almacenamiento.delete(anterior))
@@ -381,6 +383,21 @@ class Producto(models.Model):
 
             producto_id = self.pk
             transaction.on_commit(lambda: reubicar_producto(producto_id))
+
+    def _anotar_en_kardex(self, creando, stock_anterior, update_fields):
+        """
+        Inventario: el stock con que se crea un producto queda como "Inventario inicial";
+        si la tienda cambia el stock desde "Editar producto", queda como "Cambio al editar".
+        Los guardados parciales (update_fields) vienen de operaciones que anotan su
+        propio movimiento (ventas, pedidos, ingresos), así no se duplican.
+        """
+        from inventario.kardex import Tipo, registrar  # aquí para evitar un import circular
+
+        usuario = getattr(self, "_usuario_cambio", None)
+        if creando:
+            registrar(self, Tipo.INICIAL, self.stock, usuario=usuario)
+        elif update_fields is None and stock_anterior is not None and stock_anterior != self.stock:
+            registrar(self, Tipo.EDICION, self.stock - stock_anterior, usuario=usuario)
 
     def delete(self, *args, **kwargs):
         # Al eliminar el producto, también se borra su imagen

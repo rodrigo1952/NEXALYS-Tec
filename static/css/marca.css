@@ -217,3 +217,15 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
 .pie-marca { background: var(--nx-oscuro); color: var(--nx-pie-texto); }
 .pie-marca a { color: var(--nx-menu-texto); text-decoration: none; }
 .pie-marca a:hover { color: var(--nx-blanco); }
+
+/* ---------- Impresión (nota de venta y reportes) ----------
+   Al imprimir o "Guardar como PDF" solo sale el contenido: sin menú, pie,
+   botones ni avisos. Marca con class="no-imprimir" lo que no debe salir. */
+@media print {
+  .cabecera-marca, .pie-marca, .no-imprimir, .toast-container, main > .alert { display: none !important; }
+  body { background: #fff !important; }
+  main.container { padding: 0 !important; max-width: none; }
+  .card { border: 0 !important; box-shadow: none !important; }
+  .nota-venta .card-body { padding: 0 !important; }
+  a[href]::after { content: none !important; }
+}

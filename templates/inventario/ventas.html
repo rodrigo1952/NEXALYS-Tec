@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Ventas | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "inventario/_menu.html" %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <ul class="nav nav-pills small">
+    {% for clave, nombre in periodos %}
+      <li class="nav-item"><a class="nav-link py-1{% if clave == periodo %} active{% endif %}" href="{% querystring periodo=clave page=None %}">{{ nombre }}</a></li>
+    {% endfor %}
+  </ul>
+  <a href="{% url 'inventario:venta_nueva' %}" class="btn btn-primary">+ Nueva venta</a>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3"><div class="card shadow-sm h-100"><div class="card-body py-3">
+    <div class="small text-muted">Total vendido</div><div class="fs-4 fw-semibold">{{ resumen.total|default:0|soles }}</div>
+  </div></div></div>
+  <div class="col-6 col-md-3"><div class="card shadow-sm h-100"><div class="card-body py-3">
+    <div class="small text-muted">Ventas</div><div class="fs-4 fw-semibold">{{ resumen.cantidad }}</div>
+  </div></div></div>
+  <div class="col-6 col-md-3"><div class="card shadow-sm h-100"><div class="card-body py-3">
+    <div class="small text-muted">Unidades vendidas</div><div class="fs-4 fw-semibold">{{ resumen.unidades }}</div>
+  </div></div></div>
+  <div class="col-6 col-md-3"><div class="card shadow-sm h-100"><div class="card-body py-3">
+    <div class="small text-muted mb-1">Por método de pago</div>
+    {% for nombre, suma in por_metodo %}
+      <div class="d-flex justify-content-between small"><span>{{ nombre }}</span><span class="fw-semibold">{{ suma|soles }}</span></div>
+    {% empty %}
+      <div class="small text-muted">—</div>
+    {% endfor %}
+  </div></div></div>
+</div>
+
+<form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
+  <input type="hidden" name="periodo" value="{{ periodo }}">
+  <label for="buscar-venta" class="visually-hidden">Buscar venta</label>
+  <input id="buscar-venta" type="search" name="q" value="{{ q }}" class="form-control flex-grow-1" style="width:auto;flex-basis:14rem" placeholder="Buscar por N.°, cliente, DNI/RUC o producto">
+  <button type="submit" class="btn btn-outline-secondary">Buscar</button>
+  {% if q %}<a href="{% querystring q=None page=None %}" class="btn btn-link">Quitar búsqueda</a>{% endif %}
+</form>
+
+<div class="table-responsive bg-white rounded shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>N.°</th><th>Fecha</th><th class="d-none d-md-table-cell">Cliente</th><th>Productos</th><th class="d-none d-lg-table-cell">Método</th><th class="text-end">Total</th><th class="text-end"></th></tr>
+    </thead>
+    <tbody>
+      {% for v in pagina %}
+        <tr{% if v.anulada %} class="text-muted"{% endif %}>
+          <td class="text-nowrap fw-semibold">{{ v.numero|stringformat:"05d" }}</td>
+          <td class="small text-nowrap">{{ v.fecha|date:"d/m/Y H:i" }}</td>
+          <td class="small d-none d-md-table-cell">{{ v.cliente_nombre|default:"—" }}</td>
+          <td class="small">
+            {% for l in v.lineas.all %}{{ l.cantidad }} × {{ l.producto_nombre }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+            {% if v.origen %}<div class="text-muted">{{ v.origen }}</div>{% endif %}
+          </td>
+          <td class="small d-none d-lg-table-cell">{{ v.get_metodo_pago_display }}</td>
+          <td class="text-end text-nowrap">
+            {% if v.anulada %}<s>{{ v.total|soles }}</s><div><span class="badge text-bg-danger">Anulada</span></div>{% else %}<span class="fw-semibold">{{ v.total|soles }}</span>{% endif %}
+          </td>
+          <td class="text-end"><a href="{% url 'inventario:venta_detalle' v.pk %}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">{% if q %}No hay ventas que coincidan.{% else %}No hay ventas en este periodo.{% endif %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="small text-muted mt-2">Las ventas anuladas se muestran tachadas y no suman en los totales. Solo tú ves tus ventas y clientes.</p>
+{% include "catalogo/_paginacion.html" %}
+{% endblock %}

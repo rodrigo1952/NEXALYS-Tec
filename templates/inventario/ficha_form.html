@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Ficha de inventario | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "inventario/_menu.html" %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <a href="{% url 'catalogo:mis_productos' %}" class="small">&larr; Volver a mis productos</a>
+    <div class="card shadow-sm mt-2"><div class="card-body p-4">
+      <h3 class="h5 mb-1">Ficha de inventario</h3>
+      <p class="text-muted mb-3">{{ producto.nombre }} · Stock actual: <strong>{{ producto.stock }}</strong> · Precio de venta: {{ producto.precio_final|soles }}</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "_campos_formulario.html" %}
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <a href="{% url 'inventario:kardex' producto.pk %}" class="btn btn-outline-secondary">Ver kardex</a>
+        </div>
+      </form>
+      <p class="small text-muted mt-3 mb-0">Estos datos son privados: no los ven los clientes ni el administrador.</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
