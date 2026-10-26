@@ -2,8 +2,9 @@
 Limpieza automática de cuentas.
 
 1. Tiendas suspendidas que no se reactivaron en 90 días: se eliminan (cuenta, tienda,
-   productos e imágenes). Sus ventas (pedidos) se CONSERVAN ANÓNIMAS como
-   "Tienda eliminada", sin los datos del cliente, para que las estadísticas no cambien.
+   productos e imágenes). Sus ventas se CONSERVAN ANÓNIMAS como "Tienda eliminada",
+   sin los datos del cliente, para que las estadísticas no cambien. Sus ingresos,
+   proveedores y kardex (datos privados de la tienda) se eliminan con ella.
    Queda registrado en el Historial del administrador.
 2. Cuentas de cliente que no confirmaron su correo en 7 días: se eliminan, para que
    un correo mal escrito no deje el nombre de usuario ocupado para siempre.
@@ -25,7 +26,7 @@ from catalogo.archivos import carpeta_tienda
 from catalogo.models import borrar_archivo_al_confirmar
 from catalogo.reubicar import borrar_carpetas_vacias
 from cuentas.models import DIAS_PARA_CONFIRMAR_CORREO
-from pedidos.models import Pedido
+from inventario.models import Venta
 from tiendas.models import DIAS_PARA_ELIMINAR_SUSPENDIDA, Tienda
 
 from . import acciones
@@ -50,10 +51,11 @@ def eliminar_tienda_vencida(tienda):
         motivo = tienda.motivo_suspension or "sin motivo registrado"
 
         # Ventas anónimas: se quitan la tienda y los datos personales del cliente.
-        Pedido.objects.filter(tienda=tienda).update(
-            tienda=None, producto=None, tienda_nombre=NOMBRE_ANONIMO,
-            cliente_nombre="Cliente anónimo", cliente_telefono="", observacion="",
+        Venta.objects.filter(tienda=tienda).update(
+            tienda=None, tienda_nombre=NOMBRE_ANONIMO, usuario=None,
+            cliente_nombre="Cliente anónimo", cliente_documento="", nota="", motivo_anulacion="",
         )
+        tienda.movimientos.all().delete()  # el kardex es privado de la tienda
         for producto in tienda.productos.all():
             producto.delete()  # también borra sus imágenes
         borrar_archivo_al_confirmar(tienda.logo)

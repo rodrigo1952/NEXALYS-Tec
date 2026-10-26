@@ -8,8 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from favoritos.models import Favorito
-from pedidos.models import Pedido
-from pedidos.servicios import registrar_pedido
+from inventario.servicios import LineaPedida, registrar_venta
 
 from .models import MAX_DESTACADOS, Producto
 from .tests import BaseCatalogo
@@ -39,13 +38,10 @@ class OfertaModeloTests(BaseCatalogo):
         producto = self.crear_producto(precio=Decimal("100.00"), precio_oferta=Decimal("80.00"))
         self.assertIn("S/ 80.00", producto.mensaje_whatsapp())
 
-    def test_el_pedido_toma_el_precio_de_oferta(self):
+    def test_la_venta_toma_el_precio_de_oferta(self):
         producto = self.crear_producto(precio=Decimal("100.00"), precio_oferta=Decimal("80.00"), stock=5)
-        pedido = registrar_pedido(Pedido(
-            tienda=self.tienda, producto=producto, cantidad=1,
-            cliente_nombre="Ana Quispe", cliente_telefono="987654321",
-        ))
-        self.assertEqual(pedido.precio_unitario, Decimal("80.00"))
+        venta = registrar_venta(self.tienda, self.tienda.usuario, [LineaPedida(producto.pk, 1)])
+        self.assertEqual(venta.lineas.get().precio_unitario, Decimal("80.00"))
 
 
 class OfertaFormularioTests(BaseCatalogo):

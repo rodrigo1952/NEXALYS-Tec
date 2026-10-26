@@ -3,3 +3,4 @@ Django==6.1.1
 sqlparse==0.6.0
 tzdata==2026.4
 pillow>=11.3
+openpyxl>=3.1

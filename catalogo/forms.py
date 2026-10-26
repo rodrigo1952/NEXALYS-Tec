@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
@@ -5,6 +7,7 @@ from django.db.models import Max, Q
 from django.utils import timezone
 
 from cuentas.estilos import EstiloBootstrapMixin
+from inventario.models import FichaInventario
 from tiendas.models import Tienda
 
 from .models import (
@@ -43,7 +46,7 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
 
     # Control de concurrencia (bloqueo optimista): guarda la fecha de la última
     # modificación del producto cuando se abrió el formulario. Si al guardar ya no
-    # coincide (otra pestaña lo editó o un pedido cambió su stock), se avisa en vez
+    # coincide (otra pestaña lo editó o una venta cambió su stock), se avisa en vez
     # de sobrescribir los datos nuevos con los viejos.
     version = forms.CharField(widget=forms.HiddenInput, required=False)
 
@@ -60,8 +63,16 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         widget=forms.CheckboxSelectMultiple,
     )
 
+    # Precio de compra: dato PRIVADO de la tienda (es el "costo" de la ficha de inventario).
+    # No es un campo de Producto: se guarda en la ficha. Se edita aquí o en la ficha; es el mismo dato.
+    precio_compra = forms.DecimalField(
+        label="Precio de compra (S/)", required=False, min_value=Decimal("0"), max_digits=10, decimal_places=2,
+        widget=forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+        help_text="Opcional. Solo tú lo ves; sirve para calcular tu ganancia.",
+    )
+
     field_order = [
-        "nombre", "categoria", "marca", "precio", "precio_oferta", "oferta_hasta",
+        "nombre", "categoria", "marca", "precio_compra", "precio", "precio_oferta", "oferta_hasta",
         "stock", "descripcion", "imagen", "fotos_nuevas", "activo", "destacado",
     ]
 
@@ -71,7 +82,7 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
             "nombre", "categoria", "marca", "precio", "precio_oferta", "oferta_hasta",
             "stock", "descripcion", "imagen", "activo", "destacado",
         ]
-        labels = {"imagen": "Foto principal"}
+        labels = {"imagen": "Foto principal", "precio": "Precio de venta (S/)"}
         widgets = {
             "descripcion": forms.Textarea(attrs={"rows": 4}),
             "precio": forms.NumberInput(attrs={"step": "0.01", "min": str(PRECIO_MINIMO)}),
@@ -95,9 +106,15 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         self.fields["marca"].empty_label = "Selecciona una marca"
         # Las fotos que se pueden quitar se dibujan aparte, con su miniatura (producto_form.html).
         self.fields["eliminar_fotos"].aparte = True
+        # Precio de compra y de venta en una misma fila (ver _campos_formulario.html).
+        self.fields["precio_compra"].fila = "inicio"
+        self.fields["precio"].fila = "fin"
         if self.instance.pk:
             self.fields["version"].initial = self.instance.actualizado.isoformat()
             self.fields["eliminar_fotos"].queryset = self.instance.fotos.all()
+            # Al editar se muestra el costo actual (si hubo ingresos, es el costo promedio).
+            ficha = FichaInventario.objects.filter(producto=self.instance).first()
+            self.fields["precio_compra"].initial = ficha.costo if ficha else None
 
     def clean(self):
         datos = super().clean()
@@ -153,7 +170,7 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
                     f" Datos actuales: precio S/ {actual.precio}, stock {actual.stock}." if actual else ""
                 )
                 raise ValidationError(
-                    "Este producto cambió mientras lo editabas (otra pestaña o un pedido modificó sus datos)."
+                    "Este producto cambió mientras lo editabas (otra pestaña o una venta modificó sus datos)."
                     f"{datos_actuales} Corrige lo que necesites y vuelve a guardar."
                 )
 
@@ -161,7 +178,21 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         producto = super().save(commit=commit)
         if commit:
             self.guardar_fotos(producto)
+            self.guardar_precio_compra(producto)
         return producto
+
+    def guardar_precio_compra(self, producto):
+        """Solo si la tienda lo cambió: así no se pisa el costo promedio que calculó un ingreso."""
+        if "precio_compra" not in self.changed_data:
+            return
+        costo = self.cleaned_data.get("precio_compra")
+        ficha = FichaInventario.objects.filter(producto=producto).first()
+        if ficha is None:
+            if costo is None:
+                return
+            ficha = FichaInventario(producto=producto)
+        ficha.costo = costo
+        ficha.save()
 
     def guardar_fotos(self, producto):
         for foto in self.cleaned_data.get("eliminar_fotos") or []:

@@ -5,6 +5,11 @@
   <div class="col-lg-7">
     <div class="card shadow-sm"><div class="card-body p-4">
       <h2 class="h4 mb-3">{{ titulo }}</h2>
+      {% if volver == "ingreso" %}
+        <div class="alert alert-info small">Estás creando un producto para registrar un <strong>ingreso de mercadería</strong>. Deja el <strong>stock en 0</strong>: el ingreso sumará las unidades y guardará su precio de compra. Al guardar volverás al ingreso.</div>
+      {% elif volver == "venta" %}
+        <div class="alert alert-info small">Estás creando un producto para registrar una <strong>venta</strong>. En <strong>stock</strong> pon las unidades que tienes, incluidas las que vas a vender. Al guardar volverás a la venta.</div>
+      {% endif %}
       {% if producto and producto.imagen %}
         <p class="small text-muted mb-1">Foto principal actual:</p>
         <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="mb-3 rounded border" style="max-height:120px">
@@ -43,7 +48,7 @@
 
         <div class="d-flex gap-2">
           <button type="submit" class="btn btn-primary">Guardar</button>
-          <a href="{% url 'catalogo:mis_productos' %}" class="btn btn-outline-secondary">Cancelar</a>
+          <a href="{% if url_cancelar %}{{ url_cancelar }}{% else %}{% url 'catalogo:mis_productos' %}{% endif %}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
       </form>
     </div></div>

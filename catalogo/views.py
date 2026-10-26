@@ -1,9 +1,10 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, ProtectedError, Q, Sum, Value
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from tiendas.decorators import tienda_requerida
 
@@ -117,6 +118,9 @@ def mis_productos(request):
     solo_alertas = request.GET.get("alerta") == "1"
     if solo_alertas:
         productos = productos.filter(Q(stock=0) | bajo)
+    sin_costo = request.GET.get("sin_costo") == "1"
+    if sin_costo:
+        productos = productos.filter(ficha__costo__isnull=True)
     texto = request.GET.get("q", "").strip()
     if texto:
         productos = productos.buscar(texto)
@@ -138,7 +142,7 @@ def mis_productos(request):
 
     pagina = Paginator(productos, 10).get_page(request.GET.get("page"))
     return render(request, "catalogo/mis_productos.html", {
-        "pagina": pagina, "q": texto, "resumen": resumen, "solo_alertas": solo_alertas,
+        "pagina": pagina, "q": texto, "resumen": resumen, "solo_alertas": solo_alertas, "sin_costo": sin_costo,
         "categorias": categorias, "marcas": marcas,
         "categoria_id": categoria_id, "marca_id": marca_id,
         "total_productos": sum(c["cantidad"] for c in categorias),
@@ -151,7 +155,7 @@ def _resumen_inventario(tienda, bajo):
         productos=Count("id"),
         unidades=Coalesce(Sum("stock"), 0),
         valor=Sum(ExpressionWrapper(F("stock") * F("ficha__costo"), output_field=DecimalField(max_digits=14, decimal_places=2))),
-        sin_costo=Count("id", filter=Q(stock__gt=0, ficha__costo__isnull=True)),
+        sin_costo=Count("id", filter=Q(ficha__costo__isnull=True)),
         agotados=Count("id", filter=Q(stock=0)),
         stock_bajo=Count("id", filter=bajo),
     )
@@ -159,18 +163,29 @@ def _resumen_inventario(tienda, bajo):
     return datos
 
 
+# Desde "Nuevo ingreso" o "Nueva venta" se puede crear un producto que aún no existe:
+# al guardarlo se vuelve a esa página con el producto ya elegido.
+VOLVER_A = {"ingreso": "inventario:ingreso_nuevo", "venta": "inventario:venta_nueva"}
+
+
 @tienda_requerida()
 def producto_crear(request):
+    volver = request.GET.get("volver") if request.GET.get("volver") in VOLVER_A else ""
     if request.method == "POST":
         form = ProductoForm(request.POST, request.FILES, tienda=request.tienda)
         if form.is_valid():
             form.instance._usuario_cambio = request.user  # autor del "inventario inicial" en el kardex
             producto = form.save()
             messages.success(request, f"Producto \"{producto.nombre}\" registrado correctamente.")
+            if volver:
+                return redirect(f"{reverse(VOLVER_A[volver])}?producto={producto.pk}")
             return redirect("catalogo:mis_productos")
     else:
         form = ProductoForm(tienda=request.tienda)
-    return render(request, "catalogo/producto_form.html", {"form": form, "titulo": "Agregar producto"})
+    return render(request, "catalogo/producto_form.html", {
+        "form": form, "titulo": "Agregar producto", "volver": volver,
+        "url_cancelar": reverse(VOLVER_A[volver]) if volver else reverse("catalogo:mis_productos"),
+    })
 
 
 @tienda_requerida()
@@ -200,27 +215,11 @@ def producto_editar(request, pk):
 @tienda_requerida()
 def producto_eliminar(request, pk):
     producto = get_object_or_404(Producto, pk=pk, tienda=request.tienda)
-    # Regla de negocio: un producto con pedidos no se elimina, para conservar el historial de ventas.
-    if producto.pedidos.exists():
-        messages.error(
-            request,
-            f"No se puede eliminar \"{producto.nombre}\" porque tiene pedidos registrados. "
-            "Puedes ocultarlo desmarcando \"publicado\".",
-        )
-        return redirect("catalogo:mis_productos")
+    # Sus ventas, ingresos y kardex NO se borran: guardan el nombre del producto (historial).
     if request.method == "POST":
         nombre = producto.nombre
-        try:
-            with transaction.atomic():
-                producto.delete()  # el modelo borra la imagen solo si la eliminación se confirma
-        except ProtectedError:
-            # Concurrencia: se registró un pedido de este producto mientras se confirmaba la eliminación.
-            messages.error(
-                request,
-                f"No se puede eliminar \"{nombre}\" porque se le acaba de registrar un pedido. "
-                "Puedes ocultarlo desmarcando \"publicado\".",
-            )
-            return redirect("catalogo:mis_productos")
+        with transaction.atomic():
+            producto.delete()  # el modelo borra la imagen solo si la eliminación se confirma
         messages.success(request, f"Producto \"{nombre}\" eliminado.")
         return redirect("catalogo:mis_productos")
     return render(request, "catalogo/producto_confirmar_eliminar.html", {"producto": producto})

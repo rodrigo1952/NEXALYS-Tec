@@ -4,7 +4,8 @@
 {% block contenido %}
 {% comment %}
 "Mis productos" reúne el catálogo (lo que ven los clientes) y el inventario (lo interno de la tienda).
-Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ventas, Ingresos y Reportes.
+Pestañas: Productos (esta página), Ventas, Ingresos, Ajustes y conteo, y Proveedores.
+Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página es solo suya).
 {% endcomment %}
 {% include "inventario/_menu.html" %}
 
@@ -14,7 +15,7 @@ Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ven
   </div></div></div>
   <div class="col-6 col-lg-3"><div class="card text-center shadow-sm h-100"><div class="card-body">
     <div class="h3 fw-bold mb-0">{{ resumen.valor|soles }}</div>
-    <div class="text-muted small">Valor del inventario (a costo){% if resumen.sin_costo %}<br><span class="text-warning-emphasis">{{ resumen.sin_costo }} sin costo en su ficha</span>{% endif %}</div>
+    <div class="text-muted small">Valor del inventario (a costo){% if resumen.sin_costo %}<br><a href="{% url 'catalogo:mis_productos' %}?sin_costo=1" class="text-warning-emphasis">{{ resumen.sin_costo }} sin precio de compra</a>{% endif %}</div>
   </div></div></div>
   <div class="col-6 col-lg-3"><a href="{% url 'catalogo:mis_productos' %}?alerta=1" class="card text-center shadow-sm h-100 text-decoration-none"><div class="card-body">
     <div class="h3 fw-bold mb-0 {% if resumen.stock_bajo %}text-warning{% endif %}">{{ resumen.stock_bajo }}</div><div class="text-muted small">Con stock bajo</div>
@@ -27,6 +28,7 @@ Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ven
 <form method="get" class="d-flex flex-wrap gap-2 mb-3">
   {% if categoria_id %}<input type="hidden" name="categoria" value="{{ categoria_id }}">{% endif %}
   {% if solo_alertas %}<input type="hidden" name="alerta" value="1">{% endif %}
+  {% if sin_costo %}<input type="hidden" name="sin_costo" value="1">{% endif %}
   <label for="buscar-mis-productos" class="visually-hidden">Buscar por nombre</label>
   <input id="buscar-mis-productos" type="search" name="q" value="{{ q }}" class="form-control flex-grow-1" style="flex-basis: 16rem; width: auto" placeholder="Buscar por nombre">
   {% if marcas %}
@@ -52,6 +54,7 @@ Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ven
   </nav>
 {% endif %}
 {% if solo_alertas %}<p class="small text-muted">Mostrando solo productos agotados o con stock bajo. <a href="{% url 'catalogo:mis_productos' %}">Ver todos</a></p>{% endif %}
+{% if sin_costo %}<p class="small text-muted">Mostrando solo productos sin precio de compra. Agrégalo con «Editar» para que cuenten en tu ganancia y en el valor del inventario. <a href="{% url 'catalogo:mis_productos' %}">Ver todos</a></p>{% endif %}
 
 <div class="table-responsive bg-white rounded shadow-sm">
   <table class="table table-hover align-middle mb-0">
@@ -62,7 +65,7 @@ Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ven
         <th class="d-none d-lg-table-cell">Marca</th>
         <th class="text-end">Precio</th>
         <th class="text-end">Stock</th>
-        <th class="d-none d-xl-table-cell text-end" title="Costo de compra (privado)">Costo</th>
+        <th class="d-none d-xl-table-cell text-end" title="Precio de compra (privado)">P. compra</th>
         <th class="d-none d-md-table-cell">Estado</th>
         <th class="d-none d-md-table-cell text-end" title="Cuántos clientes lo guardaron en favoritos">❤️ Guardado</th>
         <th class="text-end">Acciones</th>
@@ -71,7 +74,8 @@ Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ven
     <tbody>
       {% for producto in pagina %}
         <tr>
-          <td>{{ producto.nombre }}{% if producto.codigo %}<div class="small text-muted">Código: {{ producto.codigo }}</div>{% endif %}</td>
+          <td>{{ producto.nombre }}{% if producto.codigo %}<div class="small text-muted">Código: {{ producto.codigo }}</div>{% endif %}
+            {% if producto.costo is None %}<div><a href="{% url 'catalogo:editar' producto.pk %}" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle text-decoration-none sin-precio-compra" title="Solo tú ves este aviso">Falta precio de compra</a></div>{% endif %}</td>
           <td class="d-none d-lg-table-cell">{{ producto.categoria }}</td>
           <td class="d-none d-lg-table-cell">{{ producto.marca }}</td>
           <td class="text-end text-nowrap">
@@ -89,7 +93,7 @@ Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ven
               {% if producto.stock_minimo and producto.stock <= producto.stock_minimo %}<br><span class="badge text-bg-warning" title="Mínimo: {{ producto.stock_minimo }}">Stock bajo</span>{% endif %}
             {% endif %}
           </td>
-          <td class="d-none d-xl-table-cell text-end text-nowrap">{% if producto.costo is not None %}{{ producto.costo|soles }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+          <td class="d-none d-xl-table-cell text-end text-nowrap">{% if producto.costo is not None %}{{ producto.costo|soles }}{% else %}<span class="text-warning-emphasis small">Falta</span>{% endif %}</td>
           <td class="d-none d-md-table-cell">{% if producto.activo %}<span class="badge text-bg-success">Publicado</span>{% else %}<span class="badge text-bg-light border">Oculto</span>{% endif %}
             {% if producto.destacado %}<span class="badge text-bg-warning">⭐ Destacado</span>{% endif %}
             {% if producto.oculto_por_admin %}
@@ -104,6 +108,7 @@ Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ven
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{% url 'inventario:ficha' producto.pk %}">Ficha de inventario (costo, mínimo, código)</a></li>
                 <li><a class="dropdown-item" href="{% url 'inventario:kardex' producto.pk %}">Kardex (historia del stock)</a></li>
+                <li><a class="dropdown-item" href="{% url 'inventario:ajuste_nuevo' %}?producto={{ producto.pk }}">Ajustar stock (daño, pérdida, devolución)</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-danger" href="{% url 'catalogo:eliminar' producto.pk %}">Eliminar</a></li>
               </ul>
@@ -112,7 +117,7 @@ Pestañas: Productos (esta página), Proveedores y, en las próximas etapas, Ven
         </tr>
       {% empty %}
         <tr><td colspan="9" class="text-center text-muted py-4">
-          {% if q or categoria_id or marca_id or solo_alertas %}No hay productos con esos filtros.{% else %}Aún no registraste productos.{% endif %}
+          {% if q or categoria_id or marca_id or solo_alertas or sin_costo %}No hay productos con esos filtros.{% else %}Aún no registraste productos.{% endif %}
         </td></tr>
       {% endfor %}
     </tbody>

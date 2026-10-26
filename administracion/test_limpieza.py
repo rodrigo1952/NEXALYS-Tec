@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from catalogo.models import Producto
-from pedidos.models import Pedido
+from inventario.models import LineaVenta, Movimiento, Venta
 from tiendas.models import Tienda
 
 from . import limpieza
@@ -49,18 +49,21 @@ class EliminacionAutomaticaTests(BaseAdministracion):
         self.assertIn("Precios publicados falsos", accion.motivo)
 
     def test_las_ventas_se_conservan_anonimas(self):
-        self.crear_pedido(Pedido.Estado.ENTREGADO)
+        self.crear_venta(2)
         self.suspender_hace(120)
         limpieza.ejecutar()
-        pedido = Pedido.objects.get()
-        self.assertIsNone(pedido.tienda)
-        self.assertEqual(pedido.tienda_nombre, "Tienda eliminada")
-        self.assertEqual(pedido.producto_nombre, "Galaxy A15")
-        self.assertEqual(pedido.cliente_nombre, "Cliente anónimo")
-        self.assertEqual(pedido.cliente_telefono, "")
+        venta = Venta.objects.get()
+        self.assertIsNone(venta.tienda)
+        self.assertEqual(venta.tienda_nombre, "Tienda eliminada")
+        self.assertEqual(venta.cliente_nombre, "Cliente anónimo")
+        self.assertEqual(venta.total, Decimal("1400.00"))
+        linea = LineaVenta.objects.get()
+        self.assertIsNone(linea.producto)
+        self.assertEqual(linea.producto_nombre, "Galaxy A15")
+        self.assertFalse(Movimiento.objects.exists())  # el kardex era privado de la tienda
         # Las estadísticas del administrador no cambian.
-        respuesta = self.client.get(reverse("administracion:pedidos"))
-        self.assertEqual(respuesta.context["ventas"], Decimal("1400.00"))
+        respuesta = self.client.get(reverse("administracion:ventas"))
+        self.assertEqual(respuesta.context["total_general"], Decimal("1400.00"))
         self.assertContains(respuesta, "Tienda eliminada")
 
     def test_una_tienda_reactivada_no_se_elimina(self):

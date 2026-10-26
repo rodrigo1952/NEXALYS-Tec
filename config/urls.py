@@ -33,7 +33,6 @@ urlpatterns = [
     path("cuentas/", include("django.contrib.auth.urls")),
     path("tiendas/", include("tiendas.urls")),
     path("catalogo/", include("catalogo.urls")),
-    path("pedidos/", include("pedidos.urls")),
     path("favoritos/", include("favoritos.urls")),
     path("administracion/", include("administracion.urls")),
     path("inventario/", include("inventario.urls")),

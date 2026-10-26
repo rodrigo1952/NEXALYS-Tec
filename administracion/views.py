@@ -1,16 +1,20 @@
 """
 Panel de administración con el diseño de NEXALYS (rol Administrador).
 
-Reemplaza el uso diario de Django Admin: resumen, tiendas, productos, pedidos y
+Reemplaza el uso diario de Django Admin: resumen, tiendas, productos, ventas y
 usuarios. Categorías y marcas siguen en catalogo/gestion.py. Django Admin queda
 como herramienta avanzada.
 """
+
+from datetime import datetime, time, timedelta
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, ProtectedError, Q, Sum
+from django.db.models import Count, DecimalField, OuterRef, ProtectedError, Q, Subquery, Sum
+from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -19,7 +23,7 @@ from django.views.decorators.http import require_POST
 
 from catalogo.models import Categoria, Marca, Producto, borrar_archivo_al_confirmar
 from cuentas.views import rol_requerido
-from pedidos.models import Pedido
+from inventario.models import Venta
 from tiendas.models import DIAS_PARA_ELIMINAR_SUSPENDIDA, Tienda
 
 from . import acciones, limpieza
@@ -28,10 +32,17 @@ from .models import AccionAdmin
 
 solo_admin = rol_requerido("Administrador")
 
-TOTAL_PEDIDO = ExpressionWrapper(
-    F("precio_unitario") * F("cantidad"),
-    output_field=DecimalField(max_digits=12, decimal_places=2),
-)
+MESES_VENTAS = 6  # columnas de la tabla de ventas por tienda
+NOMBRES_MES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Set", "Oct", "Nov", "Dic"]
+
+
+def _ventas_validas():
+    """Privacidad: el administrador solo ve TOTALES de ventas (nunca costos, ganancias ni clientes)."""
+    return Venta.objects.filter(anulada=False)
+
+
+def _inicio_mes_actual():
+    return timezone.make_aware(datetime.combine(timezone.localdate().replace(day=1), time.min))
 
 
 def _entero(valor):
@@ -89,10 +100,8 @@ def _limpiar(request):
 @solo_admin
 def resumen(request):
     _limpiar(request)
-    inicio_mes = timezone.localdate().replace(day=1)
     estados = dict(Tienda.objects.order_by().values_list("estado").annotate(n=Count("id")))
-    pedidos_mes = Pedido.objects.filter(creado__date__gte=inicio_mes)
-    ventas_mes = pedidos_mes.filter(estado=Pedido.Estado.ENTREGADO).aggregate(total=Sum(TOTAL_PEDIDO))["total"]
+    ventas_mes = _ventas_validas().filter(fecha__gte=_inicio_mes_actual())
     return render(request, "cuentas/panel_admin.html", {
         "tiendas_activas": estados.get(Tienda.Estado.ACTIVA, 0),
         "tiendas_pendientes": estados.get(Tienda.Estado.PENDIENTE, 0),
@@ -100,8 +109,8 @@ def resumen(request):
         "productos_publicados": Producto.objects.visibles().count(),
         "productos_ocultos": Producto.objects.filter(oculto_por_admin=True).count(),
         "clientes": User.objects.filter(groups__name="Cliente").count(),
-        "pedidos_mes": pedidos_mes.count(),
-        "ventas_mes": ventas_mes or 0,
+        "ventas_mes": ventas_mes.aggregate(t=Sum("total"))["t"] or 0,
+        "tiendas_con_ventas": ventas_mes.exclude(tienda=None).values("tienda").distinct().count(),
         "categorias": Categoria.objects.count(),
         "marcas": Marca.objects.count(),
         "por_eliminarse": limpieza.por_eliminarse_pronto()[:10],
@@ -117,7 +126,12 @@ def tiendas(request):
     _limpiar(request)
     lista = Tienda.objects.select_related("usuario").annotate(
         num_productos=Count("productos", distinct=True),
-        num_pedidos=Count("pedidos", distinct=True),
+    ).annotate(
+        vendido_mes=Subquery(
+            _ventas_validas().filter(tienda=OuterRef("pk"), fecha__gte=_inicio_mes_actual())
+            .order_by().values("tienda").annotate(t=Sum("total")).values("t")[:1],
+            output_field=DecimalField(max_digits=14, decimal_places=2),
+        ),
     ).order_by("nombre")
     estado = request.GET.get("estado", "")
     texto = request.GET.get("q", "").strip()
@@ -143,7 +157,8 @@ def tienda_detalle(request, pk):
         "total_productos": productos.count(),
         "publicados": productos.filter(activo=True, oculto_por_admin=False).count(),
         "ocultos_admin": productos.filter(oculto_por_admin=True).count(),
-        "total_pedidos": tienda.pedidos.count(),
+        "vendido_mes": _ventas_validas().filter(tienda=tienda, fecha__gte=_inicio_mes_actual())
+        .aggregate(t=Sum("total"))["t"] or 0,
     })
 
 
@@ -286,33 +301,49 @@ def producto_mostrar(request, pk):
 
 
 # ---------------------------------------------------------------------------
-# Pedidos (solo consulta)
+# Ventas (solo totales por tienda y mes)
 # ---------------------------------------------------------------------------
 
+def _meses_atras(cantidad):
+    """Primer día de los últimos `cantidad` meses, del más antiguo al actual."""
+    actual = timezone.localdate().replace(day=1)
+    meses = [actual]
+    for _ in range(cantidad - 1):
+        meses.insert(0, (meses[0] - timedelta(days=1)).replace(day=1))
+    return meses
+
+
 @solo_admin
-def pedidos(request):
-    lista = Pedido.objects.select_related("tienda", "producto")
-    tienda_id = _entero(request.GET.get("tienda"))
-    estado = request.GET.get("estado", "")
-    texto = request.GET.get("q", "").strip()
-    if tienda_id:
-        lista = lista.filter(tienda_id=tienda_id)
-    if estado in Pedido.Estado.values:
-        lista = lista.filter(estado=estado)
-    if texto:
-        lista = lista.filter(
-            Q(cliente_nombre__icontains=texto) | Q(producto__nombre__icontains=texto)
-            | Q(producto_nombre__icontains=texto)
-        )
-    entregados = lista.filter(estado=Pedido.Estado.ENTREGADO)
-    resumen_ventas = entregados.aggregate(num_entregados=Count("id"), total=Sum(TOTAL_PEDIDO))
-    pagina = Paginator(lista, 20).get_page(request.GET.get("page"))
-    return render(request, "administracion/pedidos.html", {
-        "pagina": pagina, "q": texto, "estado": estado, "estados": Pedido.Estado.choices,
-        "tienda_id": tienda_id, "tiendas": Tienda.objects.all(),
-        "total_pedidos": lista.count(),
-        "entregados": resumen_ventas["num_entregados"],
-        "ventas": resumen_ventas["total"] or 0,
+def ventas(request):
+    """
+    Tabla de ventas: filas = tiendas, columnas = últimos 6 meses y total.
+    Solo totales vendidos (sin anuladas). Las tiendas eliminadas se agrupan como "Tienda eliminada".
+    """
+    meses = _meses_atras(MESES_VENTAS)
+    desde = timezone.make_aware(datetime.combine(meses[0], time.min))
+    filas_bd = (
+        _ventas_validas().filter(fecha__gte=desde)
+        .annotate(mes=TruncMonth("fecha")).order_by()
+        .values("tienda_id", "mes").annotate(total=Sum("total"))
+    )
+    por_tienda = {}
+    for fila in filas_bd:
+        mes = fila["mes"]
+        mes = (timezone.localtime(mes) if timezone.is_aware(mes) else mes).date().replace(day=1)
+        por_tienda.setdefault(fila["tienda_id"], {})[mes] = fila["total"]
+
+    filas = []
+    for tienda in Tienda.objects.order_by("nombre"):
+        montos = [por_tienda.get(tienda.pk, {}).get(m, Decimal("0")) for m in meses]
+        filas.append({"tienda": tienda, "nombre": tienda.nombre, "montos": montos, "total": sum(montos)})
+    if None in por_tienda:
+        montos = [por_tienda[None].get(m, Decimal("0")) for m in meses]
+        filas.append({"tienda": None, "nombre": limpieza.NOMBRE_ANONIMO, "montos": montos, "total": sum(montos)})
+    filas.sort(key=lambda f: (-f["total"], f["nombre"].lower()))
+    totales = [sum(f["montos"][i] for f in filas) for i in range(len(meses))]
+    return render(request, "administracion/ventas.html", {
+        "meses": [f"{NOMBRES_MES[m.month - 1]} {m:%Y}" for m in meses],
+        "filas": filas, "totales": totales, "total_general": sum(totales),
     })
 
 
@@ -470,10 +501,10 @@ def usuario_eliminar(request, pk):
     usuario = get_object_or_404(User.objects.select_related("tienda"), pk=pk)
     motivo = _motivo_no_se_puede_modificar(request.user, usuario)
     tienda = getattr(usuario, "tienda", None)
-    if not motivo and tienda is not None and tienda.pedidos.exists():
+    if not motivo and tienda is not None and tienda.ventas.exists():
         # Regla: se conserva el historial de ventas.
         motivo = (
-            "Esta tienda tiene pedidos registrados y no se puede eliminar, para conservar el historial "
+            "Esta tienda tiene ventas registradas y no se puede eliminar, para conservar el historial "
             "de ventas. Puedes desactivar la cuenta o suspender la tienda."
         )
     if motivo:

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Nuevo ingreso | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "inventario/_menu.html" %}
+<a href="{% url 'inventario:ingresos' %}" class="small">&larr; Volver a ingresos</a>
+<h3 class="h5 my-2">Nuevo ingreso de mercadería</h3>
+<p class="text-muted small">Registra lo que recibiste y cuánto pagaste por unidad. Al guardar, el stock sube y el costo de la ficha se actualiza con el promedio.</p>
+
+<form method="post" novalidate id="form-ingreso">
+  {% csrf_token %}
+  {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+  {% for e in lineas.non_form_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+  {{ lineas.management_form }}
+
+  <div class="card shadow-sm mb-3"><div class="card-body">
+    <h4 class="h6">Productos recibidos</h4>
+    <p class="small mb-2">¿Llegó un producto que aún no tienes registrado? <a href="{% url 'catalogo:crear' %}?volver=ingreso">Créalo primero</a> y volverás aquí con el producto ya elegido.</p>
+    <div class="row g-2 small text-muted d-none d-md-flex">
+      <div class="col-md-6">Producto</div><div class="col-md-2">Cantidad</div><div class="col-md-2">Costo unit. (S/)</div><div class="col-md-2 text-end">Subtotal</div>
+    </div>
+    {% for f in lineas %}
+      <div class="row g-2 align-items-start py-2 border-bottom linea{% if forloop.counter > visibles and not f.producto.value %} d-none{% endif %}">
+        <div class="col-12 col-md-6">
+          <label class="visually-hidden" for="{{ f.producto.id_for_label }}">Producto {{ forloop.counter }}</label>
+          {{ f.producto }}
+          {% for e in f.producto.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-4 col-md-2">
+          <label class="visually-hidden" for="{{ f.cantidad.id_for_label }}">Cantidad</label>
+          {{ f.cantidad }}
+          {% for e in f.cantidad.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-4 col-md-2">
+          <label class="visually-hidden" for="{{ f.costo.id_for_label }}">Costo unitario</label>
+          {{ f.costo }}
+          {% for e in f.costo.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-4 col-md-2 text-end pt-2 fw-semibold subtotal">—</div>
+      </div>
+    {% endfor %}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="agregar-linea">+ Agregar otro producto</button>
+      <div class="fs-5">Total: <strong id="total">S/ 0.00</strong></div>
+    </div>
+    <div class="form-text">Hasta {{ lineas.max_num }} productos por ingreso. Si el producto ya tiene costo en su ficha, se sugiere al elegirlo.</div>
+  </div></div>
+
+  <div class="card shadow-sm mb-3"><div class="card-body">
+    <h4 class="h6">Proveedor y documento</h4>
+    <div class="row g-3">
+      {% for campo in form %}
+        <div class="{% if campo.name == 'nota' %}col-12{% else %}col-md-6{% endif %}">
+          <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+          {{ campo }}
+          {% if campo.name == 'proveedor' %}<div class="form-text"><a href="{% url 'inventario:proveedor_crear' %}">+ Registrar un proveedor nuevo</a></div>{% endif %}
+          {% for e in campo.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div></div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Registrar ingreso</button>
+    <a href="{% url 'inventario:ingresos' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </div>
+</form>
+
+<script src="{% static 'js/buscador_productos.js' %}?v=1"></script>
+<script>
+(function () {
+  const filas = Array.from(document.querySelectorAll("#form-ingreso .linea"));
+  const totalEl = document.getElementById("total");
+  const soles = (n) => "S/ " + n.toFixed(2);
+
+  function calcular() {
+    let total = 0;
+    filas.forEach((fila) => {
+      const select = fila.querySelector("select");
+      const [cantidad, costo] = fila.querySelectorAll("input[type=number]");
+      const n = parseInt(cantidad.value, 10);
+      const unitario = costo.value !== "" ? parseFloat(costo.value) : null;
+      const celda = fila.querySelector(".subtotal");
+      if (select.value && unitario !== null && n > 0) {
+        celda.textContent = soles(unitario * n);
+        total += unitario * n;
+      } else {
+        celda.textContent = "—";
+      }
+    });
+    totalEl.textContent = soles(total);
+  }
+
+  filas.forEach((fila) => {
+    fila.querySelector("select").addEventListener("change", (e) => {
+      const [cantidad, costo] = fila.querySelectorAll("input[type=number]");
+      const opcion = e.target.selectedOptions[0];
+      if (e.target.value && !cantidad.value) cantidad.value = 1;
+      // Se sugiere el costo de la ficha; se puede cambiar si esta vez pagaste otro precio.
+      if (opcion && opcion.dataset.costo && costo.value === "") costo.value = opcion.dataset.costo;
+      calcular();
+    });
+    fila.addEventListener("input", calcular);
+  });
+
+  const boton = document.getElementById("agregar-linea");
+  function actualizarBoton() { boton.disabled = !filas.some((f) => f.classList.contains("d-none")); }
+  boton.addEventListener("click", () => {
+    const oculta = filas.find((f) => f.classList.contains("d-none"));
+    if (oculta) { oculta.classList.remove("d-none"); oculta.querySelector("select").focus(); }
+    actualizarBoton();
+  });
+  // Si se volvió de crear un producto, ya está elegido: se sugiere su costo.
+  filas.forEach((fila) => {
+    const select = fila.querySelector("select");
+    const costo = fila.querySelectorAll("input[type=number]")[1];
+    const opcion = select.selectedOptions[0];
+    if (select.value && opcion && opcion.dataset.costo && costo.value === "") costo.value = opcion.dataset.costo;
+  });
+  actualizarBoton();
+  calcular();
+})();
+</script>
+{% endblock %}

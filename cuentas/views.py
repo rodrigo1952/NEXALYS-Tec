@@ -154,7 +154,7 @@ def editar_datos(request):
 def _puede_eliminar_cuenta(user):
     """
     Regla: solo los Clientes eliminan su cuenta desde la página. Una Tienda tiene
-    productos y pedidos, y el administrador no se elimina a sí mismo.
+    productos y ventas, y el administrador no se elimina a sí mismo.
     """
     return es_cliente(user) and not user.is_superuser and getattr(user, "tienda", None) is None
 

@@ -95,7 +95,6 @@ def panel(request):
         "total_productos": productos.count(),
         "publicados": productos.filter(activo=True).count(),
         "agotados": productos.filter(stock=0).count(),
-        "pedidos_pendientes": tienda.pedidos.filter(estado="pendiente").count(),
         # Privacidad: solo cantidades, nunca quiénes guardaron cada producto.
         "mas_guardados": (
             productos.annotate(num_favoritos=Count("favoritos"))

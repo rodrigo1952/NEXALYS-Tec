@@ -50,13 +50,13 @@
 <h3 class="h6 text-muted text-uppercase mb-3">Este mes</h3>
 <div class="row g-3 mb-4">
   <div class="col-sm-6">
-    <a href="{% url 'administracion:pedidos' %}" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
-      <div class="h2 fw-bold mb-0">{{ pedidos_mes }}</div><div class="text-muted small">Pedidos registrados por las tiendas</div>
+    <a href="{% url 'administracion:ventas' %}" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
+      <div class="h2 fw-bold mb-0">{{ ventas_mes|soles }}</div><div class="text-muted small">Vendido por todas las tiendas</div>
     </div></a>
   </div>
   <div class="col-sm-6">
     <div class="card text-center shadow-sm h-100"><div class="card-body">
-      <div class="h2 fw-bold mb-0">{{ ventas_mes|soles }}</div><div class="text-muted small">Vendido en pedidos entregados</div>
+      <div class="h2 fw-bold mb-0">{{ tiendas_con_ventas }}</div><div class="text-muted small">Tiendas que registraron ventas</div>
     </div></div>
   </div>
 </div>

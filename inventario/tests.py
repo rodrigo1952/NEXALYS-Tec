@@ -6,8 +6,6 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 
 from catalogo.tests import BaseCatalogo
-from pedidos.models import Pedido
-from pedidos.servicios import cambiar_estado, registrar_pedido
 
 from .models import FichaInventario, Movimiento, Proveedor
 
@@ -40,18 +38,6 @@ class KardexAutomaticoTests(BaseCatalogo):
         producto.precio = Decimal("650.00")
         producto.save()
         self.assertEqual(Movimiento.objects.count(), 1)  # solo el inventario inicial
-
-    def test_los_pedidos_quedan_en_el_kardex(self):
-        producto = self.crear_producto(stock=5)
-        pedido = registrar_pedido(Pedido(
-            tienda=self.tienda, producto=producto, cantidad=2,
-            cliente_nombre="Ana Quispe", cliente_telefono="987654321",
-        ))
-        venta = Movimiento.objects.get(tipo=Movimiento.Tipo.VENTA)
-        self.assertEqual((venta.cantidad, venta.stock_resultante), (-2, 3))
-        cambiar_estado(pedido, Pedido.Estado.CANCELADO)
-        anulacion = Movimiento.objects.get(tipo=Movimiento.Tipo.ANULACION)
-        self.assertEqual((anulacion.cantidad, anulacion.stock_resultante), (2, 5))
 
     def test_la_historia_se_conserva_si_se_elimina_el_producto(self):
         producto = self.crear_producto(nombre="Producto viejo", stock=4)

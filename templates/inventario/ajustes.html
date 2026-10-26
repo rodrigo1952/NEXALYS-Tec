@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}Ajustes y conteo | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "inventario/_menu.html" %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <ul class="nav nav-pills small">
+    {% for clave, nombre in periodos %}
+      <li class="nav-item"><a class="nav-link py-1{% if clave == periodo %} active{% endif %}" href="{% querystring periodo=clave page=None %}">{{ nombre }}</a></li>
+    {% endfor %}
+  </ul>
+  <div class="d-flex gap-2">
+    <a href="{% url 'inventario:ajuste_nuevo' %}" class="btn btn-primary">+ Nuevo ajuste</a>
+    <a href="{% url 'inventario:conteo' %}" class="btn btn-outline-primary">Conteo físico</a>
+  </div>
+</div>
+
+<form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
+  <input type="hidden" name="periodo" value="{{ periodo }}">
+  <label for="tipo-ajuste" class="visually-hidden">Tipo</label>
+  <select id="tipo-ajuste" name="tipo" class="form-select" style="width:auto">
+    {% for clave, nombre in tipos %}<option value="{{ clave }}"{% if clave == tipo %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+  </select>
+  <label for="buscar-ajuste" class="visually-hidden">Buscar</label>
+  <input id="buscar-ajuste" type="search" name="q" value="{{ q }}" class="form-control flex-grow-1" style="width:auto;flex-basis:14rem" placeholder="Buscar por producto o detalle">
+  <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+</form>
+
+<div class="table-responsive bg-white rounded shadow-sm">
+  <table class="table align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th class="d-none d-md-table-cell">Detalle</th><th class="text-end">Cantidad</th><th class="text-end">Stock después</th><th class="d-none d-lg-table-cell">Registrado por</th></tr>
+    </thead>
+    <tbody>
+      {% for m in pagina %}
+        <tr>
+          <td class="small text-nowrap">{{ m.fecha|date:"d/m/Y H:i" }}</td>
+          <td class="small">{% if m.producto_id %}<a href="{% url 'inventario:kardex' m.producto_id %}">{{ m.producto_nombre }}</a>{% else %}{{ m.producto_nombre }}{% endif %}</td>
+          <td class="small">{{ m.get_tipo_display }}{% if m.motivo %}<div class="text-muted">{{ m.get_motivo_display }}</div>{% endif %}</td>
+          <td class="small text-muted d-none d-md-table-cell">{{ m.nota|default:"" }}</td>
+          <td class="text-end fw-semibold {% if m.cantidad > 0 %}text-success{% else %}text-danger{% endif %}">{% if m.cantidad > 0 %}+{{ m.cantidad }}{% else %}−{{ m.salida }}{% endif %}</td>
+          <td class="text-end">{{ m.stock_resultante }}</td>
+          <td class="small d-none d-lg-table-cell">{{ m.usuario.username|default:"—" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No hay ajustes ni conteos en este periodo.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="small text-muted mt-2">Usa un <strong>ajuste</strong> para productos dañados, perdidos o devueltos. Usa el <strong>conteo físico</strong> para contar lo que hay en el local y corregir varias diferencias de una vez.</p>
+{% include "catalogo/_paginacion.html" %}
+{% endblock %}

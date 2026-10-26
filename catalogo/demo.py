@@ -12,7 +12,7 @@ laboratorio:
                                     python manage.py cargar_demo
 
 Qué se exporta: tiendas (con su horario y logo), productos (con sus fotos), y las
-categorías y marcas que usan. NO se exportan clientes, pedidos, favoritos ni
+categorías y marcas que usan. NO se exportan clientes, ventas, inventario, favoritos ni
 contraseñas. Los correos se reemplazan por correos de demostración, para no
 publicar correos reales en GitHub.
 

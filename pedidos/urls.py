@@ -1,14 +1,2 @@
-from django.urls import path
-
-from . import views
-
-app_name = "pedidos"
-
-urlpatterns = [
-    path("", views.lista, name="lista"),
-    path("nuevo/", views.crear, name="crear"),
-    path("<int:pk>/", views.detalle, name="detalle"),
-    path("<int:pk>/editar/", views.editar, name="editar"),
-    path("<int:pk>/estado/", views.estado, name="estado"),
-    path("<int:pk>/eliminar/", views.eliminar, name="eliminar"),
-]
+# El módulo Pedidos se retiró (Etapa 5): ahora se usa Mis productos > Ventas.
+# Este archivo ya no se usa y se puede borrar.

@@ -229,3 +229,11 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
   .nota-venta .card-body { padding: 0 !important; }
   a[href]::after { content: none !important; }
 }
+
+/* ---------- Buscador de productos (Nuevo ingreso, Nueva venta, Nuevo ajuste) ---------- */
+.buscador-producto-lista {
+  position: absolute; z-index: 1050; top: 100%; left: 0; right: 0;
+  max-height: 18rem; overflow-y: auto; margin-top: 2px;
+}
+.buscador-producto-lista .list-group-item { cursor: pointer; }
+.buscador-producto-lista .list-group-item.active { color: #fff; }

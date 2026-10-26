@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block titulo %}Nueva venta | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% include "inventario/_menu.html" %}
@@ -14,6 +15,7 @@
 
   <div class="card shadow-sm mb-3"><div class="card-body">
     <h4 class="h6">Productos</h4>
+    <p class="small mb-2">¿Vas a vender un producto que aún no registraste? <a href="{% url 'catalogo:crear' %}?volver=venta">Créalo primero</a> y volverás aquí con el producto ya elegido.</p>
     <div class="row g-2 small text-muted d-none d-md-flex">
       <div class="col-md-6">Producto</div><div class="col-md-2">Cantidad</div><div class="col-md-2">Precio unit. (S/)</div><div class="col-md-2 text-end">Subtotal</div>
     </div>
@@ -63,6 +65,7 @@
   </div>
 </form>
 
+<script src="{% static 'js/buscador_productos.js' %}?v=1"></script>
 <script>
 (function () {
   const filas = Array.from(document.querySelectorAll("#form-venta .linea-venta"));

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block titulo %}Conteo físico | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "inventario/_menu.html" %}
+<a href="{% url 'inventario:ajustes' %}" class="small">&larr; Volver a ajustes y conteo</a>
+<h3 class="h5 my-2">Conteo físico</h3>
+<p class="text-muted small">Cuenta lo que hay en el local y escribe la cantidad en «Contado». Deja vacíos los que no contaste: no se tocan. Al guardar, solo se corrigen los productos con diferencia y queda anotado en su kardex.</p>
+
+<form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
+  <label for="conteo-categoria" class="visually-hidden">Categoría</label>
+  <select id="conteo-categoria" name="categoria" class="form-select" style="width:auto">
+    <option value="">Todas las categorías</option>
+    {% for c in categorias %}<option value="{{ c.pk }}"{% if c.pk|stringformat:"s" == categoria_id %} selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+  </select>
+  <label for="conteo-buscar" class="visually-hidden">Buscar</label>
+  <input id="conteo-buscar" type="search" name="q" value="{{ q }}" class="form-control flex-grow-1" style="width:auto;flex-basis:14rem" placeholder="Buscar por nombre o código">
+  <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+</form>
+{% if total > limite %}<div class="alert alert-warning small">Se muestran los primeros {{ limite }} de {{ total }} productos. Filtra por categoría para contar el resto.</div>{% endif %}
+
+<form method="post" novalidate id="form-conteo">
+  {% csrf_token %}
+  <div class="table-responsive bg-white rounded shadow-sm">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Producto</th><th class="d-none d-md-table-cell">Código</th><th class="text-end">En sistema</th><th style="width:8rem">Contado</th><th class="text-end">Diferencia</th></tr>
+      </thead>
+      <tbody>
+        {% for f in filas %}
+          <tr>
+            <td class="small">{{ f.producto.nombre }}<div class="text-muted d-md-none">{{ f.producto.codigo|default:"" }}</div></td>
+            <td class="small d-none d-md-table-cell">{{ f.producto.codigo|default:"—" }}</td>
+            <td class="text-end">{{ f.producto.stock }}</td>
+            <td>
+              <input type="hidden" name="visto_{{ f.producto.pk }}" value="{{ f.producto.stock }}">
+              <label class="visually-hidden" for="contado-{{ f.producto.pk }}">Contado de {{ f.producto.nombre }}</label>
+              <input id="contado-{{ f.producto.pk }}" type="number" min="0" step="1" inputmode="numeric" name="contado_{{ f.producto.pk }}"
+                     value="{{ f.escrito }}" data-sistema="{{ f.producto.stock }}" class="form-control form-control-sm{% if f.error %} is-invalid{% endif %}">
+              {% if f.error %}<div class="invalid-feedback">{{ f.error }}</div>{% endif %}
+            </td>
+            <td class="text-end fw-semibold diferencia">—</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">No hay productos con esos filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if filas %}
+    <div class="row g-2 align-items-end mt-3">
+      <div class="col-md-6">
+        <label class="form-label small" for="conteo-nota">Nota (opcional)</label>
+        <input id="conteo-nota" type="text" name="nota" maxlength="120" class="form-control" placeholder="Ej.: Conteo de fin de mes">
+      </div>
+      <div class="col-md-6 d-flex gap-2 justify-content-md-end">
+        <span class="small text-muted align-self-center" id="resumen-conteo"></span>
+        <button type="submit" class="btn btn-primary">Guardar conteo</button>
+      </div>
+    </div>
+  {% endif %}
+</form>
+
+<script>
+(function () {
+  const entradas = document.querySelectorAll("#form-conteo input[data-sistema]");
+  const resumen = document.getElementById("resumen-conteo");
+  function actualizar() {
+    let contados = 0, conDiferencia = 0;
+    entradas.forEach((entrada) => {
+      const celda = entrada.closest("tr").querySelector(".diferencia");
+      if (entrada.value === "") { celda.textContent = "—"; celda.className = "text-end fw-semibold diferencia"; return; }
+      contados++;
+      const dif = parseInt(entrada.value, 10) - parseInt(entrada.dataset.sistema, 10);
+      if (dif !== 0) conDiferencia++;
+      celda.textContent = isNaN(dif) ? "—" : (dif > 0 ? "+" + dif : dif === 0 ? "0" : "−" + (-dif));
+      celda.className = "text-end fw-semibold diferencia " + (dif > 0 ? "text-success" : dif < 0 ? "text-danger" : "text-muted");
+    });
+    if (resumen) resumen.textContent = contados ? `${contados} contados · ${conDiferencia} con diferencia` : "";
+  }
+  entradas.forEach((e) => e.addEventListener("input", actualizar));
+  actualizar();
+})();
+</script>
+{% endblock %}

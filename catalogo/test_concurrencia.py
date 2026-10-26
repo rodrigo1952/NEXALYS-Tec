@@ -3,13 +3,9 @@ Pruebas de escenarios concurrentes en productos.
 La concurrencia se simula con formularios abiertos antes de que otro cambio se guarde.
 """
 
-from unittest import mock
-
-from django.db.models import ProtectedError
 from django.urls import reverse
 
-from pedidos.models import Pedido
-from pedidos.servicios import registrar_pedido
+from inventario.servicios import LineaPedida, registrar_venta
 from tiendas.models import Tienda
 
 from .models import Producto
@@ -47,13 +43,10 @@ class ConcurrenciaProductosTests(BaseCatalogo):
         self.producto.refresh_from_db()
         self.assertEqual(str(self.producto.precio), "650.00")  # no se perdió el cambio de la pestaña 2
 
-    def test_pedido_mientras_se_edita_no_pierde_el_stock(self):
+    def test_venta_mientras_se_edita_no_pierde_el_stock(self):
         version = self.version_al_abrir()  # la tienda abre el formulario con stock 5
 
-        registrar_pedido(Pedido(
-            tienda=self.tienda, producto=self.producto, cantidad=2,
-            cliente_nombre="Ana Quispe", cliente_telefono="987654321",
-        ))  # mientras tanto se vende: stock 3
+        registrar_venta(self.tienda, self.tienda.usuario, [LineaPedida(self.producto.pk, 2)])  # se vende: stock 3
 
         respuesta = self.client.post(self.url, self.datos_formulario(nombre="Galaxy A15", stock="5", version=version))
         self.assertContains(respuesta, "cambió mientras lo editabas")
@@ -67,14 +60,13 @@ class ConcurrenciaProductosTests(BaseCatalogo):
         self.producto.refresh_from_db()
         self.assertEqual(str(self.producto.precio), "600.00")
 
-    def test_eliminar_producto_con_pedido_recien_registrado(self):
-        # La revisión "¿tiene pedidos?" pasa, pero justo antes de borrar llega un pedido.
-        url = reverse("catalogo:eliminar", args=[self.producto.pk])
-        with mock.patch.object(Producto, "delete", side_effect=ProtectedError("tiene pedidos", set())):
-            respuesta = self.client.post(url, follow=True)
-        self.assertEqual(respuesta.status_code, 200)
-        self.assertContains(respuesta, "se le acaba de registrar un pedido")
-        self.assertTrue(Producto.objects.filter(pk=self.producto.pk).exists())
+    def test_eliminar_producto_vendido_conserva_la_venta(self):
+        venta = registrar_venta(self.tienda, self.tienda.usuario, [LineaPedida(self.producto.pk, 1)])
+        self.client.post(reverse("catalogo:eliminar", args=[self.producto.pk]))
+        self.assertFalse(Producto.objects.filter(pk=self.producto.pk).exists())
+        linea = venta.lineas.get()
+        self.assertIsNone(linea.producto)
+        self.assertEqual(linea.producto_nombre, "Galaxy A15")
 
     def test_tienda_suspendida_mientras_edita_no_guarda(self):
         version = self.version_al_abrir()

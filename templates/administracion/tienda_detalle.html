@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formato %}
 {% block titulo %}{{ tienda.nombre }} | Administración | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% include "administracion/_menu.html" %}
@@ -20,11 +21,11 @@
       <li class="list-group-item"><strong>Dirección:</strong> {{ tienda.direccion }}</li>
       <li class="list-group-item"><strong>Descripción:</strong> {{ tienda.descripcion|default:"—" }}</li>
       <li class="list-group-item"><strong>Registrada:</strong> {{ tienda.creada_en|date:"d/m/Y H:i" }} · <strong>Correo verificado:</strong> {{ tienda.verificada_en|date:"d/m/Y"|default:"No" }}</li>
-      <li class="list-group-item"><strong>Productos:</strong> {{ total_productos }} ({{ publicados }} publicados{% if ocultos_admin %}, {{ ocultos_admin }} ocultos por el administrador{% endif %}) · <strong>Pedidos:</strong> {{ total_pedidos }}</li>
+      <li class="list-group-item"><strong>Productos:</strong> {{ total_productos }} ({{ publicados }} publicados{% if ocultos_admin %}, {{ ocultos_admin }} ocultos por el administrador{% endif %}) · <strong>Vendido este mes:</strong> {{ vendido_mes|soles }}</li>
     </ul>
     <div class="d-flex flex-wrap gap-2">
       <a href="{% url 'administracion:productos' %}?tienda={{ tienda.pk }}" class="btn btn-outline-secondary btn-sm">Ver sus productos</a>
-      <a href="{% url 'administracion:pedidos' %}?tienda={{ tienda.pk }}" class="btn btn-outline-secondary btn-sm">Ver sus pedidos</a>
+      <a href="{% url 'administracion:ventas' %}" class="btn btn-outline-secondary btn-sm">Ver ventas por mes</a>
       {% if tienda.estado == "activa" %}
         <a href="{% url 'tiendas:perfil' tienda.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Ver perfil público ↗</a>
       {% endif %}

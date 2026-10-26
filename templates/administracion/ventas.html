@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load formato %}
+{% block titulo %}Ventas | Administración | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% include "administracion/_menu.html" %}
+<p class="small text-muted">Total vendido por cada tienda en los últimos {{ meses|length }} meses (sin ventas anuladas). Por privacidad solo se muestran totales: los costos, ganancias, proveedores y clientes son de cada tienda.</p>
+
+<div class="table-responsive bg-white rounded shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Tienda</th>{% for m in meses %}<th class="text-end text-nowrap">{{ m }}</th>{% endfor %}<th class="text-end">Total</th></tr>
+    </thead>
+    <tbody>
+      {% for f in filas %}
+        <tr>
+          <td class="small">{% if f.tienda %}<a href="{% url 'administracion:tienda_detalle' f.tienda.pk %}">{{ f.nombre }}</a>{% else %}<span class="text-muted">{{ f.nombre }}</span>{% endif %}</td>
+          {% for monto in f.montos %}<td class="text-end text-nowrap small{% if not monto %} text-muted{% endif %}">{{ monto|soles }}</td>{% endfor %}
+          <td class="text-end text-nowrap fw-semibold">{{ f.total|soles }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="{{ meses|length|add:2 }}" class="text-center text-muted py-4">Aún no hay tiendas registradas.</td></tr>
+      {% endfor %}
+    </tbody>
+    {% if filas %}
+      <tfoot class="table-light">
+        <tr><th>TOTAL</th>{% for t in totales %}<th class="text-end text-nowrap">{{ t|soles }}</th>{% endfor %}<th class="text-end text-nowrap">{{ total_general|soles }}</th></tr>
+      </tfoot>
+    {% endif %}
+  </table>
+</div>
+{% endblock %}

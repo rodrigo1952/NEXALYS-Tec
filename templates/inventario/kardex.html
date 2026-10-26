@@ -9,7 +9,10 @@
     <h3 class="h5 mb-0">Kardex: {{ producto.nombre }}</h3>
     <div class="text-muted small">{% if ficha.codigo %}Código {{ ficha.codigo }} · {% endif %}Stock actual: <strong>{{ producto.stock }}</strong></div>
   </div>
-  <a href="{% url 'inventario:ficha' producto.pk %}" class="btn btn-sm btn-outline-primary">Editar ficha</a>
+  <div class="d-flex gap-2">
+    <a href="{% url 'inventario:ajuste_nuevo' %}?producto={{ producto.pk }}" class="btn btn-sm btn-outline-secondary">Ajustar stock</a>
+    <a href="{% url 'inventario:ficha' producto.pk %}" class="btn btn-sm btn-outline-primary">Editar ficha</a>
+  </div>
 </div>
 <div class="table-responsive bg-white rounded shadow-sm">
   <table class="table align-middle mb-0">
@@ -21,7 +24,11 @@
         <tr>
           <td class="small text-nowrap">{{ m.fecha|date:"d/m/Y H:i" }}</td>
           <td class="small">{{ m.get_tipo_display }}{% if m.motivo %} · {{ m.get_motivo_display }}{% endif %}</td>
-          <td class="small text-muted">{{ m.nota|default:"" }}</td>
+          <td class="small text-muted">
+            {{ m.nota|default:"" }}
+            {% if m.venta_id %}<a href="{% url 'inventario:venta_detalle' m.venta_id %}" class="ms-1">Ver venta</a>{% endif %}
+            {% if m.ingreso_id %}<a href="{% url 'inventario:ingreso_detalle' m.ingreso_id %}" class="ms-1">Ver ingreso</a>{% endif %}
+          </td>
           <td class="text-end text-success">{% if m.entrada %}+{{ m.entrada }}{% endif %}</td>
           <td class="text-end text-danger">{% if m.salida %}−{{ m.salida }}{% endif %}</td>
           <td class="text-end fw-semibold">{{ m.stock_resultante }}</td>

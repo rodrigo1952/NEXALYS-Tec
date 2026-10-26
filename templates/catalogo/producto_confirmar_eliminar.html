@@ -7,6 +7,7 @@
     <div class="card shadow-sm border-danger"><div class="card-body p-4">
       <h2 class="h4">¿Eliminar este producto?</h2>
       <p>Vas a eliminar <strong>{{ producto.nombre }}</strong> ({{ producto.precio|soles }}). Esta acción no se puede deshacer.</p>
+      <p class="small text-muted">Sus ventas, ingresos y kardex no se borran: seguirán mostrando el nombre del producto.</p>
       <p class="small text-muted">Si solo quieres que no aparezca en el catálogo, edítalo y desmarca "publicado".</p>
       <form method="post" class="d-flex gap-2">
         {% csrf_token %}

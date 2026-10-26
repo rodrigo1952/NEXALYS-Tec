@@ -11,7 +11,7 @@ from django.urls import reverse
 
 from catalogo.models import Categoria, Marca, Producto
 from favoritos.models import Favorito
-from pedidos.models import Pedido
+from inventario import servicios as inventario
 from tiendas.models import Tienda
 from tiendas.tests import crear_tienda
 
@@ -38,10 +38,10 @@ class BaseAdministracion(TestCase):
         )
         self.client.force_login(self.admin)
 
-    def crear_pedido(self, estado=Pedido.Estado.ENTREGADO):
-        return Pedido.objects.create(
-            tienda=self.tienda, producto=self.producto, cantidad=2, precio_unitario=Decimal("700.00"),
-            cliente_nombre="Ana Quispe", cliente_telefono="987654321", estado=estado,
+    def crear_venta(self, cantidad=2, tienda=None, producto=None):
+        tienda, producto = tienda or self.tienda, producto or self.producto
+        return inventario.registrar_venta(
+            tienda, tienda.usuario, [inventario.LineaPedida(producto.pk, cantidad)], cliente_nombre="Ana Quispe",
         )
 
 
@@ -50,7 +50,7 @@ class AccesoTests(BaseAdministracion):
         ("panel_admin", []),
         ("administracion:tiendas", []),
         ("administracion:productos", []),
-        ("administracion:pedidos", []),
+        ("administracion:ventas", []),
         ("administracion:usuarios", []),
     ]
 
@@ -75,12 +75,12 @@ class AccesoTests(BaseAdministracion):
     def test_resumen_muestra_los_numeros(self):
         crear_tienda("tienda2", "Tienda Dos", "922222222", estado=Tienda.Estado.PENDIENTE)
         crear_cliente()
-        self.crear_pedido()
+        self.crear_venta()
         respuesta = self.client.get(reverse("panel_admin"))
         self.assertEqual(respuesta.context["tiendas_activas"], 1)
         self.assertEqual(respuesta.context["tiendas_pendientes"], 1)
         self.assertEqual(respuesta.context["clientes"], 1)
-        self.assertEqual(respuesta.context["pedidos_mes"], 1)
+        self.assertEqual(respuesta.context["tiendas_con_ventas"], 1)
         self.assertEqual(respuesta.context["ventas_mes"], Decimal("1400.00"))
         self.assertContains(respuesta, "Django Admin")  # enlace de respaldo
 
@@ -178,20 +178,31 @@ class ProductosAdminTests(BaseAdministracion):
         self.assertContains(self.client.get(reverse("favoritos:lista")), "No disponible")
 
 
-class PedidosAdminTests(BaseAdministracion):
-    def test_lista_y_resumen_de_ventas(self):
-        self.crear_pedido(Pedido.Estado.ENTREGADO)
-        self.crear_pedido(Pedido.Estado.PENDIENTE)
-        respuesta = self.client.get(reverse("administracion:pedidos"))
-        self.assertEqual(respuesta.context["total_pedidos"], 2)
-        self.assertEqual(respuesta.context["entregados"], 1)
-        self.assertEqual(respuesta.context["ventas"], Decimal("1400.00"))
-        self.assertContains(respuesta, "Ana Quispe")
+class VentasAdminTests(BaseAdministracion):
+    def test_tabla_de_seis_meses_solo_con_totales(self):
+        otra = crear_tienda("tienda2", "Tienda Dos", "922222222")
+        producto_otra = Producto.objects.create(
+            tienda=otra, categoria=self.producto.categoria, marca=self.producto.marca,
+            nombre="Mouse", precio=Decimal("50.00"), stock=10,
+        )
+        self.crear_venta(2)                                     # 1400
+        anulada = self.crear_venta(1)
+        inventario.anular_venta(anulada, self.tienda.usuario, "Prueba de anulación")  # no cuenta
+        self.crear_venta(3, tienda=otra, producto=producto_otra)  # 150
+        respuesta = self.client.get(reverse("administracion:ventas"))
+        self.assertEqual(len(respuesta.context["meses"]), 6)
+        filas = respuesta.context["filas"]
+        self.assertEqual([f["nombre"] for f in filas], ["Tienda Uno", "Tienda Dos"])  # de mayor a menor
+        self.assertEqual(filas[0]["montos"][-1], Decimal("1400.00"))  # mes actual = última columna
+        self.assertEqual(respuesta.context["total_general"], Decimal("1550.00"))
+        # Privacidad: nada de clientes, costos ni ganancias.
+        self.assertNotContains(respuesta, "Ana Quispe")
+        self.assertNotContains(respuesta, ">Ganancia<")  # no hay columna de ganancia
 
-    def test_filtrar_por_estado(self):
-        self.crear_pedido(Pedido.Estado.ENTREGADO)
-        respuesta = self.client.get(reverse("administracion:pedidos"), {"estado": "pendiente"})
-        self.assertEqual(respuesta.context["total_pedidos"], 0)
+    def test_tiendas_muestra_lo_vendido_en_el_mes(self):
+        self.crear_venta(1)
+        respuesta = self.client.get(reverse("administracion:tiendas"))
+        self.assertContains(respuesta, "S/ 700.00")
 
 
 class UsuariosAdminTests(BaseAdministracion):
@@ -229,15 +240,15 @@ class UsuariosAdminTests(BaseAdministracion):
         self.client.post(url, {"confirmar": "on", "motivo": "Cuenta duplicada"})
         self.assertFalse(User.objects.filter(pk=cliente.pk).exists())
 
-    def test_eliminar_tienda_sin_pedidos_borra_sus_productos(self):
+    def test_eliminar_tienda_sin_ventas_borra_sus_productos(self):
         url = reverse("administracion:usuario_eliminar", args=[self.tienda.usuario.pk])
         self.assertContains(self.client.get(url), "1 producto")
         self.client.post(url, {"confirmar": "on", "motivo": "La tienda cerró"})
         self.assertFalse(Tienda.objects.exists())
         self.assertFalse(Producto.objects.exists())
 
-    def test_tienda_con_pedidos_no_se_elimina(self):
-        self.crear_pedido()
+    def test_tienda_con_ventas_no_se_elimina(self):
+        self.crear_venta()
         url = reverse("administracion:usuario_eliminar", args=[self.tienda.usuario.pk])
         respuesta = self.client.post(url, {"confirmar": "on"}, follow=True)
         self.assertContains(respuesta, "historial")

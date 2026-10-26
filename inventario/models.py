@@ -1,5 +1,5 @@
 """
-Inventario de cada tienda (reemplazará a la sección Pedidos).
+Inventario de cada tienda (reemplazó a la sección Pedidos en la Etapa 5).
 
 Todo es PRIVADO de cada tienda: costos, ganancias, proveedores y clientes.
 El administrador solo verá totales de ventas.
@@ -146,6 +146,7 @@ class Ingreso(models.Model):
     tienda = models.ForeignKey(
         "tiendas.Tienda", on_delete=models.CASCADE, related_name="ingresos", verbose_name="tienda"
     )
+    numero = models.PositiveIntegerField("número de ingreso")  # correlativo por tienda
     proveedor = models.ForeignKey(
         Proveedor, on_delete=models.SET_NULL, null=True, blank=True, related_name="ingresos", verbose_name="proveedor"
     )
@@ -154,6 +155,9 @@ class Ingreso(models.Model):
     fecha = models.DateTimeField("fecha", default=timezone.now, db_index=True)
     total = models.DecimalField("total (S/)", **PRECIO, default=Decimal("0"))
     nota = models.CharField("nota", max_length=255, blank=True)
+    anulado = models.BooleanField("anulado", default=False)
+    motivo_anulacion = models.CharField("motivo de la anulación", max_length=255, blank=True)
+    anulado_en = models.DateTimeField("anulado el", null=True, blank=True)
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="ingresos_registrados", verbose_name="registrado por",
@@ -163,9 +167,12 @@ class Ingreso(models.Model):
         ordering = ["-fecha", "-id"]
         verbose_name = "ingreso de mercadería"
         verbose_name_plural = "ingresos de mercadería"
+        constraints = [
+            models.UniqueConstraint(fields=["tienda", "numero"], name="numero_de_ingreso_unico_por_tienda"),
+        ]
 
     def __str__(self):
-        return f"Ingreso del {self.fecha:%d/%m/%Y} · {self.proveedor_nombre or 'sin proveedor'}"
+        return f"Ingreso N.° {self.numero:05d} · {self.proveedor_nombre or 'sin proveedor'}"
 
 
 class LineaIngreso(models.Model):
@@ -194,6 +201,7 @@ class Movimiento(models.Model):
         VENTA = "venta", "Venta"
         ANULACION = "anulacion", "Venta anulada"
         INGRESO = "ingreso", "Ingreso de mercadería"
+        INGRESO_ANULADO = "ingreso_anulado", "Ingreso anulado"
         AJUSTE = "ajuste", "Ajuste"
         CONTEO = "conteo", "Conteo físico"
         EDICION = "edicion", "Cambio al editar el producto"
@@ -201,7 +209,8 @@ class Movimiento(models.Model):
     class Motivo(models.TextChoices):
         DANO = "dano", "Producto dañado"
         PERDIDA = "perdida", "Pérdida o robo"
-        DEVOLUCION = "devolucion", "Devolución de un cliente"
+        DEVOLUCION_CLIENTE = "devolucion_cliente", "Devolución de un cliente"
+        DEVOLUCION_PROVEEDOR = "devolucion_proveedor", "Devolución al proveedor"
         OTRO = "otro", "Otro"
 
     tienda = models.ForeignKey(
@@ -212,8 +221,8 @@ class Movimiento(models.Model):
         "catalogo.Producto", on_delete=models.SET_NULL, null=True, blank=True, related_name="movimientos", verbose_name="producto"
     )
     producto_nombre = models.CharField("producto (nombre)", max_length=200)
-    tipo = models.CharField("tipo", max_length=10, choices=Tipo.choices)
-    motivo = models.CharField("motivo", max_length=12, choices=Motivo.choices, blank=True)
+    tipo = models.CharField("tipo", max_length=20, choices=Tipo.choices)
+    motivo = models.CharField("motivo", max_length=25, choices=Motivo.choices, blank=True)
     # Con signo: positivo entra al stock, negativo sale.
     cantidad = models.IntegerField("cantidad")
     stock_resultante = models.PositiveIntegerField("stock después")

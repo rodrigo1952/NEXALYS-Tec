@@ -60,8 +60,9 @@ class MenuConBuscadorTests(TestCase):
 
     def test_tienda_ve_sus_secciones(self):
         respuesta = self.secciones(self.tienda.usuario)
-        for nombre in ("tiendas:panel", "catalogo:mis_productos", "pedidos:lista"):
+        for nombre in ("tiendas:panel", "catalogo:mis_productos"):
             self.assertContains(respuesta, f'href="{reverse(nombre)}"')
+        self.assertNotContains(respuesta, ">Pedidos<")  # la sección Pedidos se retiró (Etapa 5)
 
     def test_buscador_conserva_lo_buscado_en_el_catalogo(self):
         respuesta = self.client.get(reverse("catalogo:catalogo"), {"q": "laptop"})

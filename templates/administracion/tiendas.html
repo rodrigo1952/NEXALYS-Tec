@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formato %}
 {% block titulo %}Tiendas | Administración | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% include "administracion/_menu.html" %}
@@ -20,7 +21,7 @@
 <div class="table-responsive bg-white rounded shadow-sm">
   <table class="table table-hover align-middle mb-0">
     <thead class="table-light">
-      <tr><th>Tienda</th><th>Usuario</th><th>WhatsApp</th><th>Estado</th><th class="text-end">Productos</th><th class="text-end">Pedidos</th><th>Registrada</th><th></th></tr>
+      <tr><th>Tienda</th><th>Usuario</th><th>WhatsApp</th><th>Estado</th><th class="text-end">Productos</th><th class="text-end" title="Total vendido este mes (sin anuladas)">Vendido (mes)</th><th>Registrada</th><th></th></tr>
     </thead>
     <tbody>
       {% for t in pagina %}
@@ -35,7 +36,7 @@
           <td>{{ t.whatsapp }}</td>
           <td>{% include "administracion/_estado_tienda.html" %}</td>
           <td class="text-end">{{ t.num_productos }}</td>
-          <td class="text-end">{{ t.num_pedidos }}</td>
+          <td class="text-end text-nowrap">{{ t.vendido_mes|default:0|soles }}</td>
           <td class="small text-nowrap">{{ t.creada_en|date:"d/m/Y" }}</td>
           <td class="text-end"><a href="{% url 'administracion:tienda_detalle' t.pk %}" class="btn btn-sm btn-outline-primary">Ver</a></td>
         </tr>

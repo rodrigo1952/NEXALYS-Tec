@@ -7,7 +7,7 @@
   <li class="nav-item"><a class="nav-link text-nowrap{% if vista == 'panel_admin' %} active{% endif %}" href="{% url 'panel_admin' %}">📊 Resumen</a></li>
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and 'tienda' in vista %} active{% endif %}" href="{% url 'administracion:tiendas' %}">🏪 Tiendas</a></li>
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and 'producto' in vista %} active{% endif %}" href="{% url 'administracion:productos' %}">📦 Productos</a></li>
-  <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and vista == 'pedidos' %} active{% endif %}" href="{% url 'administracion:pedidos' %}">🧾 Pedidos</a></li>
+  <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and vista == 'ventas' %} active{% endif %}" href="{% url 'administracion:ventas' %}">🧾 Ventas</a></li>
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and 'usuario' in vista %} active{% endif %}" href="{% url 'administracion:usuarios' %}">👥 Usuarios</a></li>
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'administracion' and vista == 'historial' %} active{% endif %}" href="{% url 'administracion:historial' %}">🕓 Historial</a></li>
   <li class="nav-item"><a class="nav-link text-nowrap{% if ns == 'catalogo' and tipo == 'categorias' %} active{% endif %}" href="{% url 'catalogo:gestion_lista' 'categorias' %}">🗂️ Categorías</a></li>

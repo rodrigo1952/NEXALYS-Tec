@@ -7,7 +7,9 @@
   {% elif campo.field.aparte %}
     {# Este campo lo dibuja la plantilla que incluye este archivo. #}
   {% else %}
-    <div class="mb-3">
+    {# Dos campos pueden ir en la misma fila: el primero tiene fila="inicio" y el segundo fila="fin". #}
+    {% if campo.field.fila == "inicio" %}<div class="row g-3 mb-3">{% endif %}
+    <div class="{% if campo.field.fila %}col-sm-6{% else %}mb-3{% endif %}">
       {% if campo.widget_type == "checkbox" %}
         <div class="form-check">
           {{ campo }}
@@ -22,5 +24,6 @@
       {% if campo.help_text %}<div class="form-text">{{ campo.help_text|safe }}</div>{% endif %}
       {% for error in campo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
     </div>
+    {% if campo.field.fila == "fin" %}</div>{% endif %}
   {% endif %}
 {% endfor %}
