@@ -115,12 +115,22 @@ def mis_productos(request):
         .order_by("-creado")  # orden fijo: así la paginación no repite ni salta productos
     )
     resumen = _resumen_inventario(request.tienda, bajo)
-    solo_alertas = request.GET.get("alerta") == "1"
-    if solo_alertas:
-        productos = productos.filter(Q(stock=0) | bajo)
-    sin_costo = request.GET.get("sin_costo") == "1"
-    if sin_costo:
-        productos = productos.filter(ficha__costo__isnull=True)
+    # Filtros rápidos (reemplazan a las tarjetas: los números están en la pestaña Resumen).
+    ver = request.GET.get("ver", "")
+    if request.GET.get("alerta") == "1":
+        ver = "alertas"  # enlaces antiguos y "Ver las alertas" del Resumen
+    elif request.GET.get("sin_costo") == "1":
+        ver = "sin_costo"
+    filtros = {
+        "alertas": Q(stock=0) | bajo,
+        "bajo": bajo,
+        "agotados": Q(stock=0),
+        "sin_costo": Q(ficha__costo__isnull=True),
+    }
+    if ver in filtros:
+        productos = productos.filter(filtros[ver])
+    else:
+        ver = ""
     texto = request.GET.get("q", "").strip()
     if texto:
         productos = productos.buscar(texto)
@@ -142,7 +152,7 @@ def mis_productos(request):
 
     pagina = Paginator(productos, 10).get_page(request.GET.get("page"))
     return render(request, "catalogo/mis_productos.html", {
-        "pagina": pagina, "q": texto, "resumen": resumen, "solo_alertas": solo_alertas, "sin_costo": sin_costo,
+        "pagina": pagina, "q": texto, "resumen": resumen, "ver": ver,
         "categorias": categorias, "marcas": marcas,
         "categoria_id": categoria_id, "marca_id": marca_id,
         "total_productos": sum(c["cantidad"] for c in categorias),

@@ -15,6 +15,7 @@ from favoritos.permisos import es_cliente
 from .concurrencia import validar_y_guardar
 from .forms import EliminarCuentaForm, PerfilForm, RegistroForm
 from .models import DIAS_PARA_CONFIRMAR_CORREO, CorreoPendiente
+from .reautenticacion import confirmada_recientemente, marcar_confirmada
 from .verificacion import enviar_correo_confirmacion, horas_validez, leer_token
 
 logger = logging.getLogger(__name__)
@@ -135,6 +136,7 @@ def confirmar_correo(request, token):
 
 @login_required
 def mi_cuenta(request):
+    """Mi cuenta (para todos los roles): datos personales, editar datos y cambiar contraseña."""
     return render(request, "cuentas/mi_cuenta.html", {
         "puede_eliminar": _puede_eliminar_cuenta(request.user),
         "total_favoritos": request.user.favoritos.count(),
@@ -143,9 +145,14 @@ def mi_cuenta(request):
 
 @login_required
 def editar_datos(request):
-    form = PerfilForm(request.POST or None, instance=request.user)
+    form = PerfilForm(
+        request.POST if request.method == "POST" else None, instance=request.user,
+        usuario=request.user, ya_confirmada=confirmada_recientemente(request),
+    )
     if request.method == "POST" and form.is_valid():
         form.save()
+        if form.clave_confirmada:
+            marcar_confirmada(request)
         messages.success(request, "Tus datos se actualizaron correctamente.")
         return redirect("mi_cuenta")
     return render(request, "cuentas/editar_datos.html", {"form": form})
@@ -174,3 +181,18 @@ def eliminar_cuenta(request):
         return redirect("inicio")
     return render(request, "cuentas/eliminar_cuenta.html", {"form": form})
 
+# ---------------------------------------------------------------------------
+# Ayuda y soporte / Privacidad y términos (menú de la cuenta)
+# ---------------------------------------------------------------------------
+
+CORREO_SOPORTE = "soporte@nexalys.pe"  # de demostración: cámbialo cuando tengan uno real
+
+
+def ayuda(request):
+    """Preguntas frecuentes según el rol y contacto de soporte."""
+    return render(request, "cuentas/ayuda.html", {"correo_soporte": CORREO_SOPORTE})
+
+
+def privacidad(request):
+    """Qué datos se guardan y para qué (Ley 29733) y reglas de uso del marketplace."""
+    return render(request, "cuentas/privacidad.html", {"correo_soporte": CORREO_SOPORTE})

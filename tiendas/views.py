@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 
 from catalogo.models import Producto
 from cuentas.concurrencia import validar_y_guardar
+from cuentas.reautenticacion import confirmada_recientemente, marcar_confirmada
 
 from .decorators import tienda_requerida
 from .forms import EditarTiendaForm, HorarioForm, RegistroTiendaForm
@@ -109,7 +110,10 @@ def panel(request):
 def editar(request):
     """La tienda edita sus datos, su logo y su horario de atención."""
     tienda = request.tienda
-    form = EditarTiendaForm(request.POST or None, request.FILES or None, instance=tienda, prefix="datos")
+    form = EditarTiendaForm(
+        request.POST or None, request.FILES or None, instance=tienda, prefix="datos",
+        usuario=request.user, ya_confirmada=confirmada_recientemente(request),
+    )
     horario = HorarioForm(request.POST or None, tienda=tienda, prefix="horario")
     if request.method == "POST":
         datos_validos = form.is_valid()  # se validan los dos para mostrar todos los errores
@@ -123,6 +127,8 @@ def editar(request):
                 # Concurrencia: otra tienda tomó el mismo nombre o WhatsApp en este instante.
                 form.add_error(None, "Otra tienda acaba de registrar ese nombre o WhatsApp. Revisa los datos.")
             else:
+                if form.clave_confirmada:
+                    marcar_confirmada(request)
                 messages.success(request, "Los datos de tu tienda se actualizaron correctamente.")
                 return redirect("tiendas:panel")
     return render(request, "tiendas/editar.html", {"form": form, "horario": horario, "tienda": tienda})

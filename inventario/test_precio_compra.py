@@ -104,3 +104,30 @@ class CrearProductoDesdeIngresoTests(BaseCatalogo):
         ajeno = self.crear_producto(tienda=self.otra_tienda, nombre="Ajeno")
         respuesta = self.client.get(reverse("inventario:ingreso_nuevo"), {"producto": ajeno.pk})
         self.assertIsNone(respuesta.context["lineas"].forms[0]["producto"].value())
+
+
+class StockMinimoYOfertaEnElFormularioTests(BaseCatalogo):
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.tienda.usuario)
+
+    def test_filas_de_oferta_y_de_stock(self):
+        html = self.client.get(reverse("catalogo:crear")).content.decode()
+        self.assertIn("Stock actual", html)
+        self.assertIn("Stock mínimo", html)
+        self.assertIn("Te avisamos cuando el stock llegue a este número", html)
+        # categoría|marca, compra|venta, oferta|fecha, stock|mínimo
+        self.assertEqual(html.count('<div class="row g-3 mb-3">'), 4)
+        self.assertLess(html.index('name="precio_oferta"'), html.index('name="oferta_hasta"'))
+        self.assertLess(html.index('name="stock"'), html.index('name="stock_minimo"'))
+
+    def test_el_stock_minimo_se_guarda_en_la_ficha_y_se_muestra_al_editar(self):
+        self.client.post(reverse("catalogo:crear"), self.datos_formulario(stock_minimo="3"))
+        producto = Producto.objects.get(nombre="Galaxy A25")
+        self.assertEqual(FichaInventario.objects.get(producto=producto).stock_minimo, 3)
+        respuesta = self.client.get(reverse("catalogo:editar", args=[producto.pk]))
+        self.assertEqual(respuesta.context["form"]["stock_minimo"].value(), 3)
+
+    def test_sin_stock_minimo_no_crea_ficha(self):
+        self.client.post(reverse("catalogo:crear"), self.datos_formulario())
+        self.assertFalse(FichaInventario.objects.exists())

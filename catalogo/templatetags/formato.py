@@ -18,3 +18,12 @@ def soles(valor):
     except (InvalidOperation, ValueError):
         return valor
     return f"S/ {numero:,.2f}"
+
+
+@register.filter
+def correo_oculto(correo):
+    """Oculta parte del correo: "diaz1952123@gmail.com" -> "di•••••@gmail.com"."""
+    if not correo or "@" not in correo:
+        return correo or ""
+    usuario, dominio = correo.split("@", 1)
+    return f"{usuario[:2]}•••••@{dominio}"

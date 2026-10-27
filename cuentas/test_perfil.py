@@ -36,11 +36,28 @@ class EditarDatosTests(TestCase):
         datos.update(cambios)
         return self.client.post(self.url, datos)
 
-    def test_cambiar_nombre_no_pide_contrasena(self):
+    def test_cambiar_nombre_pide_contrasena(self):
         respuesta = self.enviar(first_name="Ana María")
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertIn("clave_actual", respuesta.context["form"].errors)
+        respuesta = self.enviar(first_name="Ana María", clave_actual=CLAVE)
         self.assertRedirects(respuesta, reverse("mi_cuenta"))
         self.cliente.refresh_from_db()
         self.assertEqual(self.cliente.first_name, "Ana María")
+
+    def test_la_contrasena_no_se_vuelve_a_pedir_en_10_minutos(self):
+        self.enviar(first_name="Ana María", clave_actual=CLAVE)
+        respuesta = self.client.get(self.url)
+        self.assertNotIn("clave_actual", respuesta.context["form"].fields)
+        self.assertRedirects(self.enviar(first_name="Ana Lucía"), reverse("mi_cuenta"))
+        # Pasados los 10 minutos, se vuelve a pedir.
+        sesion = self.client.session
+        sesion["clave_confirmada_en"] -= 11 * 60
+        sesion.save()
+        self.assertEqual(self.enviar(first_name="Ana Sofía").status_code, 200)
+
+    def test_sin_cambios_sensibles_no_pide_contrasena(self):
+        self.assertRedirects(self.enviar(), reverse("mi_cuenta"))  # mismos datos: no se pide
 
     def test_cambiar_correo_sin_contrasena_no_se_permite(self):
         respuesta = self.enviar(email="nuevo@ejemplo.com")
@@ -154,4 +171,4 @@ class EliminarCuentaTests(TestCase):
         self.client.force_login(self.cliente)
         self.assertContains(self.client.get(reverse("mi_cuenta")), self.url)
         self.client.force_login(crear_tienda().usuario)
-        self.assertNotContains(self.client.get(reverse("mi_cuenta")), self.url)
+        self.assertNotContains(self.client.get(reverse("mi_cuenta"), follow=True), self.url)

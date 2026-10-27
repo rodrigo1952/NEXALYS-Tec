@@ -59,6 +59,7 @@ class EditarTiendaTests(TestCase):
             "datos-direccion": "Jr. Lima 100",
             "datos-whatsapp": "911111111",
             "datos-descripcion": "",
+            "datos-clave_actual": "ClaveSegura#2026",  # se pide al cambiar nombre, dirección o WhatsApp
         }
         datos.update(cambios)
         return datos

@@ -21,10 +21,9 @@ from tiendas.decorators import tienda_requerida
 
 from . import reportes, servicios
 from .forms import (
-    AjusteForm, AnularIngresoForm, AnularVentaForm, FichaForm, IngresoForm, LineasIngresoFormSet,
+    AjusteForm, AnularIngresoForm, AnularVentaForm, IngresoForm, LineasIngresoFormSet,
     LineasVentaFormSet, ProveedorForm, VentaForm,
 )
-from .kardex import ficha_de
 from .models import FichaInventario, Ingreso, LineaIngreso, LineaVenta, Movimiento, Proveedor, Venta
 
 
@@ -54,13 +53,11 @@ def _producto_propio(request, pk):
 
 @tienda_requerida()
 def ficha(request, pk):
-    producto = _producto_propio(request, pk)
-    form = FichaForm(request.POST or None, instance=ficha_de(producto), tienda=request.tienda)
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, f"Se guardó la ficha de inventario de \"{producto.nombre}\".")
-        return redirect("catalogo:mis_productos")
-    return render(request, "inventario/ficha_form.html", {"form": form, "producto": producto})
+    """
+    La ficha (precio de compra, stock mínimo y código) ahora se edita en el formulario
+    del producto. Esta dirección se mantiene para que los enlaces antiguos sigan funcionando.
+    """
+    return redirect("catalogo:editar", pk=_producto_propio(request, pk).pk)
 
 
 @tienda_requerida()

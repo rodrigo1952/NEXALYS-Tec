@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Ayuda y soporte | NEXALYS Tec{% endblock %}
+{% block contenido %}
+{% comment %}Preguntas frecuentes: primero las del rol del usuario; los demás grupos quedan cerrados.{% endcomment %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <h2 class="mb-1"><span aria-hidden="true">❓</span> Ayuda y soporte</h2>
+    <p class="text-muted">Respuestas a las dudas más comunes. Si no encuentras la tuya, escríbenos.</p>
+
+    {% if tienda_actual or not user.is_authenticated %}
+      <h3 class="h5 mt-4">Para tiendas</h3>
+      <div class="accordion mb-3" id="ayuda-tiendas">
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-tiendas" id="t1" pregunta="¿Cómo registro una venta?" respuesta="En Mis productos > Ventas > «+ Nueva venta». Elige los productos (puedes buscarlos por nombre, código o marca), revisa el precio y el método de pago, y guarda. El stock se descuenta solo y puedes imprimir la nota de venta." %}
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-tiendas" id="t2" pregunta="¿Cómo registro la mercadería que me llegó?" respuesta="En Mis productos > Ingresos > «+ Nuevo ingreso». Indica la cantidad y cuánto pagaste por unidad: el stock sube y el precio de compra se actualiza con el costo promedio." %}
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-tiendas" id="t3" pregunta="Se dañó o se perdió un producto, ¿qué hago?" respuesta="Registra un ajuste en Mis productos > Ajustes y conteo > «+ Nuevo ajuste», con el motivo. Para revisar todo el local, usa el Conteo físico." %}
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-tiendas" id="t4" pregunta="¿Cómo pongo un producto en oferta o lo destaco?" respuesta="Edita el producto y escribe el precio de oferta (y, si quieres, hasta qué día vale). Para destacarlo, marca «Destacado» (máximo 3 por tienda)." %}
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-tiendas" id="t5" pregunta="¿Quién ve mis costos, ganancias y clientes?" respuesta="Solo tú. El administrador ve únicamente los totales vendidos por mes, nunca costos, ganancias, proveedores ni clientes." %}
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-tiendas" id="t6" pregunta="Mi tienda fue suspendida, ¿qué hago?" respuesta="En Mi tienda verás el motivo. Corrígelo y escribe a soporte para que el administrador la revise. Si no se reactiva en 90 días, se elimina automáticamente." %}
+      </div>
+    {% endif %}
+
+    {% if es_cliente or not user.is_authenticated %}
+      <h3 class="h5 mt-4">Para clientes</h3>
+      <div class="accordion mb-3" id="ayuda-clientes">
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-clientes" id="c1" pregunta="¿Cómo compro un producto?" respuesta="Desde el producto, toca «Consultar por WhatsApp»: hablarás directamente con la tienda para coordinar el pago y la entrega. NEXALYS no cobra ni interviene en la compra." %}
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-clientes" id="c2" pregunta="¿Para qué sirven los favoritos?" respuesta="Guarda los productos que te interesan con el corazón. En Mis favoritos te avisamos si bajaron de precio o si volvieron a tener stock." %}
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-clientes" id="c3" pregunta="¿Cómo sé si una tienda está abierta?" respuesta="En el perfil de cada tienda se muestra su horario y si está «Abierta ahora», «En refrigerio» o «Cerrada»." %}
+        {% include "cuentas/_pregunta.html" with grupo="ayuda-clientes" id="c4" pregunta="¿Puedo eliminar mi cuenta?" respuesta="Sí, en Mi cuenta > «Eliminar mi cuenta». Se borran tu cuenta y tus favoritos." %}
+      </div>
+    {% endif %}
+
+    <h3 class="h5 mt-4">Cuenta y seguridad</h3>
+    <div class="accordion mb-4" id="ayuda-cuenta">
+      {% include "cuentas/_pregunta.html" with grupo="ayuda-cuenta" id="s1" pregunta="Olvidé mi contraseña" respuesta="En «Iniciar sesión», toca «¿Olvidaste tu contraseña?» y te enviaremos un enlace a tu correo para crear una nueva." %}
+      {% include "cuentas/_pregunta.html" with grupo="ayuda-cuenta" id="s2" pregunta="¿Por qué me piden la contraseña al editar mis datos?" respuesta="Por seguridad: si alguien usa tu sesión abierta, no podrá cambiar tu nombre, tu correo ni los datos de tu tienda sin tu contraseña. Después de escribirla no se vuelve a pedir durante 10 minutos." %}
+    </div>
+
+    <div class="card shadow-sm border-0 cabecera-tienda">
+      <div class="card-body d-flex flex-wrap align-items-center gap-3">
+        <div class="me-auto">
+          <h3 class="h6 mb-1">¿Necesitas más ayuda?</h3>
+          <p class="small text-muted mb-0">Escríbenos y te responderemos lo antes posible. Cuéntanos tu usuario y qué pasó.</p>
+        </div>
+        <a href="mailto:{{ correo_soporte }}?subject=Soporte%20NEXALYS%20Tec" class="btn btn-tienda-publica">✉️ {{ correo_soporte }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

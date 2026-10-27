@@ -18,11 +18,12 @@ class KardexAutomaticoTests(BaseCatalogo):
         self.assertEqual((movimiento.tipo, movimiento.cantidad, movimiento.stock_resultante), ("inicial", 10, 10))
         self.assertEqual(movimiento.usuario, self.tienda.usuario)
 
-    def test_el_formulario_de_productos_no_cambia(self):
+    def test_los_datos_de_la_ficha_estan_en_el_formulario_de_productos(self):
+        # La Ficha se retiró: precio de compra, stock mínimo y código se editan en el formulario del producto.
         self.client.force_login(self.tienda.usuario)
-        respuesta = self.client.get(reverse("catalogo:crear"))
-        for campo in ("costo", "stock_minimo", "codigo"):
-            self.assertNotIn(campo, respuesta.context["form"].fields)
+        campos = self.client.get(reverse("catalogo:crear")).context["form"].fields
+        for campo in ("precio_compra", "stock_minimo", "codigo"):
+            self.assertIn(campo, campos)
 
     def test_cambiar_el_stock_al_editar_queda_anotado(self):
         producto = self.crear_producto(nombre="Galaxy A25", stock=10)
@@ -73,8 +74,18 @@ class SeccionInventarioTests(BaseCatalogo):
         self.assertEqual(resumen["agotados"], 1)
         self.assertContains(respuesta, "Stock bajo")
         self.assertContains(respuesta, "Agotado")
-        self.assertContains(respuesta, reverse("inventario:ficha", args=[self.producto.pk]))
+        self.assertNotContains(respuesta, reverse("inventario:ficha", args=[self.producto.pk]))  # ya no hay Ficha
         self.assertContains(respuesta, reverse("inventario:kardex", args=[self.producto.pk]))
+        # Filtros rápidos en vez de tarjetas.
+        self.assertContains(respuesta, "filtro-rapido")
+        self.assertContains(respuesta, "?ver=agotados")
+
+    def test_filtros_rapidos(self):
+        FichaInventario.objects.create(producto=self.producto, stock_minimo=5)  # 4 de stock: bajo
+        self.crear_producto(nombre="Agotado", stock=0)
+        url = reverse("catalogo:mis_productos")
+        self.assertEqual([p.nombre for p in self.client.get(url, {"ver": "bajo"}).context["pagina"]], ["Galaxy A15"])
+        self.assertEqual([p.nombre for p in self.client.get(url, {"ver": "agotados"}).context["pagina"]], ["Agotado"])
 
     def test_filtro_de_alertas(self):
         FichaInventario.objects.create(producto=self.producto, stock_minimo=5)  # 4 de stock: bajo
@@ -82,17 +93,23 @@ class SeccionInventarioTests(BaseCatalogo):
         respuesta = self.client.get(reverse("catalogo:mis_productos"), {"alerta": "1"})
         self.assertEqual([p.nombre for p in respuesta.context["pagina"]], ["Galaxy A15"])
 
-    def test_editar_la_ficha(self):
-        self.client.post(reverse("inventario:ficha", args=[self.producto.pk]), {
-            "costo": "480.50", "stock_minimo": "2", "codigo": "CEL-001",
-        })
+    def editar_producto(self, **cambios):
+        datos = self.datos_formulario(nombre="Galaxy A15", stock="4", version=self.producto.actualizado.isoformat())
+        datos.update(cambios)
+        return self.client.post(reverse("catalogo:editar", args=[self.producto.pk]), datos)
+
+    def test_la_ficha_se_edita_en_el_formulario_del_producto(self):
+        self.editar_producto(precio_compra="480.50", stock_minimo="2", codigo="CEL-001")
         ficha = FichaInventario.objects.get(producto=self.producto)
         self.assertEqual((ficha.costo, ficha.stock_minimo, ficha.codigo), (Decimal("480.50"), 2, "CEL-001"))
+        # La dirección antigua de la ficha lleva al formulario del producto.
+        self.assertRedirects(self.client.get(reverse("inventario:ficha", args=[self.producto.pk])),
+                             reverse("catalogo:editar", args=[self.producto.pk]))
 
     def test_codigo_no_se_repite_en_la_misma_tienda(self):
         otro = self.crear_producto(nombre="Galaxy A25")
         FichaInventario.objects.create(producto=otro, codigo="CEL-001")
-        respuesta = self.client.post(reverse("inventario:ficha", args=[self.producto.pk]), {"codigo": "cel-001"})
+        respuesta = self.editar_producto(codigo="cel-001")
         self.assertIn("codigo", respuesta.context["form"].errors)
 
     def test_kardex_del_producto(self):

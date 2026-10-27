@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from .estilos import EstiloBootstrapMixin
+from .reautenticacion import ConfirmarClaveMixin
 
 
 class IngresoForm(AuthenticationForm):
@@ -64,19 +65,14 @@ class RegistroForm(EstiloBootstrapMixin, UserCreationForm):
         return correo
 
 
-class PerfilForm(EstiloBootstrapMixin, forms.ModelForm):
+class PerfilForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelForm):
     """
-    Editar datos personales. Regla: para cambiar el correo se pide la contraseña
-    actual, porque "Olvidé mi contraseña" envía el enlace a ese correo.
+    Editar datos personales. Regla: para cambiar el nombre o el correo se pide la
+    contraseña actual (el correo es por donde llega "Olvidé mi contraseña").
+    No se vuelve a pedir durante 10 minutos (cuentas/reautenticacion.py).
     """
 
-    clave_actual = forms.CharField(
-        label="Contraseña actual",
-        required=False,
-        strip=False,
-        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
-        help_text="Solo es necesaria si cambias tu correo.",
-    )
+    CAMPOS_SENSIBLES = {"first_name": "nombres", "last_name": "apellidos", "email": "correo"}
 
     class Meta:
         model = User
@@ -91,7 +87,10 @@ class PerfilForm(EstiloBootstrapMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         for nombre in ("first_name", "last_name", "email"):
             self.fields[nombre].required = True
-        self.correo_original = (self.instance.email or "").lower()
+
+    def valor_original(self, campo):
+        valor = getattr(self.instance, campo) or ""
+        return valor.lower() if campo == "email" else valor
 
     def clean_email(self):
         correo = self.cleaned_data["email"].strip().lower()
@@ -99,13 +98,6 @@ class PerfilForm(EstiloBootstrapMixin, forms.ModelForm):
             raise ValidationError("Ese correo ya está registrado.")
         return correo
 
-    def clean(self):
-        datos = super().clean()
-        correo = datos.get("email")
-        if correo and correo != self.correo_original:
-            if not self.instance.check_password(datos.get("clave_actual") or ""):
-                self.add_error("clave_actual", "Para cambiar tu correo, escribe tu contraseña actual correctamente.")
-        return datos
 
 
 class EliminarCuentaForm(EstiloBootstrapMixin, forms.Form):

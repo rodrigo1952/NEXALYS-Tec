@@ -3,6 +3,7 @@ from decimal import Decimal
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
+from django.db import transaction
 from django.db.models import Max, Q
 from django.utils import timezone
 
@@ -19,6 +20,7 @@ from .models import (
     FotoProducto,
     Marca,
     Producto,
+    borrar_archivo_al_confirmar,
     validar_tamano_imagen,
 )
 
@@ -62,6 +64,9 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         required=False,
         widget=forms.CheckboxSelectMultiple,
     )
+    # "Hacer principal": la foto adicional elegida pasa a ser la principal y la principal
+    # pasa a las adicionales (se aplica al guardar).
+    principal_foto = forms.IntegerField(widget=forms.HiddenInput, required=False)
 
     # Precio de compra: dato PRIVADO de la tienda (es el "costo" de la ficha de inventario).
     # No es un campo de Producto: se guarda en la ficha. Se edita aquí o en la ficha; es el mismo dato.
@@ -70,10 +75,23 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         widget=forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
         help_text="Opcional. Solo tú lo ves; sirve para calcular tu ganancia.",
     )
+    # Stock mínimo: también es de la ficha de inventario (el mismo dato, editable aquí o en la ficha).
+    stock_minimo = forms.IntegerField(
+        label="Stock mínimo", required=False, min_value=0,
+        widget=forms.NumberInput(attrs={"min": "0", "placeholder": "0"}),
+        help_text="Te avisamos cuando el stock llegue a este número. 0 = sin aviso.",
+    )
+
+    # Código interno (SKU): también es de la ficha. Sirve para buscar el producto o escanearlo.
+    codigo = forms.CharField(
+        label="Código interno", required=False, max_length=40,
+        widget=forms.TextInput(attrs={"placeholder": "Ej.: LAP-ASUS-01", "autocomplete": "off"}),
+        help_text="Opcional. El código que usas en tu tienda (o el del código de barras). Solo tú lo ves.",
+    )
 
     field_order = [
-        "nombre", "categoria", "marca", "precio_compra", "precio", "precio_oferta", "oferta_hasta",
-        "stock", "descripcion", "imagen", "fotos_nuevas", "activo", "destacado",
+        "nombre", "categoria", "marca", "codigo", "precio_compra", "precio", "precio_oferta", "oferta_hasta",
+        "stock", "stock_minimo", "descripcion", "imagen", "fotos_nuevas", "activo", "destacado",
     ]
 
     class Meta:
@@ -82,7 +100,12 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
             "nombre", "categoria", "marca", "precio", "precio_oferta", "oferta_hasta",
             "stock", "descripcion", "imagen", "activo", "destacado",
         ]
-        labels = {"imagen": "Foto principal", "precio": "Precio de venta (S/)"}
+        labels = {"imagen": "Foto principal", "precio": "Precio de venta (S/)", "stock": "Stock actual"}
+        help_texts = {
+            "stock": "Unidades que tienes hoy.",
+            "precio_oferta": "Opcional. Menor que el precio de venta.",
+            "oferta_hasta": "Opcional. Vacío = hasta que la quites.",
+        }
         widgets = {
             "descripcion": forms.Textarea(attrs={"rows": 4}),
             "precio": forms.NumberInput(attrs={"step": "0.01", "min": str(PRECIO_MINIMO)}),
@@ -107,27 +130,65 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         # Las fotos que se pueden quitar se dibujan aparte, con su miniatura (producto_form.html).
         self.fields["eliminar_fotos"].aparte = True
         # Precio de compra y de venta en una misma fila (ver _campos_formulario.html).
-        self.fields["precio_compra"].fila = "inicio"
-        self.fields["precio"].fila = "fin"
+        # Lo mismo con la oferta y su fecha, y con el stock actual y el mínimo.
+        for inicio, fin in (("categoria", "marca"), ("precio_compra", "precio"), ("precio_oferta", "oferta_hasta"),
+                            ("stock", "stock_minimo")):
+            self.fields[inicio].fila = "inicio"
+            self.fields[fin].fila = "fin"
         if self.instance.pk:
             self.fields["version"].initial = self.instance.actualizado.isoformat()
             self.fields["eliminar_fotos"].queryset = self.instance.fotos.all()
+            # Al editar, las fotos se manejan en la galería con un botón para cada cambio
+            # (producto_form.html): cambiar o quitar la principal, hacer principal, reemplazar,
+            # quitar y agregar. Todo se aplica al presionar "Guardar".
+            for nombre in ("imagen", "fotos_nuevas"):
+                self.fields[nombre].aparte = True
+            for foto in self.instance.fotos.all():
+                campo = forms.ImageField(
+                    required=False,
+                    validators=[FileExtensionValidator(allowed_extensions=EXTENSIONES_IMAGEN), validar_tamano_imagen],
+                )
+                campo.aparte = True
+                self.fields[f"reemplazar_{foto.pk}"] = campo
             # Al editar se muestra el costo actual (si hubo ingresos, es el costo promedio).
             ficha = FichaInventario.objects.filter(producto=self.instance).first()
             self.fields["precio_compra"].initial = ficha.costo if ficha else None
+            self.fields["stock_minimo"].initial = ficha.stock_minimo if ficha else 0
+            self.fields["codigo"].initial = ficha.codigo if ficha else ""
 
     def clean(self):
         datos = super().clean()
         self._validar_oferta(datos)
         self._validar_destacado(datos)
         self._validar_cantidad_de_fotos(datos)
+        self._validar_principal(datos)
         self._validar_version(datos)
         return datos
+
+    def galeria(self):
+        """Fotos adicionales con su campo de reemplazo, para dibujar la galería al editar."""
+        if not self.instance.pk:
+            return []
+        return [{"foto": foto, "reemplazo": self[f"reemplazar_{foto.pk}"]} for foto in self.instance.fotos.all()]
+
+    def fotos_libres(self):
+        return MAX_FOTOS_EXTRA - (self.instance.fotos.count() if self.instance.pk else 0)
+
+    def _validar_principal(self, datos):
+        foto_id = datos.get("principal_foto")
+        if not foto_id:
+            return
+        if not self.instance.pk or not self.instance.fotos.filter(pk=foto_id).exists():
+            self.add_error(None, "La foto elegida como principal ya no existe. Vuelve a elegirla.")
+        elif any(f.pk == foto_id for f in datos.get("eliminar_fotos") or []):
+            self.add_error(None, "No puedes quitar la foto que elegiste como principal.")
+        elif "imagen" in self.files or self.data.get(f"{self.add_prefix('imagen')}-clear"):
+            self.add_error(None, "Elige solo un cambio para la foto principal: cambiarla, quitarla o usar una adicional.")
 
     def _validar_oferta(self, datos):
         precio, oferta, hasta = datos.get("precio"), datos.get("precio_oferta"), datos.get("oferta_hasta")
         if oferta is not None and precio is not None and oferta >= precio:
-            self.add_error("precio_oferta", "El precio de oferta debe ser menor que el precio normal.")
+            self.add_error("precio_oferta", "El precio de oferta debe ser menor que el precio de venta.")
         if hasta and oferta is None:
             self.add_error("oferta_hasta", "Indica el precio de oferta o deja la fecha vacía.")
         # Solo se revisa si la tienda cambió la oferta: así una oferta vencida no impide editar lo demás.
@@ -178,28 +239,80 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         producto = super().save(commit=commit)
         if commit:
             self.guardar_fotos(producto)
-            self.guardar_precio_compra(producto)
+            self.guardar_ficha(producto)
         return producto
 
-    def guardar_precio_compra(self, producto):
-        """Solo si la tienda lo cambió: así no se pisa el costo promedio que calculó un ingreso."""
-        if "precio_compra" not in self.changed_data:
-            return
-        costo = self.cleaned_data.get("precio_compra")
+    def guardar_ficha(self, producto):
+        """
+        Guarda en la ficha de inventario el precio de compra y el stock mínimo, solo los que
+        la tienda cambió: así no se pisa el costo promedio que calculó un ingreso.
+        """
+        cambios = {}
+        if "precio_compra" in self.changed_data:
+            cambios["costo"] = self.cleaned_data.get("precio_compra")
+        if "stock_minimo" in self.changed_data:
+            cambios["stock_minimo"] = self.cleaned_data.get("stock_minimo") or 0
+        if "codigo" in self.changed_data:
+            cambios["codigo"] = self.cleaned_data.get("codigo") or ""
         ficha = FichaInventario.objects.filter(producto=producto).first()
         if ficha is None:
-            if costo is None:
-                return
+            if not any(cambios.values()):
+                return  # nada que guardar (vacío o 0)
             ficha = FichaInventario(producto=producto)
-        ficha.costo = costo
+        if not cambios:
+            return
+        for campo, valor in cambios.items():
+            setattr(ficha, campo, valor)
         ficha.save()
 
     def guardar_fotos(self, producto):
+        quitadas = {foto.pk for foto in self.cleaned_data.get("eliminar_fotos") or []}
         for foto in self.cleaned_data.get("eliminar_fotos") or []:
             foto.delete()  # la señal borra también el archivo
+        # Reemplazar una foto adicional: se guarda la nueva y se borra el archivo anterior.
+        for foto in producto.fotos.exclude(pk__in=quitadas):
+            archivo = self.cleaned_data.get(f"reemplazar_{foto.pk}")
+            if archivo:
+                borrar_archivo_al_confirmar(foto.imagen)
+                foto.imagen = archivo
+                foto.save()
         siguiente = (producto.fotos.aggregate(maximo=Max("orden"))["maximo"] or 0) + 1
         for posicion, archivo in enumerate(self.cleaned_data.get("fotos_nuevas") or []):
             FotoProducto.objects.create(producto=producto, imagen=archivo, orden=siguiente + posicion)
+        self.hacer_principal(producto, self.cleaned_data.get("principal_foto"))
+
+    def hacer_principal(self, producto, foto_id):
+        """
+        Intercambia la foto principal con una adicional. Se cambian solo los nombres de los
+        archivos (update), sin volver a subirlos; al terminar, se ordenan sus carpetas.
+        """
+        foto = producto.fotos.filter(pk=foto_id).first() if foto_id else None
+        if foto is None:
+            return
+        principal = Producto.objects.filter(pk=producto.pk).values_list("imagen", flat=True).first() or ""
+        nombre_foto = foto.imagen.name
+        Producto.objects.filter(pk=producto.pk).update(imagen=nombre_foto)
+        if principal:
+            FotoProducto.objects.filter(pk=foto.pk).update(imagen=principal)
+        else:
+            # No había foto principal: la adicional sube y deja de estar entre las adicionales.
+            FotoProducto.objects.filter(pk=foto.pk).update(imagen="")
+            FotoProducto.objects.get(pk=foto.pk).delete()  # sin archivo: no se borra nada
+        producto.imagen.name = nombre_foto
+        from .reubicar import reubicar_producto
+
+        transaction.on_commit(lambda: reubicar_producto(producto.pk))
+
+    def clean_codigo(self):
+        """Regla: el código interno no se repite dentro de la misma tienda (sin importar mayúsculas)."""
+        codigo = (self.cleaned_data.get("codigo") or "").strip()
+        if codigo:
+            repetido = FichaInventario.objects.filter(producto__tienda=self.tienda, codigo__iexact=codigo)
+            if self.instance.pk:
+                repetido = repetido.exclude(producto=self.instance)
+            if repetido.exists():
+                raise ValidationError("Ya tienes otro producto con este código.")
+        return codigo
 
     def clean_nombre(self):
         nombre = " ".join(self.cleaned_data["nombre"].split())

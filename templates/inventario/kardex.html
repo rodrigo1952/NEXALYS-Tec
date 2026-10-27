@@ -11,7 +11,7 @@
   </div>
   <div class="d-flex gap-2">
     <a href="{% url 'inventario:ajuste_nuevo' %}?producto={{ producto.pk }}" class="btn btn-sm btn-outline-secondary">Ajustar stock</a>
-    <a href="{% url 'inventario:ficha' producto.pk %}" class="btn btn-sm btn-outline-primary">Editar ficha</a>
+    <a href="{% url 'catalogo:editar' producto.pk %}" class="btn btn-sm btn-outline-primary">Editar producto</a>
   </div>
 </div>
 <div class="table-responsive bg-white rounded shadow-sm">

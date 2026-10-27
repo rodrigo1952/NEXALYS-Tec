@@ -9,41 +9,7 @@ from catalogo.models import Producto
 from catalogo.templatetags.formato import soles
 from cuentas.estilos import EstiloBootstrapMixin
 
-from .models import FichaInventario, Ingreso, Movimiento, Proveedor, Venta
-
-
-class FichaForm(EstiloBootstrapMixin, forms.ModelForm):
-    class Meta:
-        model = FichaInventario
-        fields = ["costo", "stock_minimo", "codigo"]
-        labels = {"costo": "Precio de compra (S/)"}
-        help_texts = {
-            "costo": "Es el mismo dato que «Precio de compra» del formulario del producto. "
-                     "Cada ingreso de mercadería lo recalcula con el costo promedio.",
-        }
-        widgets = {
-            "costo": forms.NumberInput(attrs={"step": "0.01", "min": "0", "placeholder": "Ej.: 2300.00"}),
-            "stock_minimo": forms.NumberInput(attrs={"min": "0"}),
-        }
-
-    def __init__(self, *args, tienda, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.tienda = tienda
-        self.fields["stock_minimo"].required = False
-
-    def clean_stock_minimo(self):
-        return self.cleaned_data.get("stock_minimo") or 0
-
-    def clean_codigo(self):
-        """Regla: el código interno no se repite dentro de la misma tienda (sin importar mayúsculas)."""
-        codigo = (self.cleaned_data.get("codigo") or "").strip()
-        if codigo:
-            repetido = FichaInventario.objects.filter(producto__tienda=self.tienda, codigo__iexact=codigo)
-            if self.instance.pk:
-                repetido = repetido.exclude(pk=self.instance.pk)
-            if repetido.exists():
-                raise forms.ValidationError("Ya tienes otro producto con este código.")
-        return codigo
+from .models import Ingreso, Movimiento, Proveedor, Venta
 
 
 class ProveedorForm(EstiloBootstrapMixin, forms.ModelForm):

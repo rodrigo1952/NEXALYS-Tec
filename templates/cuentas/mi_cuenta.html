@@ -3,7 +3,14 @@
 {% block contenido %}
 <div class="row justify-content-center">
   <div class="col-lg-7">
-    <h2 class="mb-3">👤 Mi cuenta</h2>
+    <h2 class="mb-3 d-flex align-items-center gap-3">
+      {% if tienda_actual.logo %}
+        <img src="{{ tienda_actual.logo.url }}" alt="Logo de {{ tienda_actual.nombre }}" width="56" height="56" class="logo-panel rounded-circle border bg-white">
+      {% elif tienda_actual %}
+        <span class="logo-panel logo-panel--inicial rounded-circle" aria-hidden="true">{{ tienda_actual.nombre|first|upper }}</span>
+      {% else %}<span aria-hidden="true">👤</span>{% endif %}
+      Mi cuenta
+    </h2>
     <ul class="list-group mb-3 shadow-sm">
       <li class="list-group-item"><strong>Usuario:</strong> {{ user.username }}</li>
       <li class="list-group-item"><strong>Nombre:</strong> {{ user.get_full_name|default:"—" }}</li>
@@ -13,6 +20,7 @@
       </li>
     </ul>
 
+    <p class="small text-muted">Por seguridad, al cambiar tu nombre o tu correo te pediremos tu contraseña (no se vuelve a pedir durante 10 minutos).</p>
     <div class="d-flex flex-wrap gap-2 mb-4">
       <a href="{% url 'editar_datos' %}" class="btn btn-primary">Editar mis datos</a>
       <a href="{% url 'password_change' %}" class="btn btn-outline-secondary">Cambiar contraseña</a>

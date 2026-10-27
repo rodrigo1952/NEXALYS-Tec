@@ -1,14 +1,37 @@
-{% comment %}Enlaces de la cuenta (o de iniciar sesión). Se usa dos veces en base.html:
-en la fila de arriba en computadora y dentro del botón ☰ en el celular.{% endcomment %}
+{% load formato %}
+{% comment %}
+Menú de la cuenta (o de iniciar sesión). Se usa dos veces en base.html:
+en la fila de arriba en computadora y dentro del botón ☰ en el celular.
+Al tocar el nombre se abre un menú con: Mi tienda (solo tiendas), Mi cuenta,
+Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
+{% endcomment %}
 {% if user.is_authenticated %}
-  <li class="nav-item">
-    <a class="nav-link{% if not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta password_change' %} active" aria-current="page{% endif %}" href="{% url 'mi_cuenta' %}">{% include "_avatar.html" %}{{ user.username }}</a>
-  </li>
-  <li class="nav-item">
-    <form method="post" action="{% url 'logout' %}">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-outline-light btn-sm ms-lg-2">Cerrar sesión</button>
-    </form>
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle{% if ns == 'tiendas' and vista in 'panel editar' or not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta password_change ayuda privacidad' %} active{% endif %}"
+       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menú de la cuenta de {{ user.username }}">{% include "_avatar.html" %}{{ user.username }}</a>
+    <ul class="dropdown-menu dropdown-menu-end menu-cuenta shadow">
+      <li class="menu-cuenta__cabecera">
+        <div class="fw-semibold text-truncate">{{ user.get_full_name|default:user.username }}</div>
+        <div class="small text-muted text-truncate">{{ user.email|correo_oculto }}</div>
+        <div class="mt-1">
+          <span class="badge rounded-pill text-bg-light border">{% if es_admin %}Administrador{% elif tienda_actual %}Tienda{% else %}Cliente{% endif %}</span>
+          {% if tienda_actual %}
+            {% if tienda_actual.estado == "activa" %}<span class="badge rounded-pill text-bg-success">Activa</span>
+            {% elif tienda_actual.estado == "pendiente" %}<span class="badge rounded-pill text-bg-warning">Pendiente</span>
+            {% else %}<span class="badge rounded-pill text-bg-danger">Suspendida</span>{% endif %}
+          {% endif %}
+        </div>
+      </li>
+      <li><hr class="dropdown-divider"></li>
+      {% if tienda_actual %}
+        <li><a class="dropdown-item" href="{% url 'tiendas:panel' %}"><span aria-hidden="true">🏪</span> Mi tienda</a></li>
+      {% endif %}
+      <li><a class="dropdown-item" href="{% url 'mi_cuenta' %}"><span aria-hidden="true">⚙️</span> Mi cuenta</a></li>
+      <li><a class="dropdown-item" href="{% url 'ayuda' %}"><span aria-hidden="true">❓</span> Ayuda y soporte</a></li>
+      <li><a class="dropdown-item" href="{% url 'privacidad' %}"><span aria-hidden="true">🔒</span> Privacidad y términos</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li><button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#modal-cerrar-sesion"><span aria-hidden="true">🚪</span> Cerrar sesión</button></li>
+    </ul>
   </li>
 {% else %}
   <li class="nav-item"><a class="nav-link{% if vista == 'login' %} active{% endif %}" href="{% url 'login' %}">Iniciar sesión</a></li>

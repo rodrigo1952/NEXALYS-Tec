@@ -13,5 +13,7 @@ urlpatterns = [
     path("mi-cuenta/", views.mi_cuenta, name="mi_cuenta"),
     path("mi-cuenta/editar/", views.editar_datos, name="editar_datos"),
     path("mi-cuenta/eliminar/", views.eliminar_cuenta, name="eliminar_cuenta"),
+    path("ayuda/", views.ayuda, name="ayuda"),
+    path("privacidad/", views.privacidad, name="privacidad"),
     path("panel/admin/", resumen, name="panel_admin"),  # portada del panel de administración
 ]

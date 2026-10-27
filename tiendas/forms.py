@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 
 from cuentas.estilos import EstiloBootstrapMixin
+from cuentas.reautenticacion import ConfirmarClaveMixin
 
 from .models import HorarioDia, Tienda, validar_whatsapp
 
@@ -94,8 +95,13 @@ class RegistroTiendaForm(EstiloBootstrapMixin, UserCreationForm):
         return usuario
 
 
-class EditarTiendaForm(EstiloBootstrapMixin, forms.ModelForm):
-    """La tienda edita sus propios datos desde su panel."""
+class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelForm):
+    """
+    La tienda edita sus propios datos desde su panel. Para cambiar el nombre, la
+    dirección o el WhatsApp se pide la contraseña (no para la descripción ni el logo).
+    """
+
+    CAMPOS_SENSIBLES = {"nombre": "nombre de la tienda", "direccion": "dirección", "whatsapp": "WhatsApp"}
 
     # Se acepta el número con +51 o espacios; se guardan solo los 9 dígitos.
     whatsapp = forms.CharField(

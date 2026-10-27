@@ -9,26 +9,18 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
 {% endcomment %}
 {% include "inventario/_menu.html" %}
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-lg-3"><div class="card text-center shadow-sm h-100"><div class="card-body">
-    <div class="h3 fw-bold mb-0">{{ resumen.unidades }}</div><div class="text-muted small">Unidades en stock ({{ resumen.productos }} producto{{ resumen.productos|pluralize }})</div>
-  </div></div></div>
-  <div class="col-6 col-lg-3"><div class="card text-center shadow-sm h-100"><div class="card-body">
-    <div class="h3 fw-bold mb-0">{{ resumen.valor|soles }}</div>
-    <div class="text-muted small">Valor del inventario (a costo){% if resumen.sin_costo %}<br><a href="{% url 'catalogo:mis_productos' %}?sin_costo=1" class="text-warning-emphasis">{{ resumen.sin_costo }} sin precio de compra</a>{% endif %}</div>
-  </div></div></div>
-  <div class="col-6 col-lg-3"><a href="{% url 'catalogo:mis_productos' %}?alerta=1" class="card text-center shadow-sm h-100 text-decoration-none"><div class="card-body">
-    <div class="h3 fw-bold mb-0 {% if resumen.stock_bajo %}text-warning{% endif %}">{{ resumen.stock_bajo }}</div><div class="text-muted small">Con stock bajo</div>
-  </div></a></div>
-  <div class="col-6 col-lg-3"><a href="{% url 'catalogo:mis_productos' %}?alerta=1" class="card text-center shadow-sm h-100 text-decoration-none"><div class="card-body">
-    <div class="h3 fw-bold mb-0 {% if resumen.agotados %}text-danger{% endif %}">{{ resumen.agotados }}</div><div class="text-muted small">Agotados</div>
-  </div></a></div>
-</div>
+{# Filtros rápidos: los números completos (valor del inventario, ganancia, etc.) están en la pestaña Resumen. #}
+<nav class="filtros-rapidos d-flex flex-wrap align-items-center gap-2 mb-3" aria-label="Filtros rápidos">
+  <a href="{% querystring ver=None alerta=None sin_costo=None page=None %}" class="filtro-rapido{% if not ver %} activo{% endif %}"{% if not ver %} aria-current="true"{% endif %}>Todos <span class="contador">{{ resumen.productos }}</span></a>
+  <a href="{% querystring ver='bajo' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--aviso{% if ver == 'bajo' %} activo{% endif %}"{% if ver == 'bajo' %} aria-current="true"{% endif %}>Stock bajo <span class="contador">{{ resumen.stock_bajo }}</span></a>
+  <a href="{% querystring ver='agotados' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--peligro{% if ver == 'agotados' %} activo{% endif %}"{% if ver == 'agotados' %} aria-current="true"{% endif %}>Agotados <span class="contador">{{ resumen.agotados }}</span></a>
+  <a href="{% querystring ver='sin_costo' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--aviso{% if ver == 'sin_costo' %} activo{% endif %}"{% if ver == 'sin_costo' %} aria-current="true"{% endif %}>Sin precio de compra <span class="contador">{{ resumen.sin_costo }}</span></a>
+  <a href="{% url 'inventario:resumen' %}" class="small ms-auto">Ver números en Resumen →</a>
+</nav>
 
 <form method="get" class="d-flex flex-wrap gap-2 mb-3">
   {% if categoria_id %}<input type="hidden" name="categoria" value="{{ categoria_id }}">{% endif %}
-  {% if solo_alertas %}<input type="hidden" name="alerta" value="1">{% endif %}
-  {% if sin_costo %}<input type="hidden" name="sin_costo" value="1">{% endif %}
+  {% if ver %}<input type="hidden" name="ver" value="{{ ver }}">{% endif %}
   <label for="buscar-mis-productos" class="visually-hidden">Buscar por nombre</label>
   <input id="buscar-mis-productos" type="search" name="q" value="{{ q }}" class="form-control flex-grow-1" style="flex-basis: 16rem; width: auto" placeholder="Buscar por nombre">
   {% if marcas %}
@@ -53,8 +45,8 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
     {% endfor %}
   </nav>
 {% endif %}
-{% if solo_alertas %}<p class="small text-muted">Mostrando solo productos agotados o con stock bajo. <a href="{% url 'catalogo:mis_productos' %}">Ver todos</a></p>{% endif %}
-{% if sin_costo %}<p class="small text-muted">Mostrando solo productos sin precio de compra. Agrégalo con «Editar» para que cuenten en tu ganancia y en el valor del inventario. <a href="{% url 'catalogo:mis_productos' %}">Ver todos</a></p>{% endif %}
+{% if ver == 'alertas' %}<p class="small text-muted">Mostrando solo productos agotados o con stock bajo. <a href="{% url 'catalogo:mis_productos' %}">Ver todos</a></p>{% endif %}
+{% if ver == 'sin_costo' %}<p class="small text-muted">Agrega el precio de compra con «Editar» para que estos productos cuenten en tu ganancia y en el valor del inventario.</p>{% endif %}
 
 <div class="table-responsive bg-white rounded shadow-sm">
   <table class="table table-hover align-middle mb-0">
@@ -106,7 +98,6 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
             <div class="btn-group">
               <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Más opciones de {{ producto.nombre }}">Más</button>
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="{% url 'inventario:ficha' producto.pk %}">Ficha de inventario (costo, mínimo, código)</a></li>
                 <li><a class="dropdown-item" href="{% url 'inventario:kardex' producto.pk %}">Kardex (historia del stock)</a></li>
                 <li><a class="dropdown-item" href="{% url 'inventario:ajuste_nuevo' %}?producto={{ producto.pk }}">Ajustar stock (daño, pérdida, devolución)</a></li>
                 <li><hr class="dropdown-divider"></li>
@@ -117,7 +108,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
         </tr>
       {% empty %}
         <tr><td colspan="9" class="text-center text-muted py-4">
-          {% if q or categoria_id or marca_id or solo_alertas or sin_costo %}No hay productos con esos filtros.{% else %}Aún no registraste productos.{% endif %}
+          {% if q or categoria_id or marca_id or ver %}No hay productos con esos filtros.{% else %}Aún no registraste productos.{% endif %}
         </td></tr>
       {% endfor %}
     </tbody>

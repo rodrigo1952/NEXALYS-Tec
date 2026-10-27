@@ -1,0 +1,216 @@
+{% comment %}
+Galería de fotos al EDITAR un producto. Cada foto tiene sus botones:
+  - Principal: «Cambiar foto principal» y «Quitar foto principal».
+  - Adicionales: «Hacer principal», «Reemplazar» y «Quitar».
+  - «+ Agregar fotos» (varias a la vez, hasta llenar las 5 adicionales).
+Los botones solo MARCAN el cambio (la tarjeta muestra qué pasará); todo se aplica al
+presionar «Guardar». Quitar una foto pide confirmación (Sí / No).
+{% endcomment %}
+<section class="galeria-edicion mb-4" aria-labelledby="titulo-galeria">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <h3 class="h6 mb-0" id="titulo-galeria">Fotos del producto</h3>
+    {% if form.fotos_libres > 0 %}
+      <label for="{{ form.fotos_nuevas.id_for_label }}" class="btn btn-sm btn-outline-primary mb-0">+ Agregar fotos</label>
+      <span class="small text-muted w-100 text-sm-end" id="fotos-libres">Puedes agregar {{ form.fotos_libres }} más.</span>
+    {% else %}
+      <span class="small text-muted">Ya tienes el máximo de fotos adicionales. Quita o reemplaza una para cambiarla.</span>
+    {% endif %}
+  </div>
+  <input type="file" name="{{ form.fotos_nuevas.html_name }}" id="{{ form.fotos_nuevas.id_for_label }}" accept="image/*" multiple class="visually-hidden" data-agregar>
+
+  {% for error in form.imagen.errors %}<div class="text-danger small">Foto principal: {{ error }}</div>{% endfor %}
+  {% for error in form.fotos_nuevas.errors %}<div class="text-danger small">Fotos nuevas: {{ error }}</div>{% endfor %}
+  {% for error in form.eliminar_fotos.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+
+  <div class="row row-cols-2 row-cols-md-3 g-3">
+    {# ---- Foto principal ---- #}
+    <div class="col">
+      <div class="tarjeta-foto tarjeta-foto--principal h-100" data-tarjeta="principal">
+        <span class="badge rounded-pill text-bg-dark etiqueta-principal">Principal</span>
+        <div class="tarjeta-foto__imagen">
+          {% if producto.imagen %}
+            <img src="{{ producto.imagen.url }}" alt="Foto principal de {{ producto.nombre }}" data-vista>
+          {% else %}
+            <span class="text-muted small" data-vacia>Sin foto principal</span>
+            <img src="" alt="" class="d-none" data-vista>
+          {% endif %}
+        </div>
+        <div class="tarjeta-foto__estado small" data-estado></div>
+        <div class="tarjeta-foto__botones">
+          <label for="{{ form.imagen.id_for_label }}" class="btn btn-sm btn-outline-primary mb-0">{% if producto.imagen %}Cambiar foto principal{% else %}Subir foto principal{% endif %}</label>
+          {% if producto.imagen %}
+            <button type="button" class="btn btn-sm btn-outline-danger" data-quitar="principal">Quitar foto principal</button>
+          {% endif %}
+          <button type="button" class="btn btn-sm btn-link d-none" data-deshacer>Deshacer</button>
+        </div>
+        <input type="file" name="{{ form.imagen.html_name }}" id="{{ form.imagen.id_for_label }}" accept="image/*" class="visually-hidden" data-archivo>
+        <input type="checkbox" name="{{ form.imagen.html_name }}-clear" class="d-none" data-marca-quitar>
+      </div>
+    </div>
+
+    {# ---- Fotos adicionales ---- #}
+    {% for item in form.galeria %}
+      <div class="col">
+        <div class="tarjeta-foto h-100" data-tarjeta="{{ item.foto.pk }}">
+          <div class="tarjeta-foto__imagen">
+            <img src="{{ item.foto.imagen.url }}" alt="Foto {{ forloop.counter }} de {{ producto.nombre }}" data-vista>
+          </div>
+          <div class="tarjeta-foto__estado small" data-estado></div>
+          {% for error in item.reemplazo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          <div class="tarjeta-foto__botones">
+            <button type="button" class="btn btn-sm btn-outline-dark" data-hacer-principal="{{ item.foto.pk }}">Hacer principal</button>
+            <label for="{{ item.reemplazo.id_for_label }}" class="btn btn-sm btn-outline-primary mb-0">Reemplazar</label>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-quitar="{{ item.foto.pk }}">Quitar</button>
+            <button type="button" class="btn btn-sm btn-link d-none" data-deshacer>Deshacer</button>
+          </div>
+          <input type="file" name="{{ item.reemplazo.html_name }}" id="{{ item.reemplazo.id_for_label }}" accept="image/*" class="visually-hidden" data-archivo>
+          <input type="checkbox" name="{{ form.eliminar_fotos.html_name }}" value="{{ item.foto.pk }}" class="d-none" data-marca-quitar>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mt-2 d-none" id="nuevas-fotos" aria-live="polite"></div>
+  <p class="small text-muted mt-2 mb-0">Los cambios en las fotos se aplican al presionar <strong>«Guardar»</strong>. JPG, PNG o WEBP de máximo 2 MB.</p>
+</section>
+
+{# Confirmación para quitar una foto #}
+<div class="modal fade" id="modal-quitar-foto" tabindex="-1" aria-labelledby="titulo-quitar-foto" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content"><div class="modal-body text-center p-4">
+      <img src="" alt="" class="rounded border mb-3 d-none" style="max-height:110px;max-width:100%;object-fit:contain" id="quitar-foto-vista">
+      <h2 class="h5" id="titulo-quitar-foto">¿Quitar esta foto?</h2>
+      <p class="small text-muted mb-4">Se quitará al guardar el producto y no se podrá recuperar.</p>
+      <div class="d-flex gap-2 justify-content-center">
+        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">No</button>
+        <button type="button" class="btn btn-danger px-4" id="confirmar-quitar-foto">Sí, quitar</button>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const galeria = document.querySelector(".galeria-edicion");
+  if (!galeria) return;
+  const principalOculto = document.getElementById("{{ form.principal_foto.id_for_label }}");  // campo oculto del formulario
+  const modalEl = document.getElementById("modal-quitar-foto");
+  const vistaModal = document.getElementById("quitar-foto-vista");
+  let porQuitar = null;
+
+  function estado(tarjeta, texto, clase) {
+    const caja = tarjeta.querySelector("[data-estado]");
+    caja.textContent = texto || "";
+    caja.className = "tarjeta-foto__estado small " + (clase || "");
+    tarjeta.classList.toggle("tarjeta-foto--marcada", Boolean(texto));
+    tarjeta.querySelector("[data-deshacer]").classList.toggle("d-none", !texto);
+  }
+
+  function restaurar(tarjeta) {
+    if (!tarjeta) return;
+    const archivo = tarjeta.querySelector("[data-archivo]");
+    const quitar = tarjeta.querySelector("[data-marca-quitar]");
+    const vista = tarjeta.querySelector("[data-vista]");
+    if (archivo) archivo.value = "";
+    if (quitar) quitar.checked = false;
+    if (vista && vista.dataset.original !== undefined) {
+      vista.src = vista.dataset.original;
+      vista.classList.toggle("d-none", !vista.dataset.original);
+      const vacia = tarjeta.querySelector("[data-vacia]");
+      if (vacia) vacia.classList.toggle("d-none", Boolean(vista.dataset.original));
+    }
+    tarjeta.classList.remove("tarjeta-foto--quitada", "tarjeta-foto--sera-principal");
+    if (principalOculto.value === tarjeta.dataset.tarjeta) principalOculto.value = "";
+    estado(tarjeta, "");
+  }
+
+  // Elegir un archivo: vista previa y aviso de lo que pasará al guardar.
+  galeria.querySelectorAll("[data-archivo]").forEach(function (input) {
+    input.addEventListener("change", function () {
+      const tarjeta = input.closest("[data-tarjeta]");
+      if (!input.files.length) return;
+      const vista = tarjeta.querySelector("[data-vista]");
+      if (vista.dataset.original === undefined) vista.dataset.original = vista.getAttribute("src") || "";
+      vista.src = URL.createObjectURL(input.files[0]);
+      vista.classList.remove("d-none");
+      const vacia = tarjeta.querySelector("[data-vacia]");
+      if (vacia) vacia.classList.add("d-none");
+      const quitar = tarjeta.querySelector("[data-marca-quitar]");
+      if (quitar) quitar.checked = false;
+      tarjeta.classList.remove("tarjeta-foto--quitada");
+      if (tarjeta.dataset.tarjeta === "principal" && principalOculto.value) {
+        restaurar(galeria.querySelector('[data-tarjeta="' + principalOculto.value + '"]'));
+      }
+      estado(tarjeta, tarjeta.dataset.tarjeta === "principal" ? "Nueva foto principal (se guardará)" : "Foto nueva (se guardará)", "text-primary");
+    });
+  });
+
+  // Quitar: primero se confirma.
+  galeria.querySelectorAll("[data-quitar]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      porQuitar = boton.closest("[data-tarjeta]");
+      const img = porQuitar.querySelector("[data-vista]");
+      const fuente = img && !img.classList.contains("d-none") ? img.getAttribute("src") : "";
+      if (fuente) vistaModal.setAttribute("src", fuente);
+      vistaModal.classList.toggle("d-none", !fuente);
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+  });
+  document.getElementById("confirmar-quitar-foto").addEventListener("click", function () {
+    if (porQuitar) {
+      restaurar(porQuitar);
+      porQuitar.querySelector("[data-marca-quitar]").checked = true;
+      porQuitar.classList.add("tarjeta-foto--quitada");
+      estado(porQuitar, "Se quitará al guardar", "text-danger");
+      if (porQuitar.dataset.tarjeta === "principal" && principalOculto.value) {
+        restaurar(galeria.querySelector('[data-tarjeta="' + principalOculto.value + '"]'));
+      }
+    }
+    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+  });
+
+  // Hacer principal: solo una a la vez.
+  galeria.querySelectorAll("[data-hacer-principal]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      const tarjeta = boton.closest("[data-tarjeta]");
+      const anterior = principalOculto.value && galeria.querySelector('[data-tarjeta="' + principalOculto.value + '"]');
+      if (anterior && anterior !== tarjeta) restaurar(anterior);
+      restaurar(tarjeta);
+      restaurar(galeria.querySelector('[data-tarjeta="principal"]'));
+      principalOculto.value = tarjeta.dataset.tarjeta;
+      tarjeta.classList.add("tarjeta-foto--sera-principal");
+      estado(tarjeta, "Será la foto principal al guardar", "text-success");
+    });
+  });
+
+  galeria.querySelectorAll("[data-deshacer]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      const tarjeta = boton.closest("[data-tarjeta]");
+      tarjeta.classList.remove("tarjeta-foto--sera-principal");
+      restaurar(tarjeta);
+    });
+  });
+
+  // + Agregar fotos: miniaturas de las elegidas.
+  const agregar = galeria.querySelector("[data-agregar]");
+  const nuevas = document.getElementById("nuevas-fotos");
+  agregar.addEventListener("change", function () {
+    nuevas.innerHTML = "";
+    Array.from(agregar.files).forEach(function (archivo) {
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(archivo);
+      img.alt = archivo.name;
+      img.className = "rounded border bg-white";
+      img.style.cssText = "width:64px;height:64px;object-fit:contain";
+      nuevas.appendChild(img);
+    });
+    if (agregar.files.length) {
+      const texto = document.createElement("span");
+      texto.className = "small text-primary align-self-center";
+      texto.textContent = agregar.files.length + " foto(s) nueva(s): se agregarán al guardar.";
+      nuevas.appendChild(texto);
+    }
+    nuevas.classList.toggle("d-none", !agregar.files.length);
+  });
+})();
+</script>
