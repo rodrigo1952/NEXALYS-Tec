@@ -203,7 +203,7 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
   overflow: hidden;
 }
 .portada-marca__texto { flex: 999 1 420px; display: flex; flex-direction: column; gap: 1rem; }
-.portada-marca__dibujo { flex: 1 1 200px; display: flex; justify-content: center; }
+.portada-marca__dibujo { flex: 1 1 260px; display: flex; justify-content: center; }
 .portada-marca h1 { color: var(--nx-blanco); font-size: clamp(1.8rem, 4vw, 2.75rem); line-height: 1.1; margin: 0; }
 .portada-marca p { color: var(--nx-menu-texto); font-size: 1.1rem; margin: 0; max-width: 34rem; }
 .portada-marca__etiqueta {
@@ -300,3 +300,79 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
 .tarjeta-foto--marcada { box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .25); }
 .tarjeta-foto--quitada .tarjeta-foto__imagen { opacity: .35; filter: grayscale(1); }
 .tarjeta-foto--sera-principal { border: 2px dashed #198754; }
+
+/* ---------- Logo animado de la portada de Inicio ---------- */
+.logo-portada { width: min(300px, 100%); height: auto; overflow: visible; }
+.logo-portada__nombre { font-family: "Lilita One", var(--nx-letra); }
+/* La N aparece suave y el nombre se descubre de izquierda a derecha (una sola vez y se queda). */
+.logo-portada__n { animation: logo-entra-n .7s ease-out both; transform-origin: 320px 340px; }
+.logo-portada__cortina { animation: logo-barrido 1.6s cubic-bezier(.65, 0, .35, 1) .5s both; }
+@keyframes logo-entra-n { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
+@keyframes logo-barrido { from { width: 0; } to { width: 640px; } }
+@media (prefers-reduced-motion: reduce) { .logo-portada__n, .logo-portada__cortina { animation: none; } }
+
+/* ---------- Ventana "¿Cerrar sesión?" con el estilo de la marca ---------- */
+.modal-marca { border: 0; border-radius: 1.25rem; border-top: 4px solid var(--nx-acento); box-shadow: 0 1.5rem 3rem rgba(var(--nx-oscuro-rgb), .25); }
+.modal-marca__icono {
+  width: 64px; height: 64px; margin: 0 auto .75rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: rgba(var(--nx-acento-rgb), .14);
+}
+
+/* ---------- Página de inicio de sesión ---------- */
+.ingreso {
+  display: grid; grid-template-columns: 1fr; gap: 2.5rem; align-items: center;
+  max-width: 1040px; margin: 0 auto; padding: 1.5rem .75rem 3rem; overflow: hidden;
+}
+@media (min-width: 992px) { .ingreso { grid-template-columns: 1fr 1fr; padding-top: 2.5rem; } }
+.ingreso__marca { text-align: center; }
+.ingreso__capas { width: min(320px, 85%); height: auto; }
+.ingreso__lema { margin: 1.25rem auto 0; max-width: 22rem; font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 700; line-height: 1.2; color: var(--nx-oscuro); }
+.ingreso__lema span { color: var(--nx-acento-texto); }
+/* Tarjetas cian y azul marino inclinadas detrás del formulario */
+.ingreso__pila { position: relative; width: 100%; max-width: 440px; margin: 0 auto; }
+.ingreso__pila::before, .ingreso__pila::after { content: ""; position: absolute; inset: 0; border-radius: 1.5rem; }
+.ingreso__pila::before { background: var(--nx-acento); transform: translate(-10px, 12px) rotate(-6deg); }
+.ingreso__pila::after { background: var(--nx-oscuro); transform: translate(10px, 8px) rotate(3.5deg); }
+.ingreso__tarjeta {
+  position: relative; z-index: 1; background: var(--nx-blanco); border-radius: 1.5rem;
+  padding: 2rem 1.75rem; box-shadow: 0 1.25rem 2.5rem rgba(var(--nx-oscuro-rgb), .18);
+}
+@media (max-width: 575.98px) {
+  .ingreso__tarjeta { padding: 1.5rem 1.25rem; }
+  .ingreso__pila::before { transform: translate(-4px, 10px) rotate(-3deg); }
+  .ingreso__pila::after { transform: translate(4px, 6px) rotate(2deg); }
+}
+.ingreso__titulo { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.25rem; font-size: 1.6rem; font-weight: 700; }
+.selector-rol {
+  border: 0; min-width: 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: .25rem; padding: .25rem;
+  margin-bottom: .75rem; border-radius: 999px; background: var(--nx-fondo-suave);
+}
+.selector-rol input { position: absolute; opacity: 0; pointer-events: none; }
+.selector-rol label {
+  padding: .5rem; border-radius: 999px; text-align: center; font-weight: 600; cursor: pointer;
+  color: var(--nx-texto-suave); transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.selector-rol input:checked + label { background: var(--nx-blanco); color: var(--nx-oscuro); box-shadow: 0 1px 4px rgba(var(--nx-oscuro-rgb), .15); }
+.selector-rol input:focus-visible + label { outline: 2px solid var(--nx-acento); outline-offset: 2px; }
+.ingreso__subtitulo { color: var(--nx-texto-suave); font-size: .95rem; margin-bottom: 1.25rem; }
+.ingreso .form-label { font-weight: 600; margin-bottom: .35rem; }
+.ingreso .form-control { padding: .65rem .85rem; }
+.ingreso__ver-clave { border-color: var(--nx-borde); color: var(--nx-acento-texto); font-weight: 600; font-size: .875rem; }
+.ingreso__entrar { padding: .75rem; font-weight: 700; border-radius: .75rem; }
+
+/* ---------- Lista con buscador (categoría y marca del producto) ---------- */
+.lista-buscable { position: relative; }
+.lista-buscable__boton { text-align: left; background-color: var(--nx-blanco); }
+.lista-buscable__boton--vacio { color: var(--nx-texto-suave); }
+.lista-buscable__panel {
+  position: absolute; z-index: 1050; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--nx-blanco); border: 1px solid var(--nx-borde); border-radius: .75rem;
+  box-shadow: 0 .75rem 1.5rem rgba(var(--nx-oscuro-rgb), .15); padding: .5rem;
+}
+.lista-buscable__opciones { list-style: none; margin: .4rem 0 0; padding: 0; max-height: 15rem; overflow-y: auto; }
+.lista-buscable__opciones li { padding: .4rem .6rem; border-radius: .45rem; cursor: pointer; }
+.lista-buscable__opciones li.activa { background: rgba(var(--nx-acento-rgb), .18); }
+.lista-buscable__opciones li.elegida { font-weight: 700; }
+.lista-buscable__opciones li.elegida::after { content: " ✓"; color: var(--nx-acento-texto); }
+.lista-buscable__vacio { padding: .5rem .6rem; color: var(--nx-texto-suave); font-size: .875rem; }

@@ -34,7 +34,7 @@ Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
     </ul>
   </li>
 {% else %}
-  <li class="nav-item"><a class="nav-link{% if vista == 'login' %} active{% endif %}" href="{% url 'login' %}">Iniciar sesión</a></li>
+  {% if vista != 'login' %}<li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Iniciar sesión</a></li>{% endif %}
   <li class="nav-item"><a class="nav-link{% if vista == 'registro' and not ns %} active{% endif %}" href="{% url 'registro' %}">Registrarse</a></li>
   <li class="nav-item"><a class="btn btn-acento btn-sm ms-lg-2" href="{% url 'tiendas:registro' %}">Registrar mi tienda</a></li>
 {% endif %}

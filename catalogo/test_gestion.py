@@ -23,12 +23,12 @@ class GestionCategoriasMarcasTests(TestCase):
         self.assertContains(respuesta, "Celulares")
 
     def test_crear_categoria(self):
-        self.client.post(reverse("catalogo:gestion_crear", args=["categorias"]), {"nombre": "Tablets", "activa": "on"})
-        self.assertTrue(Categoria.objects.filter(nombre="Tablets").exists())
+        self.client.post(reverse("catalogo:gestion_crear", args=["categorias"]), {"nombre": "Proyectores", "activa": "on"})
+        self.assertTrue(Categoria.objects.filter(nombre="Proyectores").exists())
 
     def test_crear_marca(self):
-        self.client.post(reverse("catalogo:gestion_crear", args=["marcas"]), {"nombre": "Huawei", "activa": "on"})
-        self.assertTrue(Marca.objects.filter(nombre="Huawei").exists())
+        self.client.post(reverse("catalogo:gestion_crear", args=["marcas"]), {"nombre": "Pioneer", "activa": "on"})
+        self.assertTrue(Marca.objects.filter(nombre="Pioneer").exists())
 
     def test_nombre_repetido_sin_importar_mayusculas_se_rechaza(self):
         respuesta = self.client.post(reverse("catalogo:gestion_crear", args=["marcas"]), {"nombre": "samsung"})

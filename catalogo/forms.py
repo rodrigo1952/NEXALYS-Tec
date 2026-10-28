@@ -4,7 +4,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import transaction
-from django.db.models import Max, Q
+from django.db.models import Case, IntegerField, Max, Q, Value, When
+from django.db.models.functions import Lower
 from django.utils import timezone
 
 from cuentas.estilos import EstiloBootstrapMixin
@@ -41,6 +42,16 @@ class MultipleImageField(forms.ImageField):
         if isinstance(data, (list, tuple)):
             return [limpiar_una(archivo, initial) for archivo in data]
         return [limpiar_una(data, initial)] if data else []
+
+
+NOMBRES_GENERICOS = ("Otra", "Otro", "Otros", "Otras")
+
+
+def _otros_al_final(queryset):
+    """Ordena por nombre (sin importar mayúsculas: "realme" junto a la R) y deja "Otra"/"Otros" al final."""
+    return queryset.annotate(
+        orden_generica=Case(When(nombre__in=NOMBRES_GENERICOS, then=Value(1)), default=Value(0), output_field=IntegerField())
+    ).order_by("orden_generica", Lower("nombre"))
 
 
 class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
@@ -119,14 +130,18 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         self.tienda = tienda
         self.instance.tienda = tienda
         # Solo se ofrecen categorías y marcas activas (más la que ya tenía el producto).
-        self.fields["categoria"].queryset = Categoria.objects.filter(
+        # "Otros" y "Otra" van al final, para que la tienda primero busque la correcta.
+        self.fields["categoria"].queryset = _otros_al_final(Categoria.objects.filter(
             Q(activa=True) | Q(pk=self.instance.categoria_id)
-        )
-        self.fields["marca"].queryset = Marca.objects.filter(
+        ))
+        self.fields["marca"].queryset = _otros_al_final(Marca.objects.filter(
             Q(activa=True) | Q(pk=self.instance.marca_id)
-        )
+        ))
         self.fields["categoria"].empty_label = "Selecciona una categoría"
         self.fields["marca"].empty_label = "Selecciona una marca"
+        # Lista con buscador (static/js/lista_buscable.js): se escribe el nombre o la inicial.
+        self.fields["categoria"].widget.attrs["data-buscable"] = "Escribe la categoría…"
+        self.fields["marca"].widget.attrs["data-buscable"] = "Escribe la marca o su inicial…"
         # Las fotos que se pueden quitar se dibujan aparte, con su miniatura (producto_form.html).
         self.fields["eliminar_fotos"].aparte = True
         # Precio de compra y de venta en una misma fila (ver _campos_formulario.html).

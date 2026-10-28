@@ -1,11 +1,37 @@
 {% extends "base.html" %}
 {% block titulo %}Iniciar sesión | NEXALYS Tec{% endblock %}
 {% block contenido %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <div class="card shadow-sm"><div class="card-body p-4">
-      <div class="text-center mb-3">{% include "_logo.html" with claro=True tamano=44 %}</div>
-      <h2 class="h4 mb-3 text-center">Iniciar sesión</h2>
+{% with tipo=form.tipo.value|default:"cliente" %}
+<div class="ingreso">
+  {# Lado izquierdo (solo en computadora): logo de capas y el lema de la marca #}
+  <div class="ingreso__marca d-none d-lg-block" aria-hidden="true">
+    <svg class="ingreso__capas" viewBox="20 10 200 205" focusable="false">
+      {# Tres capas apiladas en vista isométrica (azul marino abajo, cian arriba) #}
+      <g>
+        <polygon points="30,145 120,190 120,202 30,157" fill="#081430"/>
+        <polygon points="120,190 210,145 210,157 120,202" fill="#0B1B3A"/>
+        <polygon points="120,100 210,145 120,190 30,145" fill="#14306A"/>
+      </g>
+      <g>
+        <polygon points="30,105 120,150 120,162 30,117" fill="#0E2A5C"/>
+        <polygon points="120,150 210,105 210,117 120,162" fill="#123673"/>
+        <polygon points="120,60 210,105 120,150 30,105" fill="#1D4E96"/>
+      </g>
+      <g>
+        <polygon points="30,65 120,110 120,122 30,77" fill="#0E9CC4"/>
+        <polygon points="120,110 210,65 210,77 120,122" fill="#12AACB"/>
+        <polygon points="120,20 210,65 120,110 30,65" fill="#19C3E6"/>
+        <polygon points="120,36 178,65 120,94 62,65" fill="none" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="3"/>
+      </g>
+    </svg>
+    <p class="ingreso__lema">Productos tecnológicos de las tiendas de <span>tu ciudad</span></p>
+  </div>
+
+  {# Lado derecho: el formulario sobre dos tarjetas inclinadas (cian y azul marino) #}
+  <div class="ingreso__pila">
+    <div class="ingreso__tarjeta">
+      <h1 class="ingreso__titulo">{% include "_logo.html" with claro=True solo_icono=True tamano=32 %} Iniciar sesión</h1>
+
       {% if form.cuenta_desactivada %}
         <div class="alert alert-warning">
           <strong>Tu cuenta fue desactivada por el administrador.</strong>
@@ -16,18 +42,84 @@
           <strong>Primero confirma tu correo.</strong> Abre el enlace que te enviamos al registrarte.
           <a href="{% url 'confirmacion_pendiente' %}" class="alert-link">¿No te llegó? Pide uno nuevo</a>.
         </div>
+      {% elif form.tipo_equivocado %}
+        <div class="alert alert-warning">{{ form.non_field_errors.0 }}</div>
       {% elif form.errors %}
         <div class="alert alert-danger">Usuario o contraseña incorrectos.</div>
       {% endif %}
-      <form method="post" class="formulario">
+
+      <form method="post" novalidate>
         {% csrf_token %}
-        {{ form.as_p }}
+        <fieldset class="selector-rol">
+          <legend class="visually-hidden">¿Cómo quieres entrar?</legend>
+          <input type="radio" name="tipo" value="cliente" id="tipo-cliente"{% if tipo == "cliente" %} checked{% endif %}>
+          <label for="tipo-cliente">Soy cliente</label>
+          <input type="radio" name="tipo" value="tienda" id="tipo-tienda"{% if tipo == "tienda" %} checked{% endif %}>
+          <label for="tipo-tienda">Soy tienda</label>
+        </fieldset>
+        <p class="ingreso__subtitulo" data-segun-tipo
+           data-cliente="Guarda tus favoritos y contacta a las tiendas de tu ciudad."
+           data-tienda="Gestiona tus productos, ventas y el perfil de tu tienda.">
+          {% if tipo == "tienda" %}Gestiona tus productos, ventas y el perfil de tu tienda.{% else %}Guarda tus favoritos y contacta a las tiendas de tu ciudad.{% endif %}
+        </p>
+
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.username.id_for_label }}">Nombre de usuario</label>
+          {{ form.username }}
+        </div>
+        <div class="mb-2">
+          <label class="form-label" for="{{ form.password.id_for_label }}">Contraseña</label>
+          <div class="input-group">
+            {{ form.password }}
+            <button type="button" class="btn ingreso__ver-clave" id="ver-clave" aria-controls="{{ form.password.id_for_label }}" aria-pressed="false">Mostrar</button>
+          </div>
+        </div>
+        <div class="text-end mb-4">
+          <a href="{% url 'password_reset' %}" class="small">¿Olvidaste tu contraseña?</a>
+        </div>
+
         <input type="hidden" name="next" value="{{ next }}">
-        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        <button type="submit" class="btn btn-primary w-100 ingreso__entrar" data-segun-tipo
+                data-cliente="Entrar" data-tienda="Entrar a mi tienda">{% if tipo == "tienda" %}Entrar a mi tienda{% else %}Entrar{% endif %}</button>
       </form>
-      <p class="mt-3 mb-0 text-center"><a href="{% url 'password_reset' %}">¿Olvidaste tu contraseña?</a></p>
-      <p class="mb-0 text-center">¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate</a></p>
-    </div></div>
+
+      <p class="mt-4 mb-0 text-center small" id="registro-cliente"{% if tipo == "tienda" %} hidden{% endif %}>
+        ¿Aún no tienes cuenta? <a href="{% url 'registro' %}" class="fw-semibold">Regístrate aquí</a>
+      </p>
+      <p class="mt-4 mb-0 text-center small" id="registro-tienda"{% if tipo != "tienda" %} hidden{% endif %}>
+        ¿Tu tienda aún no está? <a href="{% url 'tiendas:registro' %}" class="fw-semibold">Regístrala aquí</a>
+      </p>
+    </div>
   </div>
 </div>
+{% endwith %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // "Soy cliente / Soy tienda": cambia el subtítulo, el botón y el enlace de registro.
+  (function () {
+    function actualizar(tipo) {
+      document.querySelectorAll("[data-segun-tipo]").forEach(function (el) {
+        el.textContent = el.dataset[tipo];
+      });
+      document.getElementById("registro-cliente").hidden = tipo !== "cliente";
+      document.getElementById("registro-tienda").hidden = tipo !== "tienda";
+    }
+    document.querySelectorAll("input[name=tipo]").forEach(function (radio) {
+      radio.addEventListener("change", function () { actualizar(radio.value); });
+    });
+
+    // Botón para mostrar u ocultar la contraseña.
+    var boton = document.getElementById("ver-clave");
+    var clave = document.getElementById(boton.getAttribute("aria-controls"));
+    boton.addEventListener("click", function () {
+      var mostrar = clave.type === "password";
+      clave.type = mostrar ? "text" : "password";
+      boton.textContent = mostrar ? "Ocultar" : "Mostrar";
+      boton.setAttribute("aria-pressed", mostrar ? "true" : "false");
+      clave.focus();
+    });
+  })();
+</script>
 {% endblock %}

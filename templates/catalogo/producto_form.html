@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block titulo %}{{ titulo }} | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <div class="row justify-content-center">
@@ -34,4 +35,9 @@
     </div></div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{# Categoría y marca con buscador: escribe el nombre o la inicial. #}
+<script src="{% static 'js/lista_buscable.js' %}?v=1"></script>
 {% endblock %}

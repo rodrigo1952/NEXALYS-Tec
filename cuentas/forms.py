@@ -23,13 +23,51 @@ class IngresoForm(AuthenticationForm):
     incorrecta. Aquí, SOLO si la contraseña es correcta, se avisa que la cuenta fue
     desactivada y se muestra el motivo que escribió el administrador. Con una
     contraseña incorrecta no se revela nada sobre la cuenta.
+
+    Además, el selector "Soy cliente / Soy tienda" se valida: una cuenta de tienda
+    debe entrar como tienda y una de cliente como cliente (el administrador puede
+    entrar con cualquiera). El aviso solo aparece si la contraseña es correcta.
     """
+
+    TIPOS = (("cliente", "Soy cliente"), ("tienda", "Soy tienda"))
+    # Si no llega (formularios antiguos o pruebas), no se valida el tipo de cuenta.
+    tipo = forms.ChoiceField(choices=TIPOS, required=False, widget=forms.RadioSelect)
 
     cuenta_desactivada = False
     motivo_desactivacion = ""
     correo_sin_confirmar = False
+    tipo_equivocado = ""  # "tienda" o "cliente": el tipo con el que SÍ debe entrar
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs.update({"class": "form-control", "placeholder": "Tu nombre de usuario"})
+        self.fields["password"].widget.attrs.update({"class": "form-control", "placeholder": "Tu contraseña"})
+        # Si venía de una página de la tienda (ej.: /inventario/), ya se marca "Soy tienda".
+        siguiente = self.request.GET.get("next", "") if self.request else ""
+        paginas_de_tienda = ("/tiendas/panel", "/inventario/", "/catalogo/mis-productos")
+        self.fields["tipo"].initial = "tienda" if siguiente.startswith(paginas_de_tienda) else "cliente"
 
     def clean(self):
+        datos = self._validar_clave()
+        self._validar_tipo()
+        return datos
+
+    def _validar_tipo(self):
+        tipo = self.cleaned_data.get("tipo")
+        usuario = self.get_user()
+        if not tipo or usuario is None:
+            return
+        if usuario.is_superuser or usuario.groups.filter(name="Administrador").exists():
+            return
+        es_tienda = hasattr(usuario, "tienda")
+        if tipo == "tienda" and not es_tienda:
+            self.tipo_equivocado = "cliente"
+            raise ValidationError("Esta cuenta es de cliente. Elige «Soy cliente» para entrar.", code="tipo_cliente")
+        if tipo == "cliente" and es_tienda:
+            self.tipo_equivocado = "tienda"
+            raise ValidationError("Esta cuenta es de una tienda. Elige «Soy tienda» para entrar.", code="tipo_tienda")
+
+    def _validar_clave(self):
         try:
             return super().clean()
         except ValidationError:

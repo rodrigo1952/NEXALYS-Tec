@@ -1,0 +1,56 @@
+{% comment %}
+Logo grande de la portada de Inicio: la N metálica con anillos cian y el nombre
+"NEXALYS TEC." debajo. El nombre se descubre de izquierda a derecha y se queda
+(animación "barrido" en marca.css). El nombre ocupa exactamente el ancho de la N:
+desde el borde izquierdo de los anillos de la izquierda (x=121) hasta el borde
+derecho de los de la derecha (x=512).
+{% endcomment %}
+<svg class="logo-portada" viewBox="60 110 520 520" role="img" aria-label="NEXALYS Tec.">
+  <defs>
+    <linearGradient id="nxp-metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#C3CBD8"/>
+      <stop offset=".45" stop-color="#FFFFFF"/>
+      <stop offset=".55" stop-color="#EEF2F7"/>
+      <stop offset="1" stop-color="#A9B4C4"/>
+    </linearGradient>
+    <linearGradient id="nxp-metal-v" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#B9C2D0"/>
+      <stop offset=".5" stop-color="#F7F9FC"/>
+      <stop offset="1" stop-color="#AEB8C7"/>
+    </linearGradient>
+    <linearGradient id="nxp-anillo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4FE0F8"/>
+      <stop offset=".5" stop-color="#19C3E6"/>
+      <stop offset="1" stop-color="#0E9CC4"/>
+    </linearGradient>
+    <filter id="nxp-sombra" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+    <filter id="nxp-sombra-texto" x="-10%" y="-40%" width="120%" height="180%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity=".5"/>
+    </filter>
+    <clipPath id="nxp-cortina"><rect class="logo-portada__cortina" x="0" y="520" width="640" height="120"/></clipPath>
+  </defs>
+
+  <g class="logo-portada__n" filter="url(#nxp-sombra)">
+    <rect x="158" y="249" width="36" height="190" fill="url(#nxp-metal-v)"/>
+    <rect x="439" y="249" width="36" height="190" fill="url(#nxp-metal-v)"/>
+    <line x1="208.5" y1="235.6" x2="424.5" y2="452.4" stroke="url(#nxp-metal)" stroke-width="36"/>
+    <g fill="none" stroke="url(#nxp-anillo)" stroke-width="27">
+      <circle cx="176" cy="203" r="41.5"/>
+      <circle cx="457" cy="203" r="41.5"/>
+      <circle cx="176" cy="485" r="41.5"/>
+      <circle cx="457" cy="485" r="41.5"/>
+    </g>
+    <g fill="none" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="5" stroke-linecap="round">
+      <path d="M148 186 a34 34 0 0 1 22 -20"/>
+      <path d="M429 186 a34 34 0 0 1 22 -20"/>
+      <path d="M148 468 a34 34 0 0 1 22 -20"/>
+      <path d="M429 468 a34 34 0 0 1 22 -20"/>
+    </g>
+  </g>
+
+  <g clip-path="url(#nxp-cortina)" filter="url(#nxp-sombra-texto)">
+    <text class="logo-portada__nombre" x="121" y="604" textLength="391" lengthAdjust="spacingAndGlyphs" font-size="66" fill="#FFFFFF">NEXALYS <tspan fill="#19C3E6">TEC.</tspan></text>
+  </g>
+</svg>
