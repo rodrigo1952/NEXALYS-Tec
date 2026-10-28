@@ -6,20 +6,25 @@ Proyecto del IV ciclo de Arquitectura de Plataformas y Servicios de TI — IESPP
 
 ## Tecnologías
 
-- Python 3.12 o superior
-- Django 6.1
+- Python 3.14
+- Django 6.1.1
 - SQLite (base de datos de desarrollo)
-- Bootstrap 5 (interfaz)
+- Bootstrap 5.3.3 (interfaz)
+- Chart.js (gráficos del Resumen)
 - Pillow (imágenes de productos)
+- openpyxl (descarga en Excel)
 
 ## Instalación
+
+Se usa `py -3.14` para crear el entorno virtual porque en algunas PC el comando `python` abre otra versión de Python.
 
 ```powershell
 git clone https://github.com/rodrigo1952/NEXALYS-Tec.git nexalys
 cd nexalys
-python -m venv venv
+py -3.14 -m venv venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\venv\Scripts\activate
+python --version    # debe decir Python 3.14.x
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py createsuperuser
