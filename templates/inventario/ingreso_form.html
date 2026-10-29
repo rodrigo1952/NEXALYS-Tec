@@ -3,7 +3,7 @@
 {% block titulo %}Nuevo ingreso | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% include "inventario/_menu.html" %}
-<a href="{% url 'inventario:ingresos' %}" class="small">&larr; Volver a ingresos</a>
+<a href="{% url 'inventario:ingresos' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a ingresos</a>
 <h3 class="h5 my-2">Nuevo ingreso de mercadería</h3>
 <p class="text-muted small">Registra lo que recibiste y cuánto pagaste por unidad. Al guardar, el stock sube y el costo de la ficha se actualiza con el promedio.</p>
 
@@ -15,7 +15,10 @@
 
   <div class="card shadow-sm mb-3"><div class="card-body">
     <h4 class="h6">Productos recibidos</h4>
-    <p class="small mb-2">¿Llegó un producto que aún no tienes registrado? <a href="{% url 'catalogo:crear' %}?volver=ingreso">Créalo primero</a> y volverás aquí con el producto ya elegido.</p>
+    <div class="atajo mb-2">
+      <p class="atajo__texto"><strong>¿Llegó un producto nuevo?</strong> Regístralo y volverás aquí con él ya elegido.</p>
+      <a href="{% url 'catalogo:crear' %}?volver=ingreso" class="btn btn-sm btn-primary">+ Crear producto</a>
+    </div>
     <div class="row g-2 small text-muted d-none d-md-flex">
       <div class="col-md-6">Producto</div><div class="col-md-2">Cantidad</div><div class="col-md-2">Costo unit. (S/)</div><div class="col-md-2 text-end">Subtotal</div>
     </div>
@@ -52,8 +55,9 @@
       {% for campo in form %}
         <div class="{% if campo.name == 'nota' %}col-12{% else %}col-md-6{% endif %}">
           <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
-          {{ campo }}
-          {% if campo.name == 'proveedor' %}<div class="form-text"><a href="{% url 'inventario:proveedor_crear' %}">+ Registrar un proveedor nuevo</a></div>{% endif %}
+          {% if campo.name == 'proveedor' %}
+            <div class="input-group">{{ campo }}<a href="{% url 'inventario:proveedor_crear' %}" class="btn btn-outline-primary">+ Nuevo proveedor</a></div>
+          {% else %}{{ campo }}{% endif %}
           {% for e in campo.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
       {% endfor %}

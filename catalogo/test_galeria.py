@@ -45,8 +45,9 @@ class GaleriaEdicionTests(BaseCatalogo):
 
     def test_la_galeria_muestra_todas_las_fotos_con_sus_botones(self):
         respuesta = self.client.get(self.url)
-        for texto in ("Fotos del producto", "Principal", "Cambiar foto principal", "Quitar foto principal",
-                      "Hacer principal", "Reemplazar", "+ Agregar fotos", "Puedes agregar 4 más", "¿Quitar esta foto?"):
+        for texto in ("Fotos del producto", "Foto principal", "Cambiar foto principal", 'aria-label="Quitar la foto principal"',
+                      "Hacer principal", "Reemplazar", 'aria-label="Quitar la foto 1"', "+ Agregar fotos",
+                      "Puedes agregar 4 más", "o arrástralas aquí"):
             self.assertContains(respuesta, texto)
         self.assertContains(respuesta, self.adicional.imagen.url)
         self.assertContains(respuesta, f'name="reemplazar_{self.adicional.pk}"')
@@ -98,3 +99,31 @@ class GaleriaEdicionTests(BaseCatalogo):
     def test_agregar_fotos_al_editar(self):
         self.guardar(fotos_nuevas=[foto("a.png"), foto("b.png")])
         self.assertEqual(self.producto.fotos.count(), 3)
+
+    def test_la_principal_va_grande_y_las_adicionales_aparte(self):
+        html = self.client.get(self.url).content.decode()
+        principal = html.index('class="tarjeta-foto tarjeta-foto--principal"')
+        secundarias = html.index('class="galeria-edicion__secundarias"')
+        self.assertLess(principal, secundarias)
+        self.assertLess(secundarias, html.index('class="tarjeta-foto tarjeta-foto--secundaria"'))
+
+    def test_arrastrar_y_quitar_con_x(self):
+        respuesta = self.client.get(self.url)
+        self.assertContains(respuesta, 'draggable="true"')  # las adicionales se arrastran a la principal
+        self.assertContains(respuesta, 'data-soltar-texto="Suelta para que sea la foto principal"')
+        self.assertContains(respuesta, 'class="zona-agregar mb-0" data-zona-agregar')
+        self.assertContains(respuesta, 'class="tarjeta-foto__x"', count=2)
+        self.assertNotContains(respuesta, "modal-quitar-foto")  # la X no pide confirmación: se deshace
+
+    def test_sin_espacio_no_hay_zona_para_agregar(self):
+        for orden in range(2, 6):
+            FotoProducto.objects.create(producto=self.producto, imagen=foto(f"extra{orden}.png"), orden=orden)
+        respuesta = self.client.get(self.url)
+        self.assertNotContains(respuesta, 'class="zona-agregar')
+        self.assertContains(respuesta, "Ya tienes el máximo de fotos adicionales")
+
+    def test_el_visor_recorre_las_fotos_del_producto(self):
+        respuesta = self.client.get(reverse("catalogo:detalle", args=[self.producto.pk]))
+        self.assertContains(respuesta, 'data-galeria="producto"', count=2)
+        for parte in ('id="visor-anterior"', 'id="visor-siguiente"', 'id="visor-contador"'):
+            self.assertContains(respuesta, parte)

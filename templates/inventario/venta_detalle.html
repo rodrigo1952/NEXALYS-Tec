@@ -5,7 +5,7 @@
 <div class="no-imprimir">
   {% include "inventario/_menu.html" %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <a href="{% url 'inventario:ventas' %}" class="small">&larr; Volver a ventas</a>
+    <a href="{% url 'inventario:ventas' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a ventas</a>
     <div class="d-flex gap-2">
       <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
       {% if not venta.anulada %}<a href="{% url 'inventario:venta_anular' venta.pk %}" class="btn btn-outline-danger">Anular venta</a>{% endif %}

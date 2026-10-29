@@ -94,8 +94,8 @@
         <div class="alert alert-info">No tienes favoritos con esos filtros.</div>
       {% else %}
         <div class="alert alert-info">
-          Aún no guardaste productos. Toca 🤍 en cualquier producto del
-          <a href="{% url 'catalogo:catalogo' %}">catálogo</a> para encontrarlo aquí después.
+          Aún no guardaste productos. Toca 🤍 en cualquier producto para encontrarlo aquí después.
+          <a href="{% url 'catalogo:catalogo' %}" class="enlace-accion ms-1">Ir al catálogo</a>
         </div>
       {% endif %}
     </div>

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}Editar mi tienda | NEXALYS Tec{% endblock %}
 {% block contenido %}
-<a href="{% url 'tiendas:panel' %}" class="small">&larr; Volver a mi tienda</a>
+<a href="{% url 'tiendas:panel' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a mi tienda</a>
 <h2 class="h4 mt-2 mb-3">Editar datos de mi tienda</h2>
 
 <form method="post" enctype="multipart/form-data" novalidate>

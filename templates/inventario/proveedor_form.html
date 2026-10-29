@@ -4,7 +4,7 @@
 {% include "inventario/_menu.html" %}
 <div class="row justify-content-center">
   <div class="col-lg-6">
-    <a href="{% url 'inventario:proveedores' %}" class="small">&larr; Volver a proveedores</a>
+    <a href="{% url 'inventario:proveedores' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a proveedores</a>
     <div class="card shadow-sm mt-2"><div class="card-body p-4">
       <h3 class="h5 mb-3">{{ titulo }}</h3>
       <form method="post" novalidate>

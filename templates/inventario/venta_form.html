@@ -3,7 +3,7 @@
 {% block titulo %}Nueva venta | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% include "inventario/_menu.html" %}
-<a href="{% url 'inventario:ventas' %}" class="small">&larr; Volver a ventas</a>
+<a href="{% url 'inventario:ventas' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a ventas</a>
 <h3 class="h5 my-2">Nueva venta</h3>
 <p class="text-muted small">Elige los productos vendidos. El precio se sugiere solo; cámbialo si hiciste un descuento. Al guardar, el stock se descuenta.</p>
 
@@ -15,7 +15,10 @@
 
   <div class="card shadow-sm mb-3"><div class="card-body">
     <h4 class="h6">Productos</h4>
-    <p class="small mb-2">¿Vas a vender un producto que aún no registraste? <a href="{% url 'catalogo:crear' %}?volver=venta">Créalo primero</a> y volverás aquí con el producto ya elegido.</p>
+    <div class="atajo mb-2">
+      <p class="atajo__texto"><strong>¿Vas a vender un producto nuevo?</strong> Regístralo y volverás aquí con él ya elegido.</p>
+      <a href="{% url 'catalogo:crear' %}?volver=venta" class="btn btn-sm btn-primary">+ Crear producto</a>
+    </div>
     <div class="row g-2 small text-muted d-none d-md-flex">
       <div class="col-md-6">Producto</div><div class="col-md-2">Cantidad</div><div class="col-md-2">Precio unit. (S/)</div><div class="col-md-2 text-end">Subtotal</div>
     </div>

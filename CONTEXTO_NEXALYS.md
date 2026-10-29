@@ -15,12 +15,16 @@
 
 ## 2. Tecnología
 
-- Python 3.14 (Windows), **Django 6.1.1**, SQLite (`transaction_mode` IMMEDIATE), Pillow, openpyxl.
+- Python 3.14 (Windows; el venv se crea con `py -3.14 -m venv venv` y VS Code usa ese intérprete), **Django 6.1.1**, SQLite (`transaction_mode` IMMEDIATE), Pillow, openpyxl.
 - Bootstrap 5.3.3 y Chart.js desde CDN. Letra Space Grotesk (Google Fonts); el logo animado de Inicio usa Lilita One.
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
   Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html`.
-- `db.sqlite3` y `media/` **no** van a GitHub (`.gitignore`). Para llevar datos de prueba a otra PC:
+- `db.sqlite3`, `media/` y `.vscode/` **no** van a GitHub (`.gitignore`). Para llevar datos de prueba a otra PC:
   `python manage.py exportar_demo` / `python manage.py cargar_demo` (ver README).
+- Para la presentación: `python manage.py cargar_productos_presentacion` crea 3 tiendas ficticias
+  (Selva Byte, Valle Digital Tech, Kantu Tech; WhatsApp del equipo 930909090, 920909090, 910909090)
+  con 47 productos reales sin foto (datos en `catalogo/presentacion.py`; enlaces para las fotos en
+  "Claude outputs/Fotos_productos_presentacion.md").
 
 ## 3. Roles y módulos
 
@@ -85,7 +89,10 @@
 - Formularios: el atributo `fila = "inicio"/"fin"` pone dos campos en una misma fila
   (`templates/_campos_formulario.html`); `aparte = True` indica que el campo se dibuja por separado.
 - Listas con buscador: un `<select>` con el atributo `data-buscable` usa `static/js/lista_buscable.js`.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **424 pruebas**.
+- Acciones visibles (no usar enlaces `.small` para acciones): `.btn-volver` (con `<span class="flecha">&larr;</span>`)
+  para «Volver a…», `.atajo` + botón para crear lo que falta (p. ej. «+ Crear producto», «+ Nuevo proveedor»)
+  y `.enlace-accion` para «Ver más / ver todo» (agrega la flecha →). Están en `marca.css`.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **441 pruebas**.
 
 ## 7. Pendientes e ideas
 
@@ -93,8 +100,6 @@
 - Decidir cómo cobrar a las tiendas (por ejemplo, 1 % por venta) y cómo evitar que lo evadan.
 - "Seguir tiendas" (etapa 2).
 - Posible migración de SQLite a MySQL más adelante.
-- Actualizar el README: la instalación debería usar `py -3.14 -m venv venv`, porque en algunas PC
-  `python` abre otra versión.
 
 ## 8. Documentos ya hechos (en la carpeta "Claude outputs", fuera de git)
 

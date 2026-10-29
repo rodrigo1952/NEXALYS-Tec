@@ -4,7 +4,7 @@
 {% block contenido %}
 {% include "inventario/_menu.html" %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <a href="{% url 'inventario:ingresos' %}" class="small">&larr; Volver a ingresos</a>
+  <a href="{% url 'inventario:ingresos' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a ingresos</a>
   {% if not ingreso.anulado %}<a href="{% url 'inventario:ingreso_anular' ingreso.pk %}" class="btn btn-outline-danger">Anular ingreso</a>{% endif %}
 </div>
 {% if ingreso.anulado %}

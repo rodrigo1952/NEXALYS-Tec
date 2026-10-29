@@ -3,7 +3,7 @@
 {% block titulo %}Kardex · {{ producto.nombre }} | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% include "inventario/_menu.html" %}
-<a href="{% url 'catalogo:mis_productos' %}" class="small">&larr; Volver a mis productos</a>
+<a href="{% url 'catalogo:mis_productos' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a mis productos</a>
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 my-2">
   <div>
     <h3 class="h5 mb-0">Kardex: {{ producto.nombre }}</h3>
@@ -26,8 +26,8 @@
           <td class="small">{{ m.get_tipo_display }}{% if m.motivo %} · {{ m.get_motivo_display }}{% endif %}</td>
           <td class="small text-muted">
             {{ m.nota|default:"" }}
-            {% if m.venta_id %}<a href="{% url 'inventario:venta_detalle' m.venta_id %}" class="ms-1">Ver venta</a>{% endif %}
-            {% if m.ingreso_id %}<a href="{% url 'inventario:ingreso_detalle' m.ingreso_id %}" class="ms-1">Ver ingreso</a>{% endif %}
+            {% if m.venta_id %}<a href="{% url 'inventario:venta_detalle' m.venta_id %}" class="enlace-accion ms-1">Ver venta</a>{% endif %}
+            {% if m.ingreso_id %}<a href="{% url 'inventario:ingreso_detalle' m.ingreso_id %}" class="enlace-accion ms-1">Ver ingreso</a>{% endif %}
           </td>
           <td class="text-end text-success">{% if m.entrada %}+{{ m.entrada }}{% endif %}</td>
           <td class="text-end text-danger">{% if m.salida %}−{{ m.salida }}{% endif %}</td>

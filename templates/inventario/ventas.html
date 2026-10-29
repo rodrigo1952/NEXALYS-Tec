@@ -37,7 +37,7 @@
   <label for="buscar-venta" class="visually-hidden">Buscar venta</label>
   <input id="buscar-venta" type="search" name="q" value="{{ q }}" class="form-control flex-grow-1" style="width:auto;flex-basis:14rem" placeholder="Buscar por N.°, cliente, DNI/RUC o producto">
   <button type="submit" class="btn btn-outline-secondary">Buscar</button>
-  {% if q %}<a href="{% querystring q=None page=None %}" class="btn btn-link">Quitar búsqueda</a>{% endif %}
+  {% if q %}<a href="{% querystring q=None page=None %}" class="btn btn-outline-secondary">✕ Quitar búsqueda</a>{% endif %}
 </form>
 
 <div class="table-responsive bg-white rounded shadow-sm">

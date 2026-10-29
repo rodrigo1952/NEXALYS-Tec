@@ -8,7 +8,7 @@ Nada cambia hasta que se presiona el botón de este formulario.
 {% endcomment %}
 <div class="row justify-content-center">
   <div class="col-lg-7">
-    <a href="{{ cancelar }}" class="small">&larr; Volver</a>
+    <a href="{{ cancelar }}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver</a>
     <div class="card border-{{ color }} shadow-sm mt-2"><div class="card-body p-4">
       <h3 class="h5 {% if color == 'warning' %}text-body{% else %}text-{{ color }}{% endif %}">{{ titulo }}</h3>
       {% if aviso %}<p class="small text-muted mb-3">{{ aviso }}</p>{% endif %}

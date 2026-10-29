@@ -1,102 +1,115 @@
 {% comment %}
-Galería de fotos al EDITAR un producto. Cada foto tiene sus botones:
-  - Principal: «Cambiar foto principal» y «Quitar foto principal».
-  - Adicionales: «Hacer principal», «Reemplazar» y «Quitar».
-  - «+ Agregar fotos» (varias a la vez, hasta llenar las 5 adicionales).
-Los botones solo MARCAN el cambio (la tarjeta muestra qué pasará); todo se aplica al
-presionar «Guardar». Quitar una foto pide confirmación (Sí / No).
+Galería de fotos al EDITAR un producto.
+  - La foto PRINCIPAL va grande a la izquierda; las adicionales, más pequeñas a su derecha.
+  - Arrastrar y soltar:
+      · una foto adicional sobre la principal  → la intercambia (igual que «Hacer principal»);
+      · una imagen de tu carpeta sobre la principal o sobre una adicional → la reemplaza;
+      · imágenes de tu carpeta en cualquier otro lugar de la galería → se agregan como fotos nuevas.
+  - La «X» (aparece al pasar el cursor; en celular se ve siempre) marca la foto para quitarla.
+Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tiene «Deshacer».
 {% endcomment %}
-<section class="galeria-edicion mb-4" aria-labelledby="titulo-galeria">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+<section class="galeria-edicion mb-4" aria-labelledby="titulo-galeria" data-libres="{{ form.fotos_libres }}">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
     <h3 class="h6 mb-0" id="titulo-galeria">Fotos del producto</h3>
     {% if form.fotos_libres > 0 %}
       <label for="{{ form.fotos_nuevas.id_for_label }}" class="btn btn-sm btn-outline-primary mb-0">+ Agregar fotos</label>
-      <span class="small text-muted w-100 text-sm-end" id="fotos-libres">Puedes agregar {{ form.fotos_libres }} más.</span>
-    {% else %}
-      <span class="small text-muted">Ya tienes el máximo de fotos adicionales. Quita o reemplaza una para cambiarla.</span>
     {% endif %}
   </div>
+  <p class="small text-muted mb-3">
+    {% if form.fotos_libres > 0 %}<span id="fotos-libres">Puedes agregar {{ form.fotos_libres }} más.</span>{% else %}Ya tienes el máximo de fotos adicionales. Quita o reemplaza una para cambiarla.{% endif %}
+    <span class="d-none d-md-inline">Consejo: arrastra una foto sobre la principal para cambiarla, o suelta imágenes de tu carpeta aquí.</span>
+  </p>
   <input type="file" name="{{ form.fotos_nuevas.html_name }}" id="{{ form.fotos_nuevas.id_for_label }}" accept="image/*" multiple class="visually-hidden" data-agregar>
 
   {% for error in form.imagen.errors %}<div class="text-danger small">Foto principal: {{ error }}</div>{% endfor %}
   {% for error in form.fotos_nuevas.errors %}<div class="text-danger small">Fotos nuevas: {{ error }}</div>{% endfor %}
   {% for error in form.eliminar_fotos.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
 
-  <div class="row row-cols-2 row-cols-md-3 g-3">
-    {# ---- Foto principal ---- #}
-    <div class="col">
-      <div class="tarjeta-foto tarjeta-foto--principal h-100" data-tarjeta="principal">
-        <span class="badge rounded-pill text-bg-dark etiqueta-principal">Principal</span>
-        <div class="tarjeta-foto__imagen">
-          {% if producto.imagen %}
-            <img src="{{ producto.imagen.url }}" alt="Foto principal de {{ producto.nombre }}" data-vista>
-          {% else %}
-            <span class="text-muted small" data-vacia>Sin foto principal</span>
-            <img src="" alt="" class="d-none" data-vista>
-          {% endif %}
-        </div>
-        <div class="tarjeta-foto__estado small" data-estado></div>
-        <div class="tarjeta-foto__botones">
-          <label for="{{ form.imagen.id_for_label }}" class="btn btn-sm btn-outline-primary mb-0">{% if producto.imagen %}Cambiar foto principal{% else %}Subir foto principal{% endif %}</label>
-          {% if producto.imagen %}
-            <button type="button" class="btn btn-sm btn-outline-danger" data-quitar="principal">Quitar foto principal</button>
-          {% endif %}
-          <button type="button" class="btn btn-sm btn-link d-none" data-deshacer>Deshacer</button>
-        </div>
-        <input type="file" name="{{ form.imagen.html_name }}" id="{{ form.imagen.id_for_label }}" accept="image/*" class="visually-hidden" data-archivo>
-        <input type="checkbox" name="{{ form.imagen.html_name }}-clear" class="d-none" data-marca-quitar>
+  <div class="galeria-edicion__cuerpo">
+    {# ---- Foto principal (grande) ---- #}
+    <div class="tarjeta-foto tarjeta-foto--principal" data-tarjeta="principal" data-soltar-texto="Suelta para que sea la foto principal">
+      <span class="etiqueta-principal"><span aria-hidden="true">★</span> Foto principal</span>
+      <button type="button" class="tarjeta-foto__x{% if not producto.imagen %} d-none{% endif %}" data-x aria-label="Quitar la foto principal" title="Quitar">&times;</button>
+      <div class="tarjeta-foto__imagen">
+        {% if producto.imagen %}
+          <img src="{{ producto.imagen.url }}" alt="Foto principal de {{ producto.nombre }}" data-vista>
+        {% else %}
+          <span class="text-muted small text-center px-3" data-vacia>Sin foto principal.<br>Arrastra una imagen aquí.</span>
+          <img src="" alt="" class="d-none" data-vista>
+        {% endif %}
       </div>
+      <p class="small text-muted mb-0">Es la que se ve en el catálogo y en el inicio.</p>
+      <div class="tarjeta-foto__estado small" data-estado></div>
+      <div class="tarjeta-foto__botones">
+        <label for="{{ form.imagen.id_for_label }}" class="btn btn-sm btn-outline-primary mb-0">{% if producto.imagen %}Cambiar foto principal{% else %}Subir foto principal{% endif %}</label>
+        <button type="button" class="btn btn-sm btn-link d-none" data-deshacer>Deshacer</button>
+      </div>
+      <input type="file" name="{{ form.imagen.html_name }}" id="{{ form.imagen.id_for_label }}" accept="image/*" class="visually-hidden" data-archivo>
+      <input type="checkbox" name="{{ form.imagen.html_name }}-clear" class="d-none" data-marca-quitar>
     </div>
 
-    {# ---- Fotos adicionales ---- #}
-    {% for item in form.galeria %}
-      <div class="col">
-        <div class="tarjeta-foto h-100" data-tarjeta="{{ item.foto.pk }}">
+    {# ---- Fotos adicionales (más pequeñas) ---- #}
+    <div class="galeria-edicion__secundarias">
+      {% for item in form.galeria %}
+        <div class="tarjeta-foto tarjeta-foto--secundaria" data-tarjeta="{{ item.foto.pk }}" data-soltar-texto="Suelta para reemplazarla">
+          <button type="button" class="tarjeta-foto__x" data-x aria-label="Quitar la foto {{ forloop.counter }}" title="Quitar">&times;</button>
           <div class="tarjeta-foto__imagen">
-            <img src="{{ item.foto.imagen.url }}" alt="Foto {{ forloop.counter }} de {{ producto.nombre }}" data-vista>
+            <img src="{{ item.foto.imagen.url }}" alt="Foto {{ forloop.counter }} de {{ producto.nombre }}" data-vista draggable="true" title="Arrástrala a la foto principal para intercambiarlas">
           </div>
           <div class="tarjeta-foto__estado small" data-estado></div>
           {% for error in item.reemplazo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
           <div class="tarjeta-foto__botones">
             <button type="button" class="btn btn-sm btn-outline-dark" data-hacer-principal="{{ item.foto.pk }}">Hacer principal</button>
             <label for="{{ item.reemplazo.id_for_label }}" class="btn btn-sm btn-outline-primary mb-0">Reemplazar</label>
-            <button type="button" class="btn btn-sm btn-outline-danger" data-quitar="{{ item.foto.pk }}">Quitar</button>
             <button type="button" class="btn btn-sm btn-link d-none" data-deshacer>Deshacer</button>
           </div>
           <input type="file" name="{{ item.reemplazo.html_name }}" id="{{ item.reemplazo.id_for_label }}" accept="image/*" class="visually-hidden" data-archivo>
           <input type="checkbox" name="{{ form.eliminar_fotos.html_name }}" value="{{ item.foto.pk }}" class="d-none" data-marca-quitar>
         </div>
-      </div>
-    {% endfor %}
+      {% endfor %}
+      {% if form.fotos_libres > 0 %}
+        <label for="{{ form.fotos_nuevas.id_for_label }}" class="zona-agregar mb-0" data-zona-agregar>
+          <span class="zona-agregar__mas" aria-hidden="true">+</span>
+          <span class="fw-semibold">Agregar fotos</span>
+          <span class="small">o arrástralas aquí</span>
+        </label>
+      {% endif %}
+    </div>
   </div>
 
-  <div class="d-flex flex-wrap gap-2 mt-2 d-none" id="nuevas-fotos" aria-live="polite"></div>
+  <div class="nuevas-fotos d-none mt-3" id="nuevas-fotos" aria-live="polite">
+    <div class="small text-primary fw-semibold mb-2" id="nuevas-fotos-texto"></div>
+    <div class="d-flex flex-wrap gap-2" id="nuevas-fotos-lista"></div>
+  </div>
+  <div class="small text-danger mt-2 d-none" id="aviso-galeria" role="alert"></div>
   <p class="small text-muted mt-2 mb-0">Los cambios en las fotos se aplican al presionar <strong>«Guardar»</strong>. JPG, PNG o WEBP de máximo 2 MB.</p>
 </section>
-
-{# Confirmación para quitar una foto #}
-<div class="modal fade" id="modal-quitar-foto" tabindex="-1" aria-labelledby="titulo-quitar-foto" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content"><div class="modal-body text-center p-4">
-      <img src="" alt="" class="rounded border mb-3 d-none" style="max-height:110px;max-width:100%;object-fit:contain" id="quitar-foto-vista">
-      <h2 class="h5" id="titulo-quitar-foto">¿Quitar esta foto?</h2>
-      <p class="small text-muted mb-4">Se quitará al guardar el producto y no se podrá recuperar.</p>
-      <div class="d-flex gap-2 justify-content-center">
-        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">No</button>
-        <button type="button" class="btn btn-danger px-4" id="confirmar-quitar-foto">Sí, quitar</button>
-      </div>
-    </div></div>
-  </div>
-</div>
 
 <script>
 (function () {
   const galeria = document.querySelector(".galeria-edicion");
   if (!galeria) return;
   const principalOculto = document.getElementById("{{ form.principal_foto.id_for_label }}");  // campo oculto del formulario
-  const modalEl = document.getElementById("modal-quitar-foto");
-  const vistaModal = document.getElementById("quitar-foto-vista");
-  let porQuitar = null;
+  const tarjetaPrincipal = galeria.querySelector('[data-tarjeta="principal"]');
+  const aviso = document.getElementById("aviso-galeria");
+  var pendientes = [];  // fotos nuevas elegidas o soltadas, aún sin guardar
+  const TIPO_FOTO = "application/x-nexalys-foto";  // arrastre de una foto adicional (no es un archivo)
+
+  function avisar(texto) {
+    aviso.textContent = texto || "";
+    aviso.classList.toggle("d-none", !texto);
+  }
+
+  function tarjetaDe(id) {
+    return id ? galeria.querySelector('[data-tarjeta="' + id + '"]') : null;
+  }
+
+  function mostrarX(tarjeta) {
+    const x = tarjeta.querySelector("[data-x]");
+    const vista = tarjeta.querySelector("[data-vista]");
+    const conImagen = vista && !vista.classList.contains("d-none") && vista.getAttribute("src");
+    x.classList.toggle("d-none", !conImagen || tarjeta.classList.contains("tarjeta-foto--quitada"));
+  }
 
   function estado(tarjeta, texto, clase) {
     const caja = tarjeta.querySelector("[data-estado]");
@@ -104,6 +117,14 @@ presionar «Guardar». Quitar una foto pide confirmación (Sí / No).
     caja.className = "tarjeta-foto__estado small " + (clase || "");
     tarjeta.classList.toggle("tarjeta-foto--marcada", Boolean(texto));
     tarjeta.querySelector("[data-deshacer]").classList.toggle("d-none", !texto);
+    mostrarX(tarjeta);
+    actualizarZona();
+  }
+
+  // La zona «Agregar fotos» se esconde cuando ya no queda espacio para más fotos.
+  function actualizarZona() {
+    const zona = galeria.querySelector("[data-zona-agregar]");
+    if (zona) zona.classList.toggle("d-none", espacioLibre() - pendientes.length <= 0);
   }
 
   function restaurar(tarjeta) {
@@ -124,7 +145,12 @@ presionar «Guardar». Quitar una foto pide confirmación (Sí / No).
     estado(tarjeta, "");
   }
 
-  // Elegir un archivo: vista previa y aviso de lo que pasará al guardar.
+  function original(tarjeta) {
+    const vista = tarjeta.querySelector("[data-vista]");
+    return vista.dataset.original !== undefined ? vista.dataset.original : (vista.getAttribute("src") || "");
+  }
+
+  // Elegir un archivo (con el botón o soltándolo): vista previa y aviso de lo que pasará al guardar.
   galeria.querySelectorAll("[data-archivo]").forEach(function (input) {
     input.addEventListener("change", function () {
       const tarjeta = input.closest("[data-tarjeta]");
@@ -138,79 +164,183 @@ presionar «Guardar». Quitar una foto pide confirmación (Sí / No).
       const quitar = tarjeta.querySelector("[data-marca-quitar]");
       if (quitar) quitar.checked = false;
       tarjeta.classList.remove("tarjeta-foto--quitada");
-      if (tarjeta.dataset.tarjeta === "principal" && principalOculto.value) {
-        restaurar(galeria.querySelector('[data-tarjeta="' + principalOculto.value + '"]'));
-      }
-      estado(tarjeta, tarjeta.dataset.tarjeta === "principal" ? "Nueva foto principal (se guardará)" : "Foto nueva (se guardará)", "text-primary");
+      if (tarjeta === tarjetaPrincipal && principalOculto.value) restaurar(tarjetaDe(principalOculto.value));
+      estado(tarjeta, tarjeta === tarjetaPrincipal ? "Nueva foto principal (se guardará)" : "Foto nueva (se guardará)", "text-primary");
     });
   });
 
-  // Quitar: primero se confirma.
-  galeria.querySelectorAll("[data-quitar]").forEach(function (boton) {
+  // «X»: un clic marca la foto para quitarla (se puede deshacer; se aplica al guardar).
+  galeria.querySelectorAll("[data-x]").forEach(function (boton) {
     boton.addEventListener("click", function () {
-      porQuitar = boton.closest("[data-tarjeta]");
-      const img = porQuitar.querySelector("[data-vista]");
-      const fuente = img && !img.classList.contains("d-none") ? img.getAttribute("src") : "";
-      if (fuente) vistaModal.setAttribute("src", fuente);
-      vistaModal.classList.toggle("d-none", !fuente);
-      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      const tarjeta = boton.closest("[data-tarjeta]");
+      const habiaFoto = Boolean(original(tarjeta));
+      if (tarjeta === tarjetaPrincipal && principalOculto.value) restaurar(tarjetaDe(principalOculto.value));
+      restaurar(tarjeta);
+      if (!habiaFoto) return;  // era una foto nueva sin guardar: solo se descarta
+      tarjeta.querySelector("[data-marca-quitar]").checked = true;
+      tarjeta.classList.add("tarjeta-foto--quitada");
+      estado(tarjeta, "Se quitará al guardar", "text-danger");
     });
-  });
-  document.getElementById("confirmar-quitar-foto").addEventListener("click", function () {
-    if (porQuitar) {
-      restaurar(porQuitar);
-      porQuitar.querySelector("[data-marca-quitar]").checked = true;
-      porQuitar.classList.add("tarjeta-foto--quitada");
-      estado(porQuitar, "Se quitará al guardar", "text-danger");
-      if (porQuitar.dataset.tarjeta === "principal" && principalOculto.value) {
-        restaurar(galeria.querySelector('[data-tarjeta="' + principalOculto.value + '"]'));
-      }
-    }
-    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
   });
 
   // Hacer principal: solo una a la vez.
+  function hacerPrincipal(tarjeta) {
+    const anterior = tarjetaDe(principalOculto.value);
+    if (anterior && anterior !== tarjeta) restaurar(anterior);
+    restaurar(tarjeta);
+    restaurar(tarjetaPrincipal);
+    principalOculto.value = tarjeta.dataset.tarjeta;
+    tarjeta.classList.add("tarjeta-foto--sera-principal");
+    estado(tarjeta, "Será la foto principal al guardar", "text-success");
+    if (original(tarjetaPrincipal)) estado(tarjetaPrincipal, "Pasará a las fotos adicionales al guardar", "text-success");
+  }
   galeria.querySelectorAll("[data-hacer-principal]").forEach(function (boton) {
-    boton.addEventListener("click", function () {
-      const tarjeta = boton.closest("[data-tarjeta]");
-      const anterior = principalOculto.value && galeria.querySelector('[data-tarjeta="' + principalOculto.value + '"]');
-      if (anterior && anterior !== tarjeta) restaurar(anterior);
-      restaurar(tarjeta);
-      restaurar(galeria.querySelector('[data-tarjeta="principal"]'));
-      principalOculto.value = tarjeta.dataset.tarjeta;
-      tarjeta.classList.add("tarjeta-foto--sera-principal");
-      estado(tarjeta, "Será la foto principal al guardar", "text-success");
-    });
+    boton.addEventListener("click", function () { hacerPrincipal(boton.closest("[data-tarjeta]")); });
   });
 
   galeria.querySelectorAll("[data-deshacer]").forEach(function (boton) {
     boton.addEventListener("click", function () {
       const tarjeta = boton.closest("[data-tarjeta]");
-      tarjeta.classList.remove("tarjeta-foto--sera-principal");
+      if (tarjeta === tarjetaPrincipal && principalOculto.value) restaurar(tarjetaDe(principalOculto.value));
+      if (tarjeta.classList.contains("tarjeta-foto--sera-principal")) restaurar(tarjetaPrincipal);
       restaurar(tarjeta);
     });
   });
 
-  // + Agregar fotos: miniaturas de las elegidas.
+  // ---- Fotos nuevas (+ Agregar fotos o soltarlas en la galería) ----
   const agregar = galeria.querySelector("[data-agregar]");
   const nuevas = document.getElementById("nuevas-fotos");
-  agregar.addEventListener("change", function () {
-    nuevas.innerHTML = "";
-    Array.from(agregar.files).forEach(function (archivo) {
+  const nuevasLista = document.getElementById("nuevas-fotos-lista");
+  const nuevasTexto = document.getElementById("nuevas-fotos-texto");
+  function espacioLibre() {
+    const quitadas = galeria.querySelectorAll(".tarjeta-foto--secundaria.tarjeta-foto--quitada").length;
+    return parseInt(galeria.dataset.libres || "0", 10) + quitadas;
+  }
+
+  function actualizarNuevas() {
+    const transferencia = new DataTransfer();
+    pendientes.forEach(function (archivo) { transferencia.items.add(archivo); });
+    agregar.files = transferencia.files;
+    nuevasLista.innerHTML = "";
+    pendientes.forEach(function (archivo, indice) {
+      const caja = document.createElement("div");
+      caja.className = "miniatura-nueva";
       const img = document.createElement("img");
       img.src = URL.createObjectURL(archivo);
       img.alt = archivo.name;
-      img.className = "rounded border bg-white";
-      img.style.cssText = "width:64px;height:64px;object-fit:contain";
-      nuevas.appendChild(img);
+      const x = document.createElement("button");
+      x.type = "button";
+      x.className = "tarjeta-foto__x";
+      x.innerHTML = "&times;";
+      x.title = "Quitar";
+      x.setAttribute("aria-label", "No agregar " + archivo.name);
+      x.addEventListener("click", function () { pendientes.splice(indice, 1); actualizarNuevas(); });
+      caja.append(img, x);
+      nuevasLista.appendChild(caja);
     });
-    if (agregar.files.length) {
-      const texto = document.createElement("span");
-      texto.className = "small text-primary align-self-center";
-      texto.textContent = agregar.files.length + " foto(s) nueva(s): se agregarán al guardar.";
-      nuevas.appendChild(texto);
+    nuevasTexto.textContent = pendientes.length + " foto(s) nueva(s): se agregarán al guardar.";
+    nuevas.classList.toggle("d-none", !pendientes.length);
+    actualizarZona();
+  }
+
+  function sumarNuevas(archivos) {
+    const imagenes = archivos.filter(function (a) { return a.type.startsWith("image/"); });
+    if (imagenes.length < archivos.length) avisar("Solo se aceptan imágenes (JPG, PNG o WEBP).");
+    const libres = espacioLibre() - pendientes.length;
+    if (imagenes.length > libres) {
+      avisar("Solo puedes agregar " + Math.max(libres, 0) + " foto(s) más: las demás no se agregaron.");
     }
-    nuevas.classList.toggle("d-none", !agregar.files.length);
+    pendientes = pendientes.concat(imagenes.slice(0, Math.max(libres, 0)));
+    actualizarNuevas();
+  }
+
+  agregar.addEventListener("change", function () {
+    const elegidas = Array.from(agregar.files);
+    if (!elegidas.length) return;
+    avisar("");
+    // El navegador reemplaza la selección; sumarNuevas las junta con las que ya estaban pendientes.
+    sumarNuevas(elegidas);
+  });
+
+  // ---- Arrastrar y soltar ----
+  function traeArchivos(evento) { return Array.from(evento.dataTransfer.types).includes("Files"); }
+  function traeFoto(evento) { return Array.from(evento.dataTransfer.types).includes(TIPO_FOTO); }
+
+  function ponerArchivo(tarjeta, archivo) {
+    if (!archivo || !archivo.type.startsWith("image/")) {
+      avisar("Solo se aceptan imágenes (JPG, PNG o WEBP).");
+      return;
+    }
+    avisar("");
+    const input = tarjeta.querySelector("[data-archivo]");
+    const transferencia = new DataTransfer();
+    transferencia.items.add(archivo);
+    input.files = transferencia.files;
+    input.dispatchEvent(new Event("change"));
+  }
+
+  // Las fotos adicionales se pueden arrastrar hasta la principal.
+  galeria.querySelectorAll(".tarjeta-foto--secundaria [data-vista]").forEach(function (img) {
+    img.addEventListener("dragstart", function (evento) {
+      const tarjeta = img.closest("[data-tarjeta]");
+      if (tarjeta.classList.contains("tarjeta-foto--quitada")) { evento.preventDefault(); return; }
+      evento.dataTransfer.setData(TIPO_FOTO, tarjeta.dataset.tarjeta);
+      evento.dataTransfer.effectAllowed = "move";
+      galeria.classList.add("galeria-edicion--arrastrando");
+    });
+    img.addEventListener("dragend", function () {
+      galeria.classList.remove("galeria-edicion--arrastrando");
+      tarjetaPrincipal.classList.remove("tarjeta-foto--soltar");
+    });
+  });
+
+  galeria.querySelectorAll("[data-tarjeta]").forEach(function (tarjeta) {
+    const aceptaFoto = tarjeta === tarjetaPrincipal;
+    function acepta(evento) { return traeArchivos(evento) || (aceptaFoto && traeFoto(evento)); }
+    tarjeta.addEventListener("dragover", function (evento) {
+      if (!acepta(evento)) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      tarjeta.classList.add("tarjeta-foto--soltar");
+    });
+    tarjeta.addEventListener("dragleave", function (evento) {
+      if (!tarjeta.contains(evento.relatedTarget)) tarjeta.classList.remove("tarjeta-foto--soltar");
+    });
+    tarjeta.addEventListener("drop", function (evento) {
+      if (!acepta(evento)) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      tarjeta.classList.remove("tarjeta-foto--soltar");
+      galeria.classList.remove("galeria-edicion--soltar");
+      const fotoId = evento.dataTransfer.getData(TIPO_FOTO);
+      if (aceptaFoto && fotoId) {
+        const origen = tarjetaDe(fotoId);
+        if (origen) hacerPrincipal(origen);
+        return;
+      }
+      ponerArchivo(tarjeta, evento.dataTransfer.files[0]);
+    });
+  });
+
+  // Cualquier otro lugar de la galería: las imágenes se agregan como fotos nuevas.
+  galeria.addEventListener("dragover", function (evento) {
+    if (!traeArchivos(evento)) return;
+    evento.preventDefault();
+    galeria.classList.add("galeria-edicion--soltar");
+  });
+  galeria.addEventListener("dragleave", function (evento) {
+    if (!galeria.contains(evento.relatedTarget)) galeria.classList.remove("galeria-edicion--soltar");
+  });
+  galeria.addEventListener("drop", function (evento) {
+    if (!traeArchivos(evento)) return;
+    evento.preventDefault();
+    galeria.classList.remove("galeria-edicion--soltar");
+    if (!galeria.querySelector("[data-zona-agregar]") && !espacioLibre()) {
+      avisar("Ya tienes el máximo de fotos adicionales. Suelta la imagen sobre una foto para reemplazarla.");
+      return;
+    }
+    avisar("");
+    sumarNuevas(Array.from(evento.dataTransfer.files));
   });
 })();
 </script>

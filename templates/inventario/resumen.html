@@ -45,7 +45,7 @@
   <div class="col-6 col-lg-3"><div class="card shadow-sm h-100"><div class="card-body py-3">
     <div class="small text-muted">Valor del inventario (hoy)</div><div class="fs-4 fw-semibold">{{ inventario.valor_costo|soles }}</div>
     <div class="small text-muted">A precio de venta: {{ inventario.valor_venta|soles }}</div>
-    {% if inventario.sin_costo %}<a href="{% url 'catalogo:mis_productos' %}?sin_costo=1" class="small text-warning-emphasis no-imprimir">{{ inventario.sin_costo }} sin precio de compra</a>{% endif %}
+    {% if inventario.sin_costo %}<a href="{% url 'catalogo:mis_productos' %}?sin_costo=1" class="enlace-accion text-warning-emphasis no-imprimir">{{ inventario.sin_costo }} sin precio de compra</a>{% endif %}
   </div></div></div>
 </div>
 {% if ventas.anuladas %}<p class="small text-muted">{{ ventas.anuladas }} venta{{ ventas.anuladas|pluralize }} anulada{{ ventas.anuladas|pluralize }} en este periodo (no se cuentan).</p>{% endif %}
@@ -102,7 +102,7 @@
         <li class="list-group-item px-0 text-muted">Ningún producto agotado ni con stock bajo.</li>
       {% endfor %}
     </ul>
-    {% if alertas|length > 10 %}<a href="{% url 'catalogo:mis_productos' %}?alerta=1" class="small no-imprimir">Ver las {{ alertas|length }} alertas</a>{% endif %}
+    {% if alertas|length > 10 %}<a href="{% url 'catalogo:mis_productos' %}?alerta=1" class="enlace-accion no-imprimir">Ver las {{ alertas|length }} alertas</a>{% endif %}
     <p class="small text-muted mt-2 mb-0">El stock bajo se calcula con el «stock mínimo» de la ficha de cada producto.</p>
   </div></div></div>
 </div>

@@ -149,6 +149,14 @@ python manage.py cargar_demo      # en la otra PC, después de git pull y migrat
 
 No se exportan clientes, ventas, inventario, favoritos ni contraseñas. Las cuentas de tienda cargadas usan la contraseña `Demo#2026`.
 
+### Productos para la presentación
+
+```
+python manage.py cargar_productos_presentacion
+```
+
+Crea 3 tiendas de demostración (Selva Byte, Valle Digital Tech y Kantu Tech; usuarios `selvabyte`, `valledigital` y `kantutech`, contraseña `Demo#2026`) con 47 productos reales, para que cada categoría tenga 5 productos. Los modelos y precios se tomaron de Falabella.com.pe (octubre de 2026); el stock y el precio de compra son de demostración (entre 70 % y 80 % del precio). Cada tienda tiene ofertas, 3 destacados, 3 productos sin precio de compra, 3 con stock bajo y 1 agotado. Los productos se cargan sin foto. Se puede ejecutar varias veces sin duplicar nada.
+
 ## Administración de la base de datos
 
 - **Panel de administración** (`/panel/admin/`): pantallas con el diseño de NEXALYS para el trabajo diario del Administrador.

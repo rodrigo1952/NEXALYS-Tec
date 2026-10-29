@@ -4,7 +4,7 @@
 {% include "administracion/_menu.html" %}
 <div class="row justify-content-center">
   <div class="col-lg-7">
-    <a href="{% url 'administracion:usuarios' %}" class="small">&larr; Volver a usuarios</a>
+    <a href="{% url 'administracion:usuarios' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a usuarios</a>
     <div class="card border-danger shadow-sm mt-2"><div class="card-body p-4">
       <h3 class="h5 text-danger">Eliminar la cuenta «{{ usuario.username }}»</h3>
       <p class="mb-2">Rol: <strong>{{ rol }}</strong> · Correo: {{ usuario.email|default:"—" }}</p>

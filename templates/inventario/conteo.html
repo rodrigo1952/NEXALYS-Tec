@@ -2,7 +2,7 @@
 {% block titulo %}Conteo físico | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% include "inventario/_menu.html" %}
-<a href="{% url 'inventario:ajustes' %}" class="small">&larr; Volver a ajustes y conteo</a>
+<a href="{% url 'inventario:ajustes' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a ajustes y conteo</a>
 <h3 class="h5 my-2">Conteo físico</h3>
 <p class="text-muted small">Cuenta lo que hay en el local y escribe la cantidad en «Contado». Deja vacíos los que no contaste: no se tocan. Al guardar, solo se corrigen los productos con diferencia y queda anotado en su kardex.</p>
 

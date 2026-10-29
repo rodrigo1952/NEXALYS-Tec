@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titulo %}{{ producto.nombre }} | NEXALYS Tec{% endblock %}
 {% block contenido %}
-<a href="{% url 'catalogo:catalogo' %}" class="small">&larr; Volver al catálogo</a>
+<a href="{% url 'catalogo:catalogo' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver al catálogo</a>
 <div class="row g-4 mt-1">
   <div class="col-md-5">
     {% if fotos %}
@@ -10,7 +10,7 @@
         <div class="carousel-inner">
           {% for foto in fotos %}
             <div class="carousel-item{% if forloop.first %} active{% endif %}">
-              <img src="{{ foto.url }}" alt="{{ producto.nombre }} — foto {{ forloop.counter }}" data-ampliar="{{ foto.url }}" title="Clic para ver en grande" class="d-block w-100 p-3" style="height:360px;object-fit:contain">
+              <img src="{{ foto.url }}" alt="{{ producto.nombre }} — foto {{ forloop.counter }}" data-ampliar="{{ foto.url }}" data-galeria="producto" title="Clic para ver en grande" class="d-block w-100 p-3" style="height:360px;object-fit:contain">
             </div>
           {% endfor %}
         </div>

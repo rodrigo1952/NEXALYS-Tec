@@ -15,7 +15,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
   <a href="{% querystring ver='bajo' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--aviso{% if ver == 'bajo' %} activo{% endif %}"{% if ver == 'bajo' %} aria-current="true"{% endif %}>Stock bajo <span class="contador">{{ resumen.stock_bajo }}</span></a>
   <a href="{% querystring ver='agotados' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--peligro{% if ver == 'agotados' %} activo{% endif %}"{% if ver == 'agotados' %} aria-current="true"{% endif %}>Agotados <span class="contador">{{ resumen.agotados }}</span></a>
   <a href="{% querystring ver='sin_costo' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--aviso{% if ver == 'sin_costo' %} activo{% endif %}"{% if ver == 'sin_costo' %} aria-current="true"{% endif %}>Sin precio de compra <span class="contador">{{ resumen.sin_costo }}</span></a>
-  <a href="{% url 'inventario:resumen' %}" class="small ms-auto">Ver números en Resumen →</a>
+  <a href="{% url 'inventario:resumen' %}" class="enlace-accion ms-auto">Ver números en Resumen</a>
 </nav>
 
 <form method="get" class="d-flex flex-wrap gap-2 mb-3">
@@ -45,7 +45,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
     {% endfor %}
   </nav>
 {% endif %}
-{% if ver == 'alertas' %}<p class="small text-muted">Mostrando solo productos agotados o con stock bajo. <a href="{% url 'catalogo:mis_productos' %}">Ver todos</a></p>{% endif %}
+{% if ver == 'alertas' %}<p class="small text-muted">Mostrando solo productos agotados o con stock bajo. <a href="{% url 'catalogo:mis_productos' %}" class="enlace-accion">Ver todos</a></p>{% endif %}
 {% if ver == 'sin_costo' %}<p class="small text-muted">Agrega el precio de compra con «Editar» para que estos productos cuenten en tu ganancia y en el valor del inventario.</p>{% endif %}
 
 <div class="table-responsive bg-white rounded shadow-sm">
