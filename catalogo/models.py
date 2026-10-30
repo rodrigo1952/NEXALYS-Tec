@@ -38,11 +38,51 @@ def borrar_archivo_al_confirmar(campo):
         transaction.on_commit(lambda: almacenamiento.delete(nombre))
 
 
+# Íconos que el administrador puede elegir para una categoría (nombres de Bootstrap Icons).
+# Se ven en la lista «Todas las categorías» del menú.
+ICONOS_CATEGORIA = [
+    ("phone", "Celular"),
+    ("laptop", "Laptop"),
+    ("pc-display", "Computadora de escritorio"),
+    ("tablet", "Tablet"),
+    ("display", "Monitor"),
+    ("tv", "Televisor"),
+    ("headphones", "Audífonos"),
+    ("speaker", "Parlante"),
+    ("keyboard", "Teclado y accesorios"),
+    ("mouse", "Mouse"),
+    ("printer", "Impresora"),
+    ("cpu", "Componentes / repuestos"),
+    ("usb-drive", "Almacenamiento"),
+    ("camera-video", "Cámara de seguridad"),
+    ("camera", "Cámara de fotos"),
+    ("smartwatch", "Smartwatch"),
+    ("controller", "Videojuegos"),
+    ("router", "Redes / router"),
+    ("battery-charging", "Energía / UPS"),
+    ("plug", "Cables y cargadores"),
+    ("tools", "Servicio técnico"),
+    ("grid", "Otros"),
+]
+
+# Ícono que se pone solo a las categorías conocidas cuando se crean por código (datos de demostración).
+ICONOS_POR_NOMBRE = {
+    "accesorios": "keyboard", "audio": "headphones", "celulares": "phone",
+    "computadoras de escritorio": "pc-display", "impresoras y suministros": "printer", "laptops": "laptop",
+    "otros": "grid", "pantallas": "display", "repuestos": "cpu", "seguridad y videovigilancia": "camera-video",
+    "tablets": "tablet",
+}
+
+
 class Categoria(models.Model):
     """CU-07: las categorías las gestiona el administrador."""
 
     nombre = models.CharField("nombre", max_length=60, unique=True)
     activa = models.BooleanField("activa", default=True)
+    icono = models.CharField(
+        "ícono", max_length=30, choices=ICONOS_CATEGORIA, default="grid",
+        help_text="Se ve junto al nombre en «Todas las categorías».",
+    )
 
     class Meta:
         ordering = ["nombre"]

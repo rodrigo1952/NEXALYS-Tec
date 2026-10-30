@@ -1,0 +1,10 @@
+{# Selector de ícono para las categorías: cada opción es un botón con el dibujo y su nombre. #}
+<div class="selector-icono" role="radiogroup" aria-label="Ícono de la categoría">
+  {% for grupo, opciones, indice in widget.optgroups %}{% for opcion in opciones %}
+    <label class="selector-icono__opcion" for="{{ opcion.attrs.id }}" title="{{ opcion.label }}">
+      <input type="radio" name="{{ opcion.name }}" value="{{ opcion.value }}" id="{{ opcion.attrs.id }}"{% if opcion.selected %} checked{% endif %}>
+      <i class="bi bi-{{ opcion.value }}" aria-hidden="true"></i>
+      <span>{{ opcion.label }}</span>
+    </label>
+  {% endfor %}{% endfor %}
+</div>

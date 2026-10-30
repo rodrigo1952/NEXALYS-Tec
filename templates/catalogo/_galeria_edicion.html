@@ -140,7 +140,7 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
       const vacia = tarjeta.querySelector("[data-vacia]");
       if (vacia) vacia.classList.toggle("d-none", Boolean(vista.dataset.original));
     }
-    tarjeta.classList.remove("tarjeta-foto--quitada", "tarjeta-foto--sera-principal");
+    tarjeta.classList.remove("tarjeta-foto--quitada", "tarjeta-foto--sera-principal", "tarjeta-foto--intercambiada");
     if (principalOculto.value === tarjeta.dataset.tarjeta) principalOculto.value = "";
     estado(tarjeta, "");
   }
@@ -150,11 +150,39 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
     return vista.dataset.original !== undefined ? vista.dataset.original : (vista.getAttribute("src") || "");
   }
 
+  // Muestra una imagen en la tarjeta sin cambiar lo que se guardará (para el intercambio).
+  function mostrarImagen(tarjeta, fuente) {
+    const vista = tarjeta.querySelector("[data-vista]");
+    if (vista.dataset.original === undefined) vista.dataset.original = vista.getAttribute("src") || "";
+    vista.src = fuente;
+    vista.classList.toggle("d-none", !fuente);
+    const vacia = tarjeta.querySelector("[data-vacia]");
+    if (vacia) vacia.classList.toggle("d-none", Boolean(fuente));
+  }
+
+  // Si hay un intercambio pendiente (una adicional pasará a principal), se deshace.
+  function deshacerIntercambio() {
+    const elegida = tarjetaDe(principalOculto.value);
+    if (!elegida) return;
+    restaurar(elegida);
+    restaurar(tarjetaPrincipal);
+  }
+
+  function enIntercambio(tarjeta) {
+    return tarjeta === tarjetaPrincipal ? Boolean(principalOculto.value) : tarjeta.classList.contains("tarjeta-foto--sera-principal");
+  }
+
   // Elegir un archivo (con el botón o soltándolo): vista previa y aviso de lo que pasará al guardar.
   galeria.querySelectorAll("[data-archivo]").forEach(function (input) {
     input.addEventListener("change", function () {
       const tarjeta = input.closest("[data-tarjeta]");
       if (!input.files.length) return;
+      if (enIntercambio(tarjeta)) {
+        const copia = new DataTransfer();  // deshacer limpia el input: se guarda una copia del archivo elegido
+        Array.from(input.files).forEach(function (archivo) { copia.items.add(archivo); });
+        deshacerIntercambio();
+        input.files = copia.files;
+      }
       const vista = tarjeta.querySelector("[data-vista]");
       if (vista.dataset.original === undefined) vista.dataset.original = vista.getAttribute("src") || "";
       vista.src = URL.createObjectURL(input.files[0]);
@@ -164,7 +192,6 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
       const quitar = tarjeta.querySelector("[data-marca-quitar]");
       if (quitar) quitar.checked = false;
       tarjeta.classList.remove("tarjeta-foto--quitada");
-      if (tarjeta === tarjetaPrincipal && principalOculto.value) restaurar(tarjetaDe(principalOculto.value));
       estado(tarjeta, tarjeta === tarjetaPrincipal ? "Nueva foto principal (se guardará)" : "Foto nueva (se guardará)", "text-primary");
     });
   });
@@ -173,8 +200,8 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
   galeria.querySelectorAll("[data-x]").forEach(function (boton) {
     boton.addEventListener("click", function () {
       const tarjeta = boton.closest("[data-tarjeta]");
+      if (enIntercambio(tarjeta)) deshacerIntercambio();
       const habiaFoto = Boolean(original(tarjeta));
-      if (tarjeta === tarjetaPrincipal && principalOculto.value) restaurar(tarjetaDe(principalOculto.value));
       restaurar(tarjeta);
       if (!habiaFoto) return;  // era una foto nueva sin guardar: solo se descarta
       tarjeta.querySelector("[data-marca-quitar]").checked = true;
@@ -184,15 +211,21 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
   });
 
   // Hacer principal: solo una a la vez.
+  // Hacer principal (botón o arrastrar): las dos fotos cambian de lugar en la pantalla al instante;
+  // en el servidor se intercambian al guardar (la principal queda en el lugar de la adicional).
   function hacerPrincipal(tarjeta) {
-    const anterior = tarjetaDe(principalOculto.value);
-    if (anterior && anterior !== tarjeta) restaurar(anterior);
+    deshacerIntercambio();
     restaurar(tarjeta);
     restaurar(tarjetaPrincipal);
+    const fotoPrincipal = original(tarjetaPrincipal);
+    const fotoElegida = original(tarjeta);
     principalOculto.value = tarjeta.dataset.tarjeta;
-    tarjeta.classList.add("tarjeta-foto--sera-principal");
-    estado(tarjeta, "Será la foto principal al guardar", "text-success");
-    if (original(tarjetaPrincipal)) estado(tarjetaPrincipal, "Pasará a las fotos adicionales al guardar", "text-success");
+    mostrarImagen(tarjetaPrincipal, fotoElegida);
+    mostrarImagen(tarjeta, fotoPrincipal);
+    tarjeta.classList.add("tarjeta-foto--sera-principal", "tarjeta-foto--intercambiada");
+    tarjetaPrincipal.classList.add("tarjeta-foto--intercambiada");
+    estado(tarjetaPrincipal, "Intercambiada: es la nueva foto principal (se guardará)", "text-success");
+    estado(tarjeta, fotoPrincipal ? "Aquí queda la foto principal anterior" : "Esta foto pasó a ser la principal", "text-success");
   }
   galeria.querySelectorAll("[data-hacer-principal]").forEach(function (boton) {
     boton.addEventListener("click", function () { hacerPrincipal(boton.closest("[data-tarjeta]")); });
@@ -201,8 +234,7 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
   galeria.querySelectorAll("[data-deshacer]").forEach(function (boton) {
     boton.addEventListener("click", function () {
       const tarjeta = boton.closest("[data-tarjeta]");
-      if (tarjeta === tarjetaPrincipal && principalOculto.value) restaurar(tarjetaDe(principalOculto.value));
-      if (tarjeta.classList.contains("tarjeta-foto--sera-principal")) restaurar(tarjetaPrincipal);
+      if (enIntercambio(tarjeta)) deshacerIntercambio();
       restaurar(tarjeta);
     });
   });
@@ -315,7 +347,8 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
       const fotoId = evento.dataTransfer.getData(TIPO_FOTO);
       if (aceptaFoto && fotoId) {
         const origen = tarjetaDe(fotoId);
-        if (origen) hacerPrincipal(origen);
+        if (origen && origen === tarjetaDe(principalOculto.value)) deshacerIntercambio();  // la devolvió
+        else if (origen) hacerPrincipal(origen);
         return;
       }
       ponerArchivo(tarjeta, evento.dataTransfer.files[0]);

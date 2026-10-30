@@ -355,23 +355,21 @@ class BusquedaForm(EstiloBootstrapMixin, forms.Form):
         ("nombre", "Nombre (A-Z)"),
     ]
 
+    # La búsqueda (q) llega desde el buscador del menú y la categoría desde la barra de categorías;
+    # en el catálogo se conservan como campos ocultos. Marca y tienda admiten varias a la vez.
     q = forms.CharField(label="Buscar", required=False, max_length=100)
     categoria = forms.ModelChoiceField(
         label="Categoría", queryset=Categoria.objects.filter(activa=True), required=False, empty_label="Todas"
     )
-    marca = forms.ModelChoiceField(
-        label="Marca", queryset=Marca.objects.filter(activa=True), required=False, empty_label="Todas"
-    )
-    tienda = forms.ModelChoiceField(
-        label="Tienda",
-        queryset=Tienda.objects.filter(estado=Tienda.Estado.ACTIVA),
-        required=False,
-        empty_label="Todas",
+    marca = forms.ModelMultipleChoiceField(label="Marca", queryset=Marca.objects.filter(activa=True), required=False)
+    tienda = forms.ModelMultipleChoiceField(
+        label="Tienda", queryset=Tienda.objects.filter(estado=Tienda.Estado.ACTIVA), required=False
     )
     precio_min = forms.DecimalField(label="Precio mín.", required=False, min_value=0, decimal_places=2)
     precio_max = forms.DecimalField(label="Precio máx.", required=False, min_value=0, decimal_places=2)
     orden = forms.ChoiceField(label="Ordenar por", choices=ORDENES, required=False)
     solo_ofertas = forms.BooleanField(label="Solo ofertas", required=False)
+    en_stock = forms.BooleanField(label="En stock", required=False)
 
     def clean(self):
         datos = super().clean()
@@ -396,11 +394,28 @@ class NombreUnicoForm(EstiloBootstrapMixin, forms.ModelForm):
         return nombre
 
 
+class SelectorIcono(forms.RadioSelect):
+    """Los íconos se eligen tocándolos (cada opción muestra su dibujo y su nombre)."""
+
+    template_name = "widgets/selector_icono.html"  # en catalogo/templates/widgets/
+
+
 class CategoriaForm(NombreUnicoForm):
     class Meta:
         model = Categoria
-        fields = ["nombre", "activa"]
-        help_texts = {"activa": "Si la desactivas, las tiendas ya no podrán elegirla en productos nuevos."}
+        fields = ["nombre", "icono", "activa"]
+        widgets = {"icono": SelectorIcono}
+        help_texts = {
+            "activa": "Si la desactivas, las tiendas ya no podrán elegirla en productos nuevos.",
+            "icono": "Se ve junto al nombre en «Todas las categorías» del menú.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["icono"].required = False  # si no se elige, queda el ícono genérico
+
+    def clean_icono(self):
+        return self.cleaned_data.get("icono") or (self.instance.icono if self.instance.pk else "grid")
 
 
 class MarcaForm(NombreUnicoForm):

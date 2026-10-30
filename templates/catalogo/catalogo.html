@@ -1,65 +1,169 @@
 {% extends "base.html" %}
-{% block titulo %}Catálogo | NEXALYS Tec{% endblock %}
+{% load static %}
+{% block titulo %}{{ titulo }} | NEXALYS Tec{% endblock %}
 {% block contenido %}
-<h2 class="mb-3">Catálogo de productos</h2>
-
-<form method="get" class="card card-body shadow-sm mb-4" novalidate>
-  {% for error in form.non_field_errors %}<div class="alert alert-danger py-2">{{ error }}</div>{% endfor %}
-  <div class="row g-2 align-items-end">
-    <div class="col-md-4">
-      <label class="form-label small" for="{{ form.q.id_for_label }}">Buscar</label>
-      {{ form.q }}
-    </div>
-    <div class="col-6 col-md-2">
-      <label class="form-label small" for="{{ form.categoria.id_for_label }}">Categoría</label>
-      {{ form.categoria }}
-    </div>
-    <div class="col-6 col-md-2">
-      <label class="form-label small" for="{{ form.marca.id_for_label }}">Marca</label>
-      {{ form.marca }}
-    </div>
-    <div class="col-md-4">
-      <label class="form-label small" for="{{ form.tienda.id_for_label }}">Tienda</label>
-      {{ form.tienda }}
-    </div>
-    <div class="col-6 col-md-2">
-      <label class="form-label small" for="{{ form.precio_min.id_for_label }}">Precio mín. (S/)</label>
-      {{ form.precio_min }}
-      {% for e in form.precio_min.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-    </div>
-    <div class="col-6 col-md-2">
-      <label class="form-label small" for="{{ form.precio_max.id_for_label }}">Precio máx. (S/)</label>
-      {{ form.precio_max }}
-      {% for e in form.precio_max.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-    </div>
-    <div class="col-md-3">
-      <label class="form-label small" for="{{ form.orden.id_for_label }}">Ordenar por</label>
-      {{ form.orden }}
-    </div>
-    <div class="col-md-2">
-      <div class="form-check mt-md-4">
-        {{ form.solo_ofertas }}
-        <label class="form-check-label" for="{{ form.solo_ofertas.id_for_label }}">🔥 Solo ofertas</label>
-      </div>
-    </div>
-    <div class="col-md-3 d-flex gap-2">
-      <button type="submit" class="btn btn-primary flex-grow-1">Buscar</button>
-      <a href="{% url 'catalogo:catalogo' %}" class="btn btn-outline-secondary">Limpiar</a>
-    </div>
-  </div>
-</form>
-
-<p class="text-muted small">{{ pagina.paginator.count }} producto(s) encontrado(s)</p>
-
-<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
-  {% for producto in pagina %}
-    <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
-  {% empty %}
-    <div class="col-12">
-      <div class="alert alert-info">No se encontraron productos con esos criterios.</div>
-    </div>
-  {% endfor %}
+{# Ruta: Inicio › Catálogo › Categoría #}
+<nav aria-label="Ruta" class="ruta mb-2">
+  <a href="{% url 'inicio' %}">Inicio</a>
+  <i class="bi bi-chevron-right" aria-hidden="true"></i>
+  {% if form.cleaned_data.categoria or form.cleaned_data.q %}
+    <a href="{% url 'catalogo:catalogo' %}">Catálogo</a>
+    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+    <span aria-current="page">{{ titulo }}</span>
+  {% else %}
+    <span aria-current="page">Catálogo</span>
+  {% endif %}
+</nav>
+<div class="d-flex flex-wrap align-items-baseline gap-2 mb-3">
+  <h1 class="h3 mb-0">{{ titulo }}</h1>
+  <span class="text-muted">· {{ pagina.paginator.count }} producto{{ pagina.paginator.count|pluralize }}</span>
 </div>
 
-{% include "catalogo/_paginacion.html" %}
+{% for error in form.non_field_errors %}<div class="alert alert-danger py-2">{{ error }}</div>{% endfor %}
+
+<div class="row g-4">
+  {# ---------- Filtros (a la izquierda; en el celular se abren con el botón «Filtrar») ---------- #}
+  <aside class="col-lg-3">
+    <div class="offcanvas-lg offcanvas-start panel-filtros" tabindex="-1" id="panel-filtros" aria-labelledby="titulo-filtros">
+      <div class="offcanvas-header">
+        <h2 class="h5 mb-0" id="titulo-filtros">Filtrar</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#panel-filtros" aria-label="Cerrar"></button>
+      </div>
+      <div class="offcanvas-body">
+        <form method="get" id="filtros-catalogo" class="filtros" novalidate>
+          {% if form.cleaned_data.q %}<input type="hidden" name="q" value="{{ form.cleaned_data.q }}">{% endif %}
+          {% if form.cleaned_data.categoria %}<input type="hidden" name="categoria" value="{{ form.cleaned_data.categoria.pk }}">{% endif %}
+
+          <div class="filtros__cabecera d-none d-lg-flex">
+            <h2 class="h5 mb-0">Filtrar</h2>
+            {% if chips %}<a href="{% url 'catalogo:catalogo' %}" class="enlace-accion small">Quitar todos</a>{% endif %}
+          </div>
+          {% if chips %}
+            <ul class="filtros__chips" aria-label="Filtros elegidos">
+              {% for chip in chips %}
+                <li><a href="{{ chip.url }}" class="chip-filtro" aria-label="Quitar {{ chip.texto }}">{{ chip.texto }} <i class="bi bi-x-lg" aria-hidden="true"></i></a></li>
+              {% endfor %}
+            </ul>
+            <a href="{% url 'catalogo:catalogo' %}" class="enlace-accion small d-lg-none mb-2 d-inline-block">Quitar todos</a>
+          {% endif %}
+
+          <details class="filtro" open>
+            <summary>Disponibilidad</summary>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="en_stock" value="on" id="filtro-stock"{% if form.cleaned_data.en_stock %} checked{% endif %}>
+              <label class="form-check-label filtro__opcion" for="filtro-stock">En stock <span class="filtro__cantidad">{{ disponibilidad.en_stock }}</span></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="solo_ofertas" value="on" id="filtro-ofertas"{% if form.cleaned_data.solo_ofertas %} checked{% endif %}>
+              <label class="form-check-label filtro__opcion" for="filtro-ofertas">🔥 En oferta <span class="filtro__cantidad">{{ disponibilidad.ofertas }}</span></label>
+            </div>
+          </details>
+
+          <details class="filtro" open>
+            <summary>Precio</summary>
+            {% if precio.maximo > precio.minimo %}
+              <p class="small text-muted mb-2">El precio más alto es S/ {{ precio.maximo }}.</p>
+              <div class="rango-precio" data-rango data-minimo="{{ precio.minimo }}" data-maximo="{{ precio.maximo }}">
+                <div class="rango-precio__pista"><div class="rango-precio__relleno" data-relleno></div></div>
+                <input type="range" class="rango-precio__control" min="{{ precio.minimo }}" max="{{ precio.maximo }}" step="1"
+                       value="{% if precio_min is not None %}{{ precio_min|floatformat:0 }}{% else %}{{ precio.minimo }}{% endif %}" data-desde aria-label="Precio mínimo">
+                <input type="range" class="rango-precio__control" min="{{ precio.minimo }}" max="{{ precio.maximo }}" step="1"
+                       value="{% if precio_max is not None %}{{ precio_max|floatformat:0 }}{% else %}{{ precio.maximo }}{% endif %}" data-hasta aria-label="Precio máximo">
+              </div>
+            {% endif %}
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label small mb-1" for="precio-min">Desde (S/)</label>
+                <input type="number" class="form-control form-control-sm" name="precio_min" id="precio-min" min="0" step="0.01"
+                       value="{% if precio_min is not None %}{{ precio_min|stringformat:'s' }}{% endif %}" placeholder="{{ precio.minimo }}" data-precio-desde>
+              </div>
+              <div class="col-6">
+                <label class="form-label small mb-1" for="precio-max">Hasta (S/)</label>
+                <input type="number" class="form-control form-control-sm" name="precio_max" id="precio-max" min="0" step="0.01"
+                       value="{% if precio_max is not None %}{{ precio_max|stringformat:'s' }}{% endif %}" placeholder="{{ precio.maximo }}" data-precio-hasta>
+              </div>
+            </div>
+            {% for e in form.precio_min.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            {% for e in form.precio_max.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </details>
+
+          {% if marcas %}
+            <details class="filtro" open>
+              <summary>Marca</summary>
+              <div class="filtro__lista" data-lista>
+                {% for marca in marcas %}
+                  <div class="form-check{% if forloop.counter > marcas_visibles and not marca.elegida %} filtro__extra d-none{% endif %}">
+                    <input class="form-check-input" type="checkbox" name="marca" value="{{ marca.pk }}" id="filtro-marca-{{ marca.pk }}"{% if marca.elegida %} checked{% endif %}>
+                    <label class="form-check-label filtro__opcion" for="filtro-marca-{{ marca.pk }}">{{ marca.nombre }} <span class="filtro__cantidad">{{ marca.cantidad }}</span></label>
+                  </div>
+                {% endfor %}
+              </div>
+              {% if marcas|length > marcas_visibles %}
+                <button type="button" class="btn btn-link btn-sm px-0 fw-semibold" data-ver-mas aria-expanded="false">Ver todas ({{ marcas|length }})</button>
+              {% endif %}
+            </details>
+          {% endif %}
+
+          {% if tiendas %}
+            <details class="filtro" open>
+              <summary>Tienda</summary>
+              {% for tienda in tiendas %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="tienda" value="{{ tienda.pk }}" id="filtro-tienda-{{ tienda.pk }}"{% if tienda.elegida %} checked{% endif %}>
+                  <label class="form-check-label filtro__opcion" for="filtro-tienda-{{ tienda.pk }}">{{ tienda.nombre }} <span class="filtro__cantidad">{{ tienda.cantidad }}</span></label>
+                </div>
+              {% endfor %}
+            </details>
+          {% endif %}
+
+          {# En computadora los filtros se aplican al instante; el botón queda para el celular (o sin JavaScript). #}
+          <button type="submit" class="btn btn-primary w-100 mt-3 filtros__aplicar">Ver resultados</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  {# ---------- Productos ---------- #}
+  <div class="col-lg-9">
+    <div class="barra-catalogo">
+      <button type="button" class="btn btn-outline-primary btn-sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#panel-filtros" aria-controls="panel-filtros">
+        <i class="bi bi-sliders" aria-hidden="true"></i> Filtrar{% if chips %} <span class="badge rounded-pill text-bg-primary">{{ chips|length }}</span>{% endif %}
+      </button>
+      <div class="barra-catalogo__orden">
+        <label for="{{ form.orden.id_for_label }}" class="small text-muted text-nowrap mb-0">Ordenar por</label>
+        <select name="orden" id="{{ form.orden.id_for_label }}" class="form-select form-select-sm" form="filtros-catalogo" data-orden>
+          {% for valor, texto in form.fields.orden.choices %}
+            <option value="{{ valor }}"{% if form.orden.value == valor or not form.orden.value and not valor %} selected{% endif %}>{{ texto }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="barra-catalogo__vistas d-none d-md-flex" role="group" aria-label="Cómo ver los productos">
+        <button type="button" class="vista-boton" data-vista-boton="4" aria-label="4 por fila" title="4 por fila"><i class="bi bi-grid-3x3-gap-fill" aria-hidden="true"></i></button>
+        <button type="button" class="vista-boton" data-vista-boton="3" aria-label="3 por fila" title="3 por fila"><i class="bi bi-grid-fill" aria-hidden="true"></i></button>
+        <button type="button" class="vista-boton" data-vista-boton="lista" aria-label="Lista" title="Lista"><i class="bi bi-view-list" aria-hidden="true"></i></button>
+      </div>
+    </div>
+
+    {% if pagina.object_list %}
+      <div class="catalogo-grilla" data-vista="3" id="grilla-catalogo">
+        {% for producto in pagina %}
+          {% include "catalogo/_tarjeta_producto.html" %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="catalogo-vacio">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <h2 class="h5">No encontramos productos con esos filtros</h2>
+        <p class="text-muted mb-3">Prueba quitando alguno o mira todo el catálogo.</p>
+        <a href="{% url 'catalogo:catalogo' %}" class="btn btn-primary">Ver todo el catálogo</a>
+      </div>
+    {% endif %}
+
+    {% include "catalogo/_paginacion.html" %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/catalogo.js' %}?v=1"></script>
 {% endblock %}

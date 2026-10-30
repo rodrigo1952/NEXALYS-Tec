@@ -31,7 +31,7 @@ from inventario.models import FichaInventario
 from tiendas.models import HorarioDia, Tienda
 
 from .demo import CLAVE_DEMO, correo_demo
-from .models import Categoria, Marca, Producto
+from .models import ICONOS_POR_NOMBRE, Categoria, Marca, Producto
 
 # El costo de demostración varía entre el 70 % y el 80 % del precio que paga el cliente.
 PORCENTAJES_COSTO = [Decimal("0.75"), Decimal("0.70"), Decimal("0.78"), Decimal("0.72"), Decimal("0.80")]
@@ -254,8 +254,12 @@ def stock_minimo_de(dato):
 
 
 def _obtener(modelo, nombre):
-    """Busca la categoría o marca sin importar mayúsculas; si no existe, la crea."""
-    return modelo.objects.filter(nombre__iexact=nombre).first() or modelo.objects.create(nombre=nombre)
+    """Busca la categoría o marca sin importar mayúsculas; si no existe, la crea (con su ícono)."""
+    existente = modelo.objects.filter(nombre__iexact=nombre).first()
+    if existente:
+        return existente
+    extra = {"icono": ICONOS_POR_NOMBRE.get(nombre.lower(), "grid")} if modelo is Categoria else {}
+    return modelo.objects.create(nombre=nombre, **extra)
 
 
 # ---------------------------------------------------------------------------

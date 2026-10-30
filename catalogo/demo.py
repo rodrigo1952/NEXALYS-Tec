@@ -34,7 +34,7 @@ from django.utils.text import slugify
 
 from tiendas.models import HorarioDia, Tienda
 
-from .models import Categoria, FotoProducto, Marca, Producto
+from .models import ICONOS_POR_NOMBRE, Categoria, FotoProducto, Marca, Producto
 
 CLAVE_DEMO = "Demo#2026"
 VERSION = 1
@@ -206,7 +206,9 @@ def cargar(carpeta=None, salida=print):
         if tienda is None:
             continue  # su tienda ya existía en esta PC: no se mezclan productos
         with transaction.atomic():
-            categoria, _ = Categoria.objects.get_or_create(nombre=p["categoria"])
+            categoria, _ = Categoria.objects.get_or_create(
+                nombre=p["categoria"], defaults={"icono": ICONOS_POR_NOMBRE.get(p["categoria"].lower(), "grid")}
+            )
             marca, _ = Marca.objects.get_or_create(nombre=p["marca"])
             producto = Producto(
                 tienda=tienda, categoria=categoria, marca=marca, nombre=p["nombre"],

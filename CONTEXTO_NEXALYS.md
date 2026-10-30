@@ -102,7 +102,15 @@
   Se calcula en `catalogo/context_processors.py`.
 - Tarjeta de producto: toda la tarjeta lleva al detalle (el nombre usa `stretched-link`); ya no hay
   botón «Ver detalle». El corazón y el enlace de la tienda funcionan aparte.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **452 pruebas**.
+- Catálogo (`catalogo/views.py` + `static/js/catalogo.js`): ruta y título de la categoría, filtros a la
+  izquierda (en stock, ofertas, precio con deslizador, varias marcas y tiendas con su cantidad) que se
+  aplican al instante en computadora (en el celular, panel «Filtrar» + «Ver resultados»), chips para
+  quitar filtros, orden y vista 4/3/lista. La búsqueda viene del menú y la categoría de la barra.
+- Cada categoría tiene `icono` (Bootstrap Icons, lo elige el admin con un selector de dibujos); se ve
+  solo en «Todas las categorías». Visor de fotos con fondo claro difuminado y miniaturas.
+- Galería al editar: «Hacer principal» o arrastrar una adicional a la principal las intercambia en la
+  pantalla al instante (arrastrarla de vuelta lo deshace); un archivo de la PC reemplaza.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **465 pruebas**.
 
 ## 7. Pendientes e ideas
 

@@ -1,7 +1,9 @@
+from math import ceil, floor
+
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Max, Min, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -33,34 +35,120 @@ def _entero(valor):
 # Catálogo público (CU-04 y CU-05): no requiere iniciar sesión
 # ---------------------------------------------------------------------------
 
-def catalogo(request):
-    form = BusquedaForm(request.GET or None)
-    productos = Producto.objects.visibles().con_precio_actual().select_related("tienda", "categoria", "marca")
+FILTROS = ("q", "categoria", "marca", "tienda", "precio_min", "precio_max", "solo_ofertas", "en_stock")
+MARCAS_VISIBLES = 8  # las demás marcas se muestran con «Ver todas»
 
-    if form.is_valid():
-        datos = form.cleaned_data
-        if datos["q"]:
-            # Sin tildes ni mayúsculas: "camara" encuentra "Cámara".
-            # También busca en la descripción, pero con "Más relevantes" sale primero
-            # lo que coincide en el nombre.
-            productos = productos.buscar(datos["q"]).con_relevancia(datos["q"])
-        if datos["solo_ofertas"]:
-            productos = productos.en_oferta()
-        if datos["categoria"]:
-            productos = productos.filter(categoria=datos["categoria"])
-        if datos["marca"]:
-            productos = productos.filter(marca=datos["marca"])
-        if datos["tienda"]:
-            productos = productos.filter(tienda=datos["tienda"])
-        if datos["precio_min"] is not None:
+
+def _filtrar(productos, datos, excepto=()):
+    """Aplica los filtros del catálogo; `excepto` deja fuera algunos (para contar las opciones de ese filtro)."""
+    if datos.get("q") and "q" not in excepto:
+        # Sin tildes ni mayúsculas: "camara" encuentra "Cámara". También busca en la descripción,
+        # pero con "Más relevantes" sale primero lo que coincide en el nombre.
+        productos = productos.buscar(datos["q"]).con_relevancia(datos["q"])
+    if datos.get("categoria") and "categoria" not in excepto:
+        productos = productos.filter(categoria=datos["categoria"])
+    if datos.get("marca") and "marca" not in excepto:
+        productos = productos.filter(marca__in=datos["marca"])
+    if datos.get("tienda") and "tienda" not in excepto:
+        productos = productos.filter(tienda__in=datos["tienda"])
+    if datos.get("solo_ofertas") and "solo_ofertas" not in excepto:
+        productos = productos.en_oferta()
+    if datos.get("en_stock") and "en_stock" not in excepto:
+        productos = productos.filter(stock__gt=0)
+    if "precio" not in excepto:
+        if datos.get("precio_min") is not None:
             productos = productos.filter(precio_actual__gte=datos["precio_min"])
-        if datos["precio_max"] is not None:
+        if datos.get("precio_max") is not None:
             productos = productos.filter(precio_actual__lte=datos["precio_max"])
-        orden = datos["orden"] or ("relevantes" if datos["q"] else "recientes")
-        productos = productos.order_by(*ORDENES.get(orden, ORDENES["recientes"]))
+    return productos
 
+
+def _sin(request, clave, valor=None):
+    """Enlace a la misma página sin un filtro (o sin uno de sus valores, p. ej. una marca)."""
+    consulta = request.GET.copy()
+    consulta.pop("page", None)
+    if valor is None:
+        consulta.pop(clave, None)
+    else:
+        consulta.setlist(clave, [v for v in consulta.getlist(clave) if v != str(valor)])
+    if clave == "precio_min":
+        consulta.pop("precio_max", None)  # el precio se quita completo (desde y hasta)
+    return f"{request.path}?{consulta.urlencode()}" if consulta else request.path
+
+
+def _opciones(productos, campo, nombre, elegidos):
+    """Opciones de un filtro con su cantidad de productos; las elegidas siempre se muestran."""
+    filas = productos.order_by().values(campo, nombre).annotate(cantidad=Count("id"))
+    opciones = {f[campo]: {"pk": f[campo], "nombre": f[nombre], "cantidad": f["cantidad"]} for f in filas}
+    for objeto in elegidos:
+        opciones.setdefault(objeto.pk, {"pk": objeto.pk, "nombre": str(objeto), "cantidad": 0})
+    ids = {objeto.pk for objeto in elegidos}
+    lista = sorted(opciones.values(), key=lambda o: (o["nombre"].lower() in ("otra", "otros"), o["nombre"].lower()))
+    for opcion in lista:
+        opcion["elegida"] = opcion["pk"] in ids
+    return lista
+
+
+def catalogo(request):
+    """
+    CU-04 y CU-05. Filtros a la izquierda (disponibilidad, precio, marca y tienda, con cuántos
+    productos tiene cada opción) que se aplican al instante. La categoría se elige en la barra de
+    categorías y la búsqueda en el buscador del menú: aquí se muestran como título y «chips».
+    """
+    form = BusquedaForm(request.GET or None)
+    base = Producto.objects.visibles().con_precio_actual().select_related("tienda", "categoria", "marca")
+    datos = form.cleaned_data if form.is_valid() else {}
+
+    productos = _filtrar(base, datos)
+    orden = datos.get("orden") or ("relevantes" if datos.get("q") else "recientes")
+    productos = productos.order_by(*ORDENES.get(orden, ORDENES["recientes"]))
     pagina = Paginator(productos, 12).get_page(request.GET.get("page"))
-    return render(request, "catalogo/catalogo.html", {"form": form, "pagina": pagina})
+
+    # Cada filtro cuenta sus opciones con los DEMÁS filtros aplicados.
+    marcas = _opciones(_filtrar(base, datos, {"marca"}), "marca_id", "marca__nombre", datos.get("marca") or [])
+    tiendas = _opciones(_filtrar(base, datos, {"tienda"}), "tienda_id", "tienda__nombre", datos.get("tienda") or [])
+    rango = _filtrar(base, datos, {"precio"}).aggregate(minimo=Min("precio_actual"), maximo=Max("precio_actual"))
+    precio = {
+        "minimo": int(floor(rango["minimo"])) if rango["minimo"] is not None else 0,
+        "maximo": int(ceil(rango["maximo"])) if rango["maximo"] is not None else 0,
+    }
+    disponibilidad = {
+        "en_stock": _filtrar(base, datos, {"en_stock"}).filter(stock__gt=0).count(),
+        "ofertas": _filtrar(base, datos, {"solo_ofertas"}).en_oferta().count(),
+    }
+
+    # Filtros elegidos, cada uno con su enlace para quitarlo.
+    chips = []
+    if datos.get("q"):
+        chips.append({"texto": f"Búsqueda: «{datos['q']}»", "url": _sin(request, "q")})
+    if datos.get("categoria"):
+        chips.append({"texto": datos["categoria"].nombre, "url": _sin(request, "categoria")})
+    for marca in datos.get("marca") or []:
+        chips.append({"texto": marca.nombre, "url": _sin(request, "marca", marca.pk)})
+    for tienda in datos.get("tienda") or []:
+        chips.append({"texto": tienda.nombre, "url": _sin(request, "tienda", tienda.pk)})
+    if datos.get("precio_min") is not None or datos.get("precio_max") is not None:
+        desde = f"S/ {datos['precio_min']:,.2f}" if datos.get("precio_min") is not None else "S/ 0.00"
+        hasta = f"S/ {datos['precio_max']:,.2f}" if datos.get("precio_max") is not None else "más"
+        chips.append({"texto": f"{desde} – {hasta}", "url": _sin(request, "precio_min")})
+    if datos.get("en_stock"):
+        chips.append({"texto": "En stock", "url": _sin(request, "en_stock")})
+    if datos.get("solo_ofertas"):
+        chips.append({"texto": "🔥 Ofertas", "url": _sin(request, "solo_ofertas")})
+
+    if datos.get("categoria"):
+        titulo = datos["categoria"].nombre
+    elif datos.get("q"):
+        titulo = f"Resultados para «{datos['q']}»"
+    else:
+        titulo = "Todos los productos"
+
+    return render(request, "catalogo/catalogo.html", {
+        "form": form, "pagina": pagina, "titulo": titulo, "chips": chips,
+        "marcas": marcas, "marcas_visibles": MARCAS_VISIBLES, "tiendas": tiendas,
+        "precio": precio, "disponibilidad": disponibilidad,
+        "precio_min": datos.get("precio_min"), "precio_max": datos.get("precio_max"),
+    })
 
 
 def producto_detalle(request, pk):
