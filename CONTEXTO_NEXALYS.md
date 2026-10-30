@@ -92,7 +92,17 @@
 - Acciones visibles (no usar enlaces `.small` para acciones): `.btn-volver` (con `<span class="flecha">&larr;</span>`)
   para «Volver a…», `.atajo` + botón para crear lo que falta (p. ej. «+ Crear producto», «+ Nuevo proveedor»)
   y `.enlace-accion` para «Ver más / ver todo» (agrega la flecha →). Están en `marca.css`.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **441 pruebas**.
+- Fotos al editar un producto (`catalogo/_galeria_edicion.html`): principal grande a la izquierda y
+  adicionales más pequeñas; se arrastra una adicional a la principal para intercambiarlas, se sueltan
+  archivos sobre una foto para reemplazarla o en la galería para agregarlos; la «X» marca para quitar
+  (con Deshacer). Todo se aplica al «Guardar». Visor de fotos con flechas, teclado y contador en
+  `static/js/visor.js` (las imágenes con el mismo `data-galeria` se recorren juntas).
+- Barra de categorías (debajo del menú, en todas las páginas menos el login): las 5 con más movimiento
+  (vistas + favoritos × 5 de los últimos 30 días; «Otros» nunca entra) y «☰ Todas las categorías».
+  Se calcula en `catalogo/context_processors.py`.
+- Tarjeta de producto: toda la tarjeta lleva al detalle (el nombre usa `stretched-link`); ya no hay
+  botón «Ver detalle». El corazón y el enlace de la tienda funcionan aparte.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **452 pruebas**.
 
 ## 7. Pendientes e ideas
 

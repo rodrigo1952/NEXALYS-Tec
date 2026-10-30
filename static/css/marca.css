@@ -475,3 +475,56 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
 }
 .enlace-accion::after { content: " →"; }
 .enlace-accion:hover { text-decoration-thickness: 2px; }
+
+/* ---------- Barra de categorías (debajo del menú azul, en todas las páginas) ---------- */
+.barra-categorias { background: var(--nx-blanco); border-bottom: 1px solid var(--nx-borde-suave); box-shadow: var(--nx-sombra); }
+.barra-categorias__fila { display: flex; align-items: center; gap: .75rem; min-height: 48px; }
+.barra-categorias__todas {
+  display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .25rem; border: 0; background: none;
+  color: var(--nx-oscuro); font-weight: 700; white-space: nowrap;
+}
+.barra-categorias__todas:hover, .barra-categorias__todas:focus-visible, .barra-categorias__todas.show { color: var(--nx-acento-texto); }
+.barra-categorias__menu { min-width: 17rem; max-height: 70vh; overflow-y: auto; border-radius: var(--nx-radio); padding: .4rem; }
+.barra-categorias__menu .dropdown-item { border-radius: .5rem; padding: .45rem .75rem; }
+.barra-categorias__menu .dropdown-item.active, .barra-categorias__menu .dropdown-item:active { background: var(--nx-oscuro); color: #fff; }
+.barra-categorias__cantidad {
+  min-width: 1.7rem; padding: 0 .45rem; border-radius: 999px; background: var(--nx-fondo-suave);
+  color: var(--nx-texto-suave); font-size: .78rem; font-weight: 600; text-align: center;
+}
+.barra-categorias__menu .dropdown-item.active .barra-categorias__cantidad { background: rgba(255, 255, 255, .2); color: #fff; }
+.barra-categorias__lista {
+  display: flex; flex: 1; min-width: 0; gap: .15rem; margin: 0; padding: 0 0 0 .75rem; list-style: none;
+  border-left: 1px solid var(--nx-borde-suave); overflow-x: auto; scrollbar-width: none;
+}
+.barra-categorias__lista::-webkit-scrollbar { display: none; }
+/* En pantallas angostas la lista se desliza: el borde derecho se desvanece para que se note que hay más. */
+@media (max-width: 991.98px) {
+  .barra-categorias__lista {
+    -webkit-mask-image: linear-gradient(to right, #000 80%, transparent);
+    mask-image: linear-gradient(to right, #000 80%, transparent);
+  }
+}
+.barra-categorias__enlace {
+  display: block; padding: .7rem .75rem calc(.7rem - 2px); border-bottom: 2px solid transparent;
+  color: var(--nx-oscuro); font-weight: 500; text-decoration: none; white-space: nowrap;
+}
+.barra-categorias__enlace:hover, .barra-categorias__enlace:focus-visible { color: var(--nx-acento-texto); border-bottom-color: var(--nx-acento); }
+.barra-categorias__enlace.activa { color: var(--nx-acento-texto); font-weight: 700; border-bottom-color: var(--nx-acento); }
+
+/* ---------- Tarjeta de producto: toda la tarjeta lleva al detalle ---------- */
+.tarjeta-producto { transition: transform .15s ease, box-shadow .15s ease; }
+.tarjeta-producto:hover, .tarjeta-producto:focus-within {
+  transform: translateY(-3px); box-shadow: 0 .6rem 1.4rem rgba(var(--nx-oscuro-rgb), .14) !important;
+}
+.tarjeta-producto__foto { overflow: hidden; border-top-left-radius: var(--bs-card-inner-border-radius); border-top-right-radius: var(--bs-card-inner-border-radius); }
+.tarjeta-producto__foto img, .tarjeta-producto__foto .foto-vacia { transition: transform .25s ease; }
+.tarjeta-producto:hover .tarjeta-producto__foto img, .tarjeta-producto:hover .tarjeta-producto__foto .foto-vacia { transform: scale(1.05); }
+.tarjeta-producto__nombre { color: var(--nx-oscuro); text-decoration: none; }
+.tarjeta-producto:hover .tarjeta-producto__nombre, .tarjeta-producto__nombre:focus-visible {
+  color: var(--nx-acento-texto); text-decoration: underline; text-underline-offset: .2em;
+}
+.tarjeta-producto__tienda { position: relative; z-index: 2; }  /* por encima del enlace que cubre la tarjeta */
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta-producto, .tarjeta-producto__foto img, .tarjeta-producto__foto .foto-vacia { transition: none; }
+  .tarjeta-producto:hover, .tarjeta-producto:focus-within, .tarjeta-producto:hover .tarjeta-producto__foto img { transform: none; }
+}

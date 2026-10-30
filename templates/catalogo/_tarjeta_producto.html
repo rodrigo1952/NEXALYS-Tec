@@ -1,16 +1,22 @@
-<div class="card h-100 shadow-sm">
+{% comment %}
+Tarjeta de producto. Toda la tarjeta lleva al detalle (el nombre usa «stretched-link»);
+el corazón de favoritos y el enlace de la tienda siguen funcionando aparte.
+{% endcomment %}
+<div class="card h-100 shadow-sm tarjeta-producto">
   {% include "favoritos/_boton_corazon.html" %}
   {% if producto.en_oferta %}
     <span class="badge text-bg-danger position-absolute top-0 start-0 m-2" style="z-index:2">Oferta</span>
   {% endif %}
-  {% if producto.imagen %}
-    <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}" loading="lazy">
-  {% else %}
-    <div class="foto-vacia card-img-top">📦</div>
-  {% endif %}
+  <div class="tarjeta-producto__foto">
+    {% if producto.imagen %}
+      <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}" loading="lazy">
+    {% else %}
+      <div class="foto-vacia card-img-top">📦</div>
+    {% endif %}
+  </div>
   <div class="card-body d-flex flex-column">
     <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
-    <h3 class="h6 card-title mt-1">{{ producto.nombre }}</h3>
+    <h3 class="h6 card-title mt-1"><a href="{% url 'catalogo:detalle' producto.pk %}" class="tarjeta-producto__nombre stretched-link">{{ producto.nombre }}</a></h3>
     {% if producto.coincide_descripcion %}
       {# Solo al buscar: la palabra no está en el nombre, sino en la descripción del producto. #}
       <small class="text-muted fst-italic mb-1">Coincide con sus características</small>
@@ -19,7 +25,6 @@
     {% if producto.agotado %}
       <span class="badge text-bg-secondary align-self-start mb-2">Agotado</span>
     {% endif %}
-    <small class="text-muted mb-3">🏪 <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="link-secondary">{{ producto.tienda }}</a></small>
-    <a href="{% url 'catalogo:detalle' producto.pk %}" class="btn btn-outline-primary btn-sm mt-auto">Ver detalle</a>
+    <small class="text-muted mt-auto tarjeta-producto__tienda">🏪 <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="link-secondary">{{ producto.tienda }}</a></small>
   </div>
 </div>

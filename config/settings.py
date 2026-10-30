@@ -70,6 +70,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'cuentas.context_processors.roles',
                 'favoritos.context_processors.favoritos',
+                'catalogo.context_processors.categorias_menu',
             ],
         },
     },
