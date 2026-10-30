@@ -78,6 +78,9 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
     # "Hacer principal": la foto adicional elegida pasa a ser la principal y la principal
     # pasa a las adicionales (se aplica al guardar).
     principal_foto = forms.IntegerField(widget=forms.HiddenInput, required=False)
+    # Orden de las fotos adicionales (ids separados por comas) cuando se arrastran para
+    # cambiarlas de lugar. Es el orden en que el cliente las ve después de la principal.
+    orden_fotos = forms.CharField(widget=forms.HiddenInput, required=False, max_length=200)
 
     # Precio de compra: dato PRIVADO de la tienda (es el "costo" de la ficha de inventario).
     # No es un campo de Producto: se guarda en la ficha. Se edita aquí o en la ficha; es el mismo dato.
@@ -291,10 +294,24 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
                 borrar_archivo_al_confirmar(foto.imagen)
                 foto.imagen = archivo
                 foto.save()
+        self.ordenar_fotos(producto)
         siguiente = (producto.fotos.aggregate(maximo=Max("orden"))["maximo"] or 0) + 1
         for posicion, archivo in enumerate(self.cleaned_data.get("fotos_nuevas") or []):
             FotoProducto.objects.create(producto=producto, imagen=archivo, orden=siguiente + posicion)
         self.hacer_principal(producto, self.cleaned_data.get("principal_foto"))
+
+    def ordenar_fotos(self, producto):
+        """Guarda el nuevo orden de las fotos adicionales (solo las de este producto que siguen existiendo)."""
+        texto = self.cleaned_data.get("orden_fotos") or ""
+        ids = [int(parte) for parte in texto.split(",") if parte.strip().isdigit()]
+        propias = set(producto.fotos.values_list("pk", flat=True))
+        ids = [pk for pk in dict.fromkeys(ids) if pk in propias]  # sin repetidos ni ajenas
+        if not ids:
+            return
+        # Las que no vinieron en la lista quedan al final, en su orden actual.
+        resto = list(producto.fotos.exclude(pk__in=ids).values_list("pk", flat=True))
+        for posicion, pk in enumerate(ids + resto, start=1):
+            FotoProducto.objects.filter(pk=pk).update(orden=posicion)
 
     def hacer_principal(self, producto, foto_id):
         """

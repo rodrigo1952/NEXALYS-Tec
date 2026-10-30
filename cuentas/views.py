@@ -5,15 +5,17 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
+from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from catalogo.models import Producto
 from favoritos.permisos import es_cliente
 
 from .concurrencia import validar_y_guardar
-from .forms import EliminarCuentaForm, PerfilForm, RegistroForm
+from .forms import EliminarCuentaForm, IngresoForm, PerfilForm, RegistroForm
 from .models import DIAS_PARA_CONFIRMAR_CORREO, CorreoPendiente
 from .reautenticacion import confirmada_recientemente, marcar_confirmada
 from .verificacion import enviar_correo_confirmacion, horas_validez, leer_token
@@ -196,3 +198,17 @@ def ayuda(request):
 def privacidad(request):
     """Qué datos se guardan y para qué (Ley 29733) y reglas de uso del marketplace."""
     return render(request, "cuentas/privacidad.html", {"correo_soporte": CORREO_SOPORTE})
+
+
+class IngresoView(LoginView):
+    """
+    Iniciar sesión. Si la persona llegó desde un enlace (?next=...), vuelve a ese enlace;
+    si no, la tienda entra directo a «Mis productos» y los demás al inicio.
+    """
+
+    authentication_form = IngresoForm
+
+    def get_default_redirect_url(self):
+        if getattr(self.request.user, "tienda", None) is not None:
+            return reverse("catalogo:mis_productos")
+        return super().get_default_redirect_url()

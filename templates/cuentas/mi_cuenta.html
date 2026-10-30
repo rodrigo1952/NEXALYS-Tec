@@ -1,43 +1,60 @@
-{% extends "base.html" %}
-{% block titulo %}Mi cuenta | NEXALYS Tec{% endblock %}
-{% block contenido %}
-<div class="row justify-content-center">
-  <div class="col-lg-7">
-    <h2 class="mb-3 d-flex align-items-center gap-3">
-      {% if tienda_actual.logo %}
-        <img src="{{ tienda_actual.logo.url }}" alt="Logo de {{ tienda_actual.nombre }}" width="56" height="56" class="logo-panel rounded-circle border bg-white">
-      {% elif tienda_actual %}
-        <span class="logo-panel logo-panel--inicial rounded-circle" aria-hidden="true">{{ tienda_actual.nombre|first|upper }}</span>
-      {% else %}<span aria-hidden="true">👤</span>{% endif %}
-      Mi cuenta
-    </h2>
-    <ul class="list-group mb-3 shadow-sm">
-      <li class="list-group-item"><strong>Usuario:</strong> {{ user.username }}</li>
-      <li class="list-group-item"><strong>Nombre:</strong> {{ user.get_full_name|default:"—" }}</li>
-      <li class="list-group-item"><strong>Correo:</strong> {{ user.email|default:"—" }}</li>
-      <li class="list-group-item"><strong>Rol:</strong>
-        {% for g in user.groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}Sin rol asignado{% endfor %}
-      </li>
-    </ul>
-
-    <p class="small text-muted">Por seguridad, al cambiar tu nombre o tu correo te pediremos tu contraseña (no se vuelve a pedir durante 10 minutos).</p>
-    <div class="d-flex flex-wrap gap-2 mb-4">
-      <a href="{% url 'editar_datos' %}" class="btn btn-primary">Editar mis datos</a>
-      <a href="{% url 'password_change' %}" class="btn btn-outline-secondary">Cambiar contraseña</a>
-      {% if es_cliente %}
-        <a href="{% url 'favoritos:lista' %}" class="btn btn-outline-danger">❤️ Mis favoritos ({{ total_favoritos }})</a>
-      {% endif %}
-    </div>
-
-    {% if puede_eliminar %}
-      <div class="card border-danger">
-        <div class="card-body">
-          <h3 class="h6 text-danger">Eliminar mi cuenta</h3>
-          <p class="small text-muted mb-2">Se borran tu cuenta y tus favoritos. Esta acción no se puede deshacer.</p>
-          <a href="{% url 'eliminar_cuenta' %}" class="btn btn-sm btn-outline-danger">Eliminar mi cuenta</a>
-        </div>
-      </div>
-    {% endif %}
-  </div>
+{% extends "cuentas/_centro.html" %}
+{% block titulo %}Mi perfil | NEXALYS Tec{% endblock %}
+{% block centro %}
+<div class="seccion-cuenta__cabecera">
+  <h1 class="h3 mb-1">Mi perfil</h1>
+  <p class="text-muted mb-0">Tus datos para iniciar sesión y para que te reconozcamos.</p>
 </div>
+
+<div class="tarjeta-cuenta">
+  <div class="tarjeta-cuenta__titulo">
+    <h2 class="h6 mb-0">Datos personales</h2>
+    <a href="{% url 'editar_datos' %}" class="btn btn-sm btn-primary"><i class="bi bi-pencil" aria-hidden="true"></i> Editar mis datos</a>
+  </div>
+  <dl class="datos-cuenta">
+    <div><dt>Nombre</dt><dd>{{ user.get_full_name|default:"—" }}</dd></div>
+    <div><dt>Usuario</dt><dd>{{ user.username }}</dd></div>
+    <div><dt>Correo</dt><dd>{{ user.email|default:"—" }}</dd></div>
+    <div><dt>Rol</dt><dd>{% for g in user.groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}Sin rol asignado{% endfor %}</dd></div>
+    <div><dt>Miembro desde</dt><dd>{{ user.date_joined|date:"j \d\e F \d\e Y" }}</dd></div>
+  </dl>
+  <p class="small text-muted mb-0"><i class="bi bi-info-circle" aria-hidden="true"></i> Por seguridad, al cambiar tu nombre o tu correo te pediremos tu contraseña (no se vuelve a pedir durante 10 minutos).</p>
+</div>
+
+<div class="row g-3 mt-0">
+  <div class="col-md-6">
+    <a href="{% url 'password_change' %}" class="acceso-cuenta">
+      <i class="bi bi-shield-lock" aria-hidden="true"></i>
+      <span><strong>Seguridad</strong><span>Cambia tu contraseña</span></span>
+    </a>
+  </div>
+  {% if es_cliente %}
+    <div class="col-md-6">
+      <a href="{% url 'favoritos:lista' %}" class="acceso-cuenta">
+        <i class="bi bi-heart" aria-hidden="true"></i>
+        <span><strong>Mis favoritos ({{ total_favoritos }})</strong><span>Productos que guardaste</span></span>
+      </a>
+    </div>
+  {% endif %}
+  {% if tienda_actual %}
+    <div class="col-md-6">
+      <a href="{% url 'tiendas:panel' %}" class="acceso-cuenta">
+        <i class="bi bi-shop" aria-hidden="true"></i>
+        <span><strong>Datos de mi tienda</strong><span>Dirección, WhatsApp, logo y horario</span></span>
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+{% if puede_eliminar %}
+  <div class="tarjeta-cuenta tarjeta-cuenta--peligro mt-4">
+    <div class="tarjeta-cuenta__titulo">
+      <div>
+        <h2 class="h6 text-danger mb-1">Eliminar mi cuenta</h2>
+        <p class="small text-muted mb-0">Se borran tu cuenta y tus favoritos. Esta acción no se puede deshacer.</p>
+      </div>
+      <a href="{% url 'eliminar_cuenta' %}" class="btn btn-sm btn-outline-danger">Eliminar mi cuenta</a>
+    </div>
+  </div>
+{% endif %}
 {% endblock %}

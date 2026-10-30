@@ -12,7 +12,7 @@
   {# Íconos (categorías del menú y otros detalles). #}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   {# Colores, letra y logo de la marca. Si cambias marca.css, sube el número de ?v= para que los navegadores lo recarguen. #}
-  <link href="{% static 'css/marca.css' %}?v=15" rel="stylesheet">
+  <link href="{% static 'css/marca.css' %}?v=18" rel="stylesheet">
   <style>
     .formulario input:not([type=checkbox]):not([type=hidden]) {
       display: block; width: 100%; padding: .5rem .75rem;
@@ -36,6 +36,7 @@
 </head>
 <body class="fondo-marca d-flex flex-column min-vh-100">
 {% with ns=request.resolver_match.namespace vista=request.resolver_match.url_name %}
+{% block cabecera %}
 <header class="cabecera-marca" id="cabecera">
 <nav class="navbar navbar-expand-lg navbar-dark navbar-marca" aria-label="Menú principal">
   <div class="container flex-wrap">
@@ -65,17 +66,18 @@
     {# Segunda fila: las secciones según el tipo de usuario. En el celular se abren con ☰. #}
     <div class="collapse navbar-collapse menu-fila order-3 order-lg-0" id="menu">
       <ul class="navbar-nav menu-secciones me-auto">
-        <li class="nav-item">
-          <a class="nav-link{% if vista == 'inicio' %} active" aria-current="page{% endif %}" href="{% url 'inicio' %}">Inicio</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link{% if ns == 'catalogo' and vista == 'catalogo' or ns == 'catalogo' and vista == 'detalle' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}">Catálogo</a>
-        </li>
+        {# La tienda ve primero su zona de trabajo: Mis productos, Inicio y Catálogo. #}
         {% if es_tienda %}
           <li class="nav-item">
             <a class="nav-link{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}">Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %} <span class="badge rounded-pill text-bg-warning" title="Productos agotados o con stock bajo">{{ num_alertas }}<span class="visually-hidden"> alertas de stock</span></span>{% endif %}</a>
           </li>
         {% endif %}
+        <li class="nav-item">
+          <a class="nav-link{% if not ns and vista == 'inicio' %} active" aria-current="page{% endif %}" href="{% url 'inicio' %}">Inicio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link{% if ns == 'catalogo' and vista == 'catalogo' or ns == 'catalogo' and vista == 'detalle' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}">Catálogo</a>
+        </li>
         {% if es_cliente %}
           <li class="nav-item">
             <a class="nav-link{% if ns == 'favoritos' %} active" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}">❤️ Mis favoritos
@@ -95,8 +97,9 @@
     </div>
   </div>
 </nav>
-{% if vista != 'login' %}
 {# Barra de categorías: las 5 con más movimiento (vistas + favoritos) y el botón con todas. #}
+{# No se muestra en el inicio de sesión ni en la zona de trabajo de la tienda (Mis productos e inventario). #}
+{% if vista == 'login' or ns == 'inventario' or ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' %}{% else %}
 <nav class="barra-categorias" aria-label="Categorías">
   <div class="container barra-categorias__fila">
     <div class="dropdown">
@@ -129,6 +132,7 @@
 </nav>
 {% endif %}
 </header>
+{% endblock %}
 {% endwith %}
 
 <main class="container py-4 flex-grow-1">
@@ -210,7 +214,7 @@
 {% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{% static 'js/visor.js' %}?v=2"></script>
+<script src="{% static 'js/visor.js' %}?v=3"></script>
 <script>
   // Evita el doble clic: al enviar un formulario POST, sus botones se desactivan y
   // muestran "Procesando…". Así no se registra dos veces el mismo pedido o producto.

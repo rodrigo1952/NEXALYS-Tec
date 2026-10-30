@@ -59,6 +59,8 @@
       : [imagen];
     dibujarMiniaturas();
     mostrar(grupo.indexOf(imagen));
+    var carruselAbierto = imagen.closest(".carousel");
+    if (carruselAbierto) bootstrap.Carousel.getOrCreateInstance(carruselAbierto).pause();
     bootstrap.Modal.getOrCreateInstance(modal).show();
   });
   anterior.addEventListener("click", function () { mostrar(actual - 1); });
@@ -77,6 +79,9 @@
   });
   modal.addEventListener("hidden.bs.modal", function () {
     var carrusel = grupo[actual] && grupo[actual].closest(".carousel");
-    if (carrusel && grupo.length > 1) bootstrap.Carousel.getOrCreateInstance(carrusel).to(actual);
+    if (!carrusel) return;
+    var instancia = bootstrap.Carousel.getOrCreateInstance(carrusel);
+    if (grupo.length > 1) instancia.to(actual);
+    if (carrusel.dataset.automatico) instancia.cycle();  // las fotos vuelven a avanzar solas
   });
 })();

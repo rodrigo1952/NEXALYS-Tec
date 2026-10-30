@@ -19,8 +19,11 @@ class MenuDeLaCuentaTests(TestCase):
     def test_desplegable_de_la_tienda(self):
         respuesta = self.client.get(reverse("inicio"))
         self.assertContains(respuesta, 'class="dropdown-menu dropdown-menu-end menu-cuenta shadow"')
-        for nombre in ("tiendas:panel", "mi_cuenta", "ayuda", "privacidad"):
+        for nombre in ("mi_cuenta", "ayuda", "privacidad"):
             self.assertContains(respuesta, f'href="{reverse(nombre)}"')
+        # «Mi tienda» lleva a la página pública de la tienda (los datos están en Mi cuenta).
+        publica = reverse("tiendas:perfil", args=[self.tienda.pk])
+        self.assertContains(respuesta, f'<a class="dropdown-item" href="{publica}"><span aria-hidden="true">🏪</span> Mi tienda</a>', html=True)
         self.assertContains(respuesta, "ti•••••@ejemplo.com")  # correo parcialmente oculto
         self.assertNotContains(respuesta, f'href="{reverse("tiendas:panel")}">Mi tienda</a>')  # ya no está en la fila de secciones
 
@@ -37,6 +40,12 @@ class MenuDeLaCuentaTests(TestCase):
         respuesta = self.client.get(reverse("inicio"))
         self.assertContains(respuesta, f'href="{reverse("mi_cuenta")}"')
         self.assertNotContains(respuesta, f'href="{reverse("tiendas:panel")}"')
+
+    def test_tienda_pendiente_va_a_datos_de_mi_tienda(self):
+        self.tienda.estado = "pendiente"
+        self.tienda.save()
+        respuesta = self.client.get(reverse("inicio"))
+        self.assertContains(respuesta, f'<a class="dropdown-item" href="{reverse("tiendas:panel")}"><span aria-hidden="true">🏪</span> Mi tienda</a>', html=True)
 
     def test_visitante_ve_iniciar_sesion(self):
         self.client.logout()
@@ -71,8 +80,8 @@ class PanelYMiCuentaTests(TestCase):
     def test_mi_cuenta_tambien_para_la_tienda(self):
         respuesta = self.client.get(reverse("mi_cuenta"))
         self.assertEqual(respuesta.status_code, 200)
-        self.assertContains(respuesta, "logo-panel--inicial")
-        for nombre in ("editar_datos", "password_change"):
+        self.assertContains(respuesta, '<span class="centro-cuenta__avatar" aria-hidden="true">T</span>', html=True)
+        for nombre in ("editar_datos", "password_change", "tiendas:panel"):
             self.assertContains(respuesta, f'href="{reverse(nombre)}"')
 
 

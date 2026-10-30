@@ -1,13 +1,13 @@
-{% extends "base.html" %}
+{% extends "cuentas/_centro.html" %}
 {% block titulo %}Editar mi tienda | NEXALYS Tec{% endblock %}
-{% block contenido %}
-<a href="{% url 'tiendas:panel' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a mi tienda</a>
-<h2 class="h4 mt-2 mb-3">Editar datos de mi tienda</h2>
+{% block centro %}
+<a href="{% url 'tiendas:panel' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a datos de mi tienda</a>
+<h1 class="h3 mt-2 mb-3">Editar datos de mi tienda</h1>
 
 <form method="post" enctype="multipart/form-data" novalidate>
   {% csrf_token %}
   <div class="row g-4">
-    <div class="col-lg-8 col-xl-7">
+    <div class="col-xl-9">
       <div class="card shadow-sm"><div class="card-body p-4">
         <h3 class="h6 mb-3">Datos y logo</h3>
         {% if tienda.logo %}

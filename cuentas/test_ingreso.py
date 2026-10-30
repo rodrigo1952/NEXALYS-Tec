@@ -41,7 +41,7 @@ class IngresoPorTipoTests(TestCase):
         self.assertContains(respuesta, 'id="tipo-tienda" checked')
 
     def test_cada_uno_entra_con_su_tipo(self):
-        self.assertRedirects(self.entrar("tienda1", "tienda"), reverse("inicio"), fetch_redirect_response=False)
+        self.assertRedirects(self.entrar("tienda1", "tienda"), reverse("catalogo:mis_productos"), fetch_redirect_response=False)
         self.assertEqual(int(self.sesion()), self.tienda.usuario.pk)
         self.client.logout()
         self.entrar("cliente1", "cliente")

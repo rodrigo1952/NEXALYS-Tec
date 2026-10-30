@@ -4,7 +4,8 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
-from cuentas.forms import CambiarClaveForm, IngresoForm, NuevaClaveForm, RecuperarClaveForm
+from cuentas.forms import CambiarClaveForm, NuevaClaveForm, RecuperarClaveForm
+from cuentas.views import IngresoView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -12,7 +13,7 @@ urlpatterns = [
     # de django.contrib.auth.urls para reemplazar a las de Django).
     path(
         "cuentas/login/",
-        auth_views.LoginView.as_view(authentication_form=IngresoForm),
+        IngresoView.as_view(),  # la tienda entra directo a «Mis productos»
         name="login",
     ),
     path(

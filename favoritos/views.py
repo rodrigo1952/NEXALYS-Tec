@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.http import JsonResponse
 from django.core.paginator import Paginator
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -29,26 +30,45 @@ def _destino_seguro(request, por_defecto):
     return por_defecto
 
 
+def _enteros(valores):
+    """Lista de números válidos (sin repetidos) a partir de lo que llega en la dirección."""
+    return list(dict.fromkeys(n for n in (_entero(v) for v in valores) if n))
+
+
 @cliente_requerido
 def lista(request):
-    """Mis favoritos: precio y stock actuales, avisos, WhatsApp y filtros."""
+    """
+    Mis favoritos, con la misma forma que el catálogo: filtros a la izquierda (categoría con su
+    ícono y tienda, varias a la vez, con cuántos favoritos hay en cada una) y tarjetas de producto.
+    """
     favoritos = (
         Favorito.objects.filter(usuario=request.user)
         .select_related("producto__tienda", "producto__categoria", "producto__marca")
     )
     total = favoritos.count()
 
-    # Las opciones de los filtros salen solo de los productos guardados.
-    categorias = Categoria.objects.filter(productos__favoritos__usuario=request.user).distinct()
-    tiendas = Tienda.objects.filter(productos__favoritos__usuario=request.user).distinct()
+    categorias_elegidas = _enteros(request.GET.getlist("categoria"))
+    tiendas_elegidas = _enteros(request.GET.getlist("tienda"))
+    por_categoria = favoritos.filter(producto__categoria_id__in=categorias_elegidas) if categorias_elegidas else favoritos
+    por_tienda = favoritos.filter(producto__tienda_id__in=tiendas_elegidas) if tiendas_elegidas else favoritos
 
-    categoria_id = _entero(request.GET.get("categoria"))
-    tienda_id = _entero(request.GET.get("tienda"))
-    if categoria_id:
-        favoritos = favoritos.filter(producto__categoria_id=categoria_id)
-    if tienda_id:
-        favoritos = favoritos.filter(producto__tienda_id=tienda_id)
+    # Cada opción muestra cuántos favoritos tiene, contando con los otros filtros ya puestos
+    # (así se pueden sumar varias categorías o tiendas a la vez).
+    categorias = [
+        {"pk": c.pk, "nombre": c.nombre, "icono": c.icono or "grid", "cantidad": c.cantidad,
+         "elegida": c.pk in categorias_elegidas}
+        for c in Categoria.objects.filter(productos__favoritos__in=por_tienda)
+        .annotate(cantidad=Count("productos__favoritos", distinct=True)).order_by("nombre")
+    ]
+    tiendas = [
+        {"pk": t.pk, "nombre": t.nombre, "cantidad": t.cantidad, "elegida": t.pk in tiendas_elegidas}
+        for t in Tienda.objects.filter(productos__favoritos__in=por_categoria)
+        .annotate(cantidad=Count("productos__favoritos", distinct=True)).order_by("nombre")
+    ]
 
+    favoritos = por_categoria
+    if tiendas_elegidas:
+        favoritos = favoritos.filter(producto__tienda_id__in=tiendas_elegidas)
     pagina = Paginator(favoritos, 12).get_page(request.GET.get("page"))
 
     # Primero se calculan los avisos de lo que se muestra y luego se marca como
@@ -64,8 +84,7 @@ def lista(request):
         "total": total,
         "categorias": categorias,
         "tiendas": tiendas,
-        "categoria_id": categoria_id,
-        "tienda_id": tienda_id,
+        "hay_filtros": bool(categorias_elegidas or tiendas_elegidas),
     })
 
 

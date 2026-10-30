@@ -343,6 +343,7 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
   background: rgba(var(--nx-oscuro-rgb), .72); color: #fff; font-weight: 700; pointer-events: none;
 }
 .galeria-edicion--arrastrando .tarjeta-foto--principal { outline: 3px dashed var(--nx-acento); outline-offset: 3px; }
+.galeria-edicion--arrastrando-principal .tarjeta-foto--secundaria:not(.tarjeta-foto--quitada) { outline: 2px dashed var(--nx-acento); outline-offset: 2px; }
 .zona-agregar {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem;
   min-height: 140px; padding: .75rem; text-align: center; cursor: pointer; border-radius: .75rem;
@@ -672,3 +673,191 @@ body:has(.visor.show) .modal-backdrop { opacity: 0; }
   border: 1px dashed var(--nx-borde); border-radius: var(--nx-radio);
 }
 .catalogo-vacio .bi { display: block; margin-bottom: .5rem; font-size: 2.2rem; color: var(--nx-acento-texto); }
+
+/* Miniaturas debajo de la foto del producto: la que se ve queda resaltada */
+.miniatura-galeria {
+  padding: 2px; border: 2px solid var(--nx-borde-suave); border-radius: .6rem; background: var(--nx-blanco);
+  opacity: .7; transition: opacity .15s ease, border-color .15s ease, transform .15s ease;
+}
+.miniatura-galeria img { display: block; border-radius: .4rem; }
+.miniatura-galeria:hover { opacity: 1; border-color: var(--nx-borde); }
+.miniatura-galeria.activa {
+  opacity: 1; border-color: var(--nx-acento); transform: translateY(-2px);
+  box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .25);
+}
+
+/* Número de cada foto: el orden en que el cliente las ve (1 = principal) */
+.numero-foto {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 1.45rem; height: 1.45rem;
+  margin-right: .35rem; padding: 0 .3rem; border-radius: 999px; background: var(--nx-acento);
+  color: var(--nx-oscuro); font-size: .75rem; font-weight: 800; line-height: 1;
+}
+.numero-foto--secundaria {
+  position: absolute; top: .55rem; left: .55rem; z-index: 3; margin: 0;
+  background: var(--nx-oscuro); color: var(--nx-blanco); box-shadow: 0 1px 4px rgba(var(--nx-oscuro-rgb), .35);
+}
+.aviso-orden {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem;
+  padding: .55rem .85rem; border-radius: .75rem; background: rgba(var(--nx-acento-rgb), .12);
+  color: var(--nx-oscuro); font-size: .875rem;
+}
+.aviso-orden.d-none { display: none; }
+
+/* Centro de cuenta (Mi perfil, Datos de mi tienda, Seguridad, Ayuda, Privacidad) ---- */
+/* Cabecera simple: logo, «Volver a la página» y el menú de la cuenta (sin buscador ni categorías). */
+.cabecera-cuenta .navbar { padding-top: .6rem; padding-bottom: .6rem; }
+.cabecera-cuenta__volver {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .85rem;
+  border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px;
+  color: var(--nx-menu-texto); font-weight: 600; font-size: .9rem; text-decoration: none; white-space: nowrap;
+}
+.cabecera-cuenta__volver:hover, .cabecera-cuenta__volver:focus-visible {
+  border-color: var(--nx-acento); color: var(--nx-blanco); background: rgba(var(--nx-acento-rgb), .12);
+}
+.min-w-0 { min-width: 0; }
+/* En el celular la cabecera de la cuenta solo muestra el avatar (sin el nombre) y, sin sesión, «Iniciar sesión». */
+@media (max-width: 575.98px) {
+  .cabecera-cuenta .menu-usuario__nombre { display: none; }
+  .cabecera-cuenta .menu-usuario > .nav-item:not(.dropdown) ~ .nav-item { display: none; }
+  .cabecera-cuenta .logo-marca__texto { font-size: 1.05rem; }
+}
+
+/* Menú lateral */
+.centro-cuenta__menu {
+  position: sticky; top: 1rem; padding: 1rem; background: var(--nx-blanco);
+  border: 1px solid var(--nx-borde-suave); border-radius: var(--nx-radio); box-shadow: var(--nx-sombra);
+}
+.centro-cuenta__usuario {
+  display: flex; align-items: center; gap: .75rem; padding-bottom: .9rem; margin-bottom: .6rem;
+  border-bottom: 1px solid var(--nx-borde-suave);
+}
+.centro-cuenta__avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 46px; height: 46px; overflow: hidden; border-radius: 50%;
+  background: var(--nx-oscuro); color: var(--nx-acento); font-weight: 800; font-size: 1.2rem;
+}
+.centro-cuenta__avatar img { width: 100%; height: 100%; object-fit: cover; background: var(--nx-blanco); }
+.centro-cuenta__enlaces { list-style: none; margin: 0; padding: 0; }
+.centro-cuenta__enlaces a {
+  display: flex; align-items: center; gap: .65rem; padding: .55rem .7rem; border-radius: .6rem;
+  color: var(--nx-texto); font-weight: 500; text-decoration: none;
+  border-left: 3px solid transparent;
+}
+.centro-cuenta__enlaces a .bi:first-child { font-size: 1.05rem; color: var(--nx-texto-suave); }
+.centro-cuenta__enlaces a:hover, .centro-cuenta__enlaces a:focus-visible { background: var(--nx-fondo); }
+.centro-cuenta__enlaces a.activo {
+  background: rgba(var(--nx-acento-rgb), .12); border-left-color: var(--nx-acento); font-weight: 700;
+}
+.centro-cuenta__enlaces a.activo .bi:first-child { color: var(--nx-acento-texto); }
+.centro-cuenta__enlaces--accesos { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--nx-borde-suave); }
+.centro-cuenta__enlaces--accesos a { font-size: .9rem; color: var(--nx-texto-suave); }
+
+/* En el celular el menú se vuelve una fila de pestañas que se desliza de lado. */
+@media (max-width: 991.98px) {
+  .centro-cuenta__menu { position: static; padding: .75rem; }
+  .centro-cuenta__usuario { padding-bottom: .6rem; }
+  .centro-cuenta__enlaces { position: relative; display: flex; gap: .35rem; overflow-x: auto; scrollbar-width: none; }
+  .centro-cuenta__enlaces::-webkit-scrollbar { display: none; }
+  .centro-cuenta__enlaces a { white-space: nowrap; border-left: 0; border-bottom: 3px solid transparent; border-radius: .5rem .5rem 0 0; }
+  .centro-cuenta__enlaces a.activo { border-bottom-color: var(--nx-acento); }
+  .centro-cuenta__enlaces--accesos { display: none; }
+}
+
+/* Contenido */
+.seccion-cuenta__cabecera { margin-bottom: 1rem; }
+.tarjeta-cuenta {
+  padding: 1.25rem; background: var(--nx-blanco); border: 1px solid var(--nx-borde-suave);
+  border-radius: var(--nx-radio); box-shadow: var(--nx-sombra);
+}
+.tarjeta-cuenta--formulario { padding: 1.5rem; }
+.tarjeta-cuenta--peligro { border-color: rgba(220, 53, 69, .35); background: #FFF8F8; }
+.tarjeta-cuenta__titulo {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem;
+  margin-bottom: 1rem;
+}
+.tarjeta-cuenta__titulo h2 .bi { color: var(--nx-acento-texto); margin-right: .25rem; }
+.datos-cuenta { margin: 0 0 1rem; }
+.datos-cuenta > div {
+  display: grid; grid-template-columns: 9rem 1fr; gap: .75rem; padding: .6rem 0;
+  border-bottom: 1px solid var(--nx-borde-suave);
+}
+.datos-cuenta > div:last-child { border-bottom: 0; }
+.datos-cuenta dt { font-weight: 600; color: var(--nx-texto-suave); font-size: .9rem; }
+.datos-cuenta dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 575.98px) { .datos-cuenta > div { grid-template-columns: 1fr; gap: .1rem; } }
+
+/* Accesos en forma de tarjeta (Seguridad, Favoritos, temas de ayuda…) */
+.acceso-cuenta {
+  display: flex; align-items: center; gap: .85rem; height: 100%; padding: 1rem 1.1rem;
+  background: var(--nx-blanco); border: 1px solid var(--nx-borde-suave); border-radius: var(--nx-radio);
+  color: var(--nx-texto); text-decoration: none; box-shadow: var(--nx-sombra);
+  transition: border-color .15s ease, transform .15s ease;
+}
+.acceso-cuenta > .bi {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 2.6rem; height: 2.6rem; border-radius: .7rem; font-size: 1.25rem;
+  background: rgba(var(--nx-acento-rgb), .14); color: var(--nx-acento-texto);
+}
+.acceso-cuenta strong { display: block; }
+.acceso-cuenta strong + span, .acceso-cuenta small { display: block; font-size: .85rem; color: var(--nx-texto-suave); }
+.acceso-cuenta:hover, .acceso-cuenta:focus-visible { border-color: var(--nx-acento); color: var(--nx-texto); transform: translateY(-2px); }
+.consejos-cuenta ul { padding-left: 1.1rem; margin-bottom: 0; }
+.consejos-cuenta li + li { margin-top: .35rem; }
+
+/* Datos de mi tienda */
+.cabecera-tienda-cuenta { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; border-left: 4px solid var(--nx-acento); }
+.cabecera-tienda-cuenta .logo-panel { width: 64px; height: 64px; }
+.numeros-tienda {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.5rem; padding: .8rem 1.1rem;
+  background: var(--nx-blanco); border: 1px solid var(--nx-borde-suave); border-radius: var(--nx-radio);
+}
+.numeros-tienda > div { display: flex; align-items: baseline; gap: .4rem; }
+.numeros-tienda strong { font-size: 1.35rem; }
+.numeros-tienda span { color: var(--nx-texto-suave); font-size: .9rem; }
+.numeros-tienda .enlace-accion { margin-left: auto; font-size: .9rem; }
+.horario-cuenta { list-style: none; margin: 0; padding: 0; }
+.horario-cuenta li {
+  display: flex; justify-content: space-between; gap: 1rem; padding: .4rem 0; font-size: .9rem;
+  border-bottom: 1px solid var(--nx-borde-suave);
+}
+.horario-cuenta li:last-child { border-bottom: 0; }
+.horario-cuenta li span:first-child { font-weight: 600; }
+.horario-cuenta li span:last-child { text-align: right; }
+
+/* Ayuda y soporte */
+.temas-ayuda { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .75rem; list-style: none; margin: 0; padding: 0; }
+.preguntas { --bs-accordion-border-color: var(--nx-borde-suave); --bs-accordion-active-bg: rgba(var(--nx-acento-rgb), .1); --bs-accordion-active-color: var(--nx-oscuro); }
+.preguntas .accordion-item { background: transparent; }
+.preguntas .accordion-button { padding-left: 0; padding-right: 0; font-weight: 600; background: transparent; box-shadow: none; }
+.preguntas .accordion-button:not(.collapsed) { color: var(--nx-acento-texto); }
+.preguntas .accordion-body { padding-left: 0; padding-right: 0; color: var(--nx-texto-suave); }
+.tarjeta-cuenta--contacto {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+  background: linear-gradient(135deg, var(--nx-oscuro), var(--nx-principal-hover)); border: 0; color: var(--nx-blanco);
+}
+.tarjeta-cuenta--contacto > .bi { font-size: 2rem; color: var(--nx-acento); }
+.tarjeta-cuenta--contacto .text-muted { color: var(--nx-menu-texto) !important; }
+section[id^="tema-"], section.tarjeta-cuenta[id] { scroll-margin-top: 1rem; }
+
+/* Privacidad y términos */
+.indice-legal { display: flex; flex-wrap: wrap; gap: .5rem; }
+.indice-legal a {
+  display: inline-flex; align-items: center; gap: .45rem; padding: .4rem .8rem .4rem .45rem;
+  background: var(--nx-blanco); border: 1px solid var(--nx-borde-suave); border-radius: 999px;
+  color: var(--nx-texto); font-size: .9rem; font-weight: 600; text-decoration: none;
+}
+.indice-legal a span {
+  display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem;
+  border-radius: 50%; background: var(--nx-oscuro); color: var(--nx-acento); font-size: .75rem;
+}
+.indice-legal a:hover, .indice-legal a:focus-visible { border-color: var(--nx-acento); }
+.lista-legal { margin: 0; padding-left: 1.1rem; }
+.lista-legal li + li { margin-top: .5rem; }
+
+/* Mis favoritos (misma forma que el catálogo) */
+.filtro__icono { display: inline-flex; align-items: center; gap: .55rem; }
+.filtro__icono .bi { width: 1.1rem; text-align: center; color: var(--nx-acento-texto); }
+.tarjeta-favorito__acciones { position: relative; z-index: 2; }  /* por encima del enlace que cubre la tarjeta */
+.tarjeta-favorito--no-disponible { opacity: .75; }
+.tarjeta-favorito--no-disponible:hover { transform: none; }
+.modal-marca__icono--peligro { background: #FDECEE; color: #C62839; font-size: 1.6rem; }

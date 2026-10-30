@@ -1,46 +1,52 @@
-{% extends "base.html" %}
+{% extends "cuentas/_centro.html" %}
 {% block titulo %}Privacidad y términos | NEXALYS Tec{% endblock %}
-{% block contenido %}
-<div class="row justify-content-center">
-  <div class="col-lg-9">
-    <h2 class="mb-1"><span aria-hidden="true">🔒</span> Privacidad y términos</h2>
-    <p class="text-muted">Proyecto académico del IV ciclo · IESPP Urusayhua · Quillabamba. Última actualización: octubre de 2026.</p>
-
-    <div class="card shadow-sm mb-3"><div class="card-body">
-      <h3 class="h5">1. Qué datos guardamos y para qué</h3>
-      <ul class="mb-0">
-        <li><strong>Cuenta:</strong> usuario, nombre, correo y contraseña (guardada cifrada; nadie puede leerla). Sirven para iniciar sesión y recuperar el acceso.</li>
-        <li><strong>Clientes:</strong> sus favoritos, para avisarles cambios de precio o stock. Las tiendas solo ven cuántas personas guardaron un producto, nunca quiénes.</li>
-        <li><strong>Tiendas:</strong> nombre, dirección, WhatsApp, logo, horario y productos (públicos en el catálogo); y sus ventas, inventario, costos, proveedores y clientes, que son <strong>privados</strong> de cada tienda.</li>
-        <li><strong>Administrador:</strong> solo ve totales de ventas por tienda y mes; nunca costos, ganancias, proveedores ni clientes.</li>
-      </ul>
-    </div></div>
-
-    <div class="card shadow-sm mb-3"><div class="card-body">
-      <h3 class="h5">2. Tus derechos (Ley N.° 29733, Protección de Datos Personales)</h3>
-      <p class="mb-2">Puedes <strong>acceder</strong> a tus datos y <strong>corregirlos</strong> desde Mi cuenta, y <strong>eliminar</strong> tu cuenta de cliente cuando quieras.
-        Para cualquier otra solicitud, escribe a <a href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a>.</p>
-      <p class="mb-0 small text-muted">No vendemos ni compartimos tus datos con terceros.</p>
-    </div></div>
-
-    <div class="card shadow-sm mb-3"><div class="card-body">
-      <h3 class="h5">3. Cuánto tiempo los guardamos</h3>
-      <ul class="mb-0">
-        <li>Las cuentas que no confirman su correo se eliminan a los <strong>7 días</strong>.</li>
-        <li>Las tiendas suspendidas que no se reactivan se eliminan a los <strong>90 días</strong>; sus ventas quedan solo como totales anónimos.</li>
-        <li>Al eliminar una cuenta de cliente se borran también sus favoritos.</li>
-      </ul>
-    </div></div>
-
-    <div class="card shadow-sm mb-3"><div class="card-body">
-      <h3 class="h5">4. Reglas de uso del marketplace</h3>
-      <ul class="mb-0">
-        <li>NEXALYS Tec muestra productos de tiendas de la ciudad; <strong>la compra se coordina directamente con la tienda</strong> por WhatsApp. No cobramos ni intervenimos en pagos ni entregas.</li>
-        <li>Cada tienda es responsable de que sus precios, stock y fotos sean reales.</li>
-        <li>El administrador puede ocultar productos o suspender tiendas que publiquen información falsa u ofensiva, siempre indicando el motivo.</li>
-        <li>La nota de venta es un documento interno: no reemplaza a la boleta ni a la factura.</li>
-      </ul>
-    </div></div>
-  </div>
+{% block centro %}
+<div class="seccion-cuenta__cabecera">
+  <h1 class="h3 mb-1">Privacidad y términos</h1>
+  <p class="text-muted mb-0">Proyecto académico del IV ciclo · IESPP Urusayhua · Quillabamba. Última actualización: octubre de 2026.</p>
 </div>
+
+{# Índice: lleva a cada parte de la página. #}
+<nav class="indice-legal" aria-label="Contenido">
+  <a href="#datos"><span>1</span>Qué datos guardamos</a>
+  <a href="#derechos"><span>2</span>Tus derechos</a>
+  <a href="#plazos"><span>3</span>Cuánto tiempo</a>
+  <a href="#reglas"><span>4</span>Reglas de uso</a>
+</nav>
+
+<section class="tarjeta-cuenta mt-3" id="datos" aria-labelledby="titulo-datos">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-datos"><i class="bi bi-database" aria-hidden="true"></i> 1. Qué datos guardamos y para qué</h2></div>
+  <ul class="lista-legal">
+    <li><strong>Cuenta:</strong> usuario, nombre, correo y contraseña (guardada cifrada; nadie puede leerla). Sirven para iniciar sesión y recuperar el acceso.</li>
+    <li><strong>Clientes:</strong> sus favoritos, para avisarles cambios de precio o stock. Las tiendas solo ven cuántas personas guardaron un producto, nunca quiénes.</li>
+    <li><strong>Tiendas:</strong> nombre, dirección, WhatsApp, logo, horario y productos (públicos en el catálogo); y sus ventas, inventario, costos, proveedores y clientes, que son <strong>privados</strong> de cada tienda.</li>
+    <li><strong>Administrador:</strong> solo ve totales de ventas por tienda y mes; nunca costos, ganancias, proveedores ni clientes.</li>
+  </ul>
+</section>
+
+<section class="tarjeta-cuenta mt-3" id="derechos" aria-labelledby="titulo-derechos">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-derechos"><i class="bi bi-person-check" aria-hidden="true"></i> 2. Tus derechos (Ley N.° 29733, Protección de Datos Personales)</h2></div>
+  <p class="mb-2">Puedes <strong>acceder</strong> a tus datos y <strong>corregirlos</strong> desde Mi perfil, y <strong>eliminar</strong> tu cuenta de cliente cuando quieras.
+    Para cualquier otra solicitud, escribe a <a href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a>.</p>
+  <p class="mb-0 small text-muted">No vendemos ni compartimos tus datos con terceros.</p>
+</section>
+
+<section class="tarjeta-cuenta mt-3" id="plazos" aria-labelledby="titulo-plazos">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-plazos"><i class="bi bi-hourglass-split" aria-hidden="true"></i> 3. Cuánto tiempo los guardamos</h2></div>
+  <ul class="lista-legal">
+    <li>Las cuentas que no confirman su correo se eliminan a los <strong>7 días</strong>.</li>
+    <li>Las tiendas suspendidas que no se reactivan se eliminan a los <strong>90 días</strong>; sus ventas quedan solo como totales anónimos.</li>
+    <li>Al eliminar una cuenta de cliente se borran también sus favoritos.</li>
+  </ul>
+</section>
+
+<section class="tarjeta-cuenta mt-3" id="reglas" aria-labelledby="titulo-reglas">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-reglas"><i class="bi bi-journal-check" aria-hidden="true"></i> 4. Reglas de uso del marketplace</h2></div>
+  <ul class="lista-legal">
+    <li>NEXALYS Tec muestra productos de tiendas de la ciudad; <strong>la compra se coordina directamente con la tienda</strong> por WhatsApp. No cobramos ni intervenimos en pagos ni entregas.</li>
+    <li>Cada tienda es responsable de que sus precios, stock y fotos sean reales.</li>
+    <li>El administrador puede ocultar productos o suspender tiendas que publiquen información falsa u ofensiva, siempre indicando el motivo.</li>
+    <li>La nota de venta es un documento interno: no reemplaza a la boleta ni a la factura.</li>
+  </ul>
+</section>
 {% endblock %}

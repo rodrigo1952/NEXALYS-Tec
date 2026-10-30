@@ -1,106 +1,201 @@
 {% extends "base.html" %}
-{% load formato %}
+{% load static formato %}
 {% block titulo %}Mis favoritos | NEXALYS Tec{% endblock %}
 {% block contenido %}
-<h2 class="mb-3">❤️ Mis favoritos</h2>
-
-{% if total %}
-  <form method="get" class="card card-body shadow-sm mb-4">
-    <div class="row g-2 align-items-end">
-      <div class="col-sm-5">
-        <label class="form-label small" for="filtro-categoria">Categoría</label>
-        <select name="categoria" id="filtro-categoria" class="form-select">
-          <option value="">Todas</option>
-          {% for categoria in categorias %}
-            <option value="{{ categoria.pk }}"{% if categoria.pk == categoria_id %} selected{% endif %}>{{ categoria.nombre }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-sm-5">
-        <label class="form-label small" for="filtro-tienda">Tienda</label>
-        <select name="tienda" id="filtro-tienda" class="form-select">
-          <option value="">Todas</option>
-          {% for tienda in tiendas %}
-            <option value="{{ tienda.pk }}"{% if tienda.pk == tienda_id %} selected{% endif %}>{{ tienda.nombre }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-sm-2 d-flex gap-2">
-        <button type="submit" class="btn btn-primary flex-grow-1">Filtrar</button>
-        <a href="{% url 'favoritos:lista' %}" class="btn btn-outline-secondary" title="Quitar filtros">✕</a>
-      </div>
-    </div>
-  </form>
-{% endif %}
-
-<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
-  {% for favorito in pagina %}
-    {% with producto=favorito.producto %}
-    <div class="col">
-      <div class="card h-100 shadow-sm{% if not favorito.disponible %} opacity-75{% endif %}">
-        {% if producto.imagen %}
-          <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}">
-        {% else %}
-          <div class="foto-vacia card-img-top">📦</div>
-        {% endif %}
-        <div class="card-body d-flex flex-column">
-          <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
-          <h3 class="h6 card-title mt-1">
-            {% if favorito.disponible %}
-              <a href="{% url 'catalogo:detalle' producto.pk %}" class="text-decoration-none">{{ producto.nombre }}</a>
-            {% else %}
-              {{ producto.nombre }}
-            {% endif %}
-          </h3>
-
-          <p class="fw-bold fs-5 mb-1">
-            {{ producto.precio_final|soles }}
-            {% if favorito.bajo_de_precio %}
-              <small class="text-muted fw-normal text-decoration-line-through fs-6">{{ favorito.precio_guardado|soles }}</small>
-            {% endif %}
-          </p>
-
-          <div class="d-flex flex-wrap gap-1 mb-2">
-            {% if not favorito.disponible %}
-              <span class="badge text-bg-secondary">No disponible</span>
-            {% elif producto.agotado %}
-              <span class="badge text-bg-secondary">Agotado</span>
-            {% else %}
-              <span class="badge text-bg-light border">Stock: {{ producto.stock }}</span>
-            {% endif %}
-            {% if favorito.bajo_de_precio %}<span class="badge text-bg-success">Bajó de precio</span>{% endif %}
-            {% if favorito.aviso_stock %}<span class="badge text-bg-info">Volvió a tener stock</span>{% endif %}
-          </div>
-
-          <small class="text-muted mb-3">🏪 {{ producto.tienda }}</small>
-
-          <div class="mt-auto d-flex gap-2">
-            {% if favorito.disponible %}
-              <a href="{{ producto.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-sm flex-grow-1">WhatsApp</a>
-            {% endif %}
-            <form method="post" action="{% url 'favoritos:alternar' producto.pk %}" class="{% if not favorito.disponible %}flex-grow-1{% endif %}">
-              {% csrf_token %}
-              <input type="hidden" name="next" value="{{ request.get_full_path }}">
-              <button type="submit" class="btn btn-outline-danger btn-sm w-100">Quitar</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-    {% endwith %}
-  {% empty %}
-    <div class="col-12">
-      {% if total %}
-        <div class="alert alert-info">No tienes favoritos con esos filtros.</div>
-      {% else %}
-        <div class="alert alert-info">
-          Aún no guardaste productos. Toca 🤍 en cualquier producto para encontrarlo aquí después.
-          <a href="{% url 'catalogo:catalogo' %}" class="enlace-accion ms-1">Ir al catálogo</a>
-        </div>
-      {% endif %}
-    </div>
-  {% endfor %}
+{% comment %}
+Mis favoritos con la misma forma que el catálogo: filtros a la izquierda (categoría con su ícono
+y tienda; se aplican al hacer clic) y tarjetas que abren el producto. Cada tarjeta mantiene los
+avisos (bajó de precio, volvió a tener stock) y los botones WhatsApp y Quitar (pide confirmación).
+{% endcomment %}
+<div class="d-flex flex-wrap align-items-baseline gap-2 mb-3">
+  <h1 class="h3 mb-0"><span aria-hidden="true">❤️</span> Mis favoritos</h1>
+  <span class="text-muted">· {{ pagina.paginator.count }} producto{{ pagina.paginator.count|pluralize }}</span>
 </div>
 
-{% include "catalogo/_paginacion.html" %}
+{% if not total %}
+  <div class="catalogo-vacio">
+    <i class="bi bi-heart" aria-hidden="true"></i>
+    <h2 class="h5">Aún no guardaste productos</h2>
+    <p class="text-muted mb-3">Toca 🤍 en cualquier producto para encontrarlo aquí después.</p>
+    <a href="{% url 'catalogo:catalogo' %}" class="btn btn-primary">Ir al catálogo</a>
+  </div>
+{% else %}
+<div class="row g-4">
+  {# ---------- Filtros (a la izquierda; en el celular se abren con el botón «Filtrar») ---------- #}
+  <aside class="col-lg-3">
+    <div class="offcanvas-lg offcanvas-start panel-filtros" tabindex="-1" id="panel-filtros" aria-labelledby="titulo-filtros">
+      <div class="offcanvas-header">
+        <h2 class="h5 mb-0" id="titulo-filtros">Filtrar</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#panel-filtros" aria-label="Cerrar"></button>
+      </div>
+      <div class="offcanvas-body">
+        <form method="get" id="filtros-catalogo" class="filtros" novalidate>
+          <div class="filtros__cabecera d-none d-lg-flex">
+            <h2 class="h5 mb-0">Filtrar</h2>
+            {% if hay_filtros %}<a href="{% url 'favoritos:lista' %}" class="enlace-accion small">Quitar todos</a>{% endif %}
+          </div>
+          {% if hay_filtros %}
+            <a href="{% url 'favoritos:lista' %}" class="enlace-accion small d-lg-none mb-2 d-inline-block">Quitar todos</a>
+          {% endif %}
+
+          <details class="filtro" open>
+            <summary>Categoría</summary>
+            {% for categoria in categorias %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="categoria" value="{{ categoria.pk }}" id="filtro-categoria-{{ categoria.pk }}"{% if categoria.elegida %} checked{% endif %}>
+                <label class="form-check-label filtro__opcion" for="filtro-categoria-{{ categoria.pk }}"><span class="filtro__icono"><i class="bi bi-{{ categoria.icono }}" aria-hidden="true"></i>{{ categoria.nombre }}</span> <span class="filtro__cantidad">{{ categoria.cantidad }}</span></label>
+              </div>
+            {% empty %}
+              <p class="small text-muted mb-0">Sin categorías con esta tienda.</p>
+            {% endfor %}
+          </details>
+
+          <details class="filtro" open>
+            <summary>Tienda</summary>
+            {% for tienda in tiendas %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="tienda" value="{{ tienda.pk }}" id="filtro-tienda-{{ tienda.pk }}"{% if tienda.elegida %} checked{% endif %}>
+                <label class="form-check-label filtro__opcion" for="filtro-tienda-{{ tienda.pk }}">{{ tienda.nombre }} <span class="filtro__cantidad">{{ tienda.cantidad }}</span></label>
+              </div>
+            {% empty %}
+              <p class="small text-muted mb-0">Sin tiendas con esta categoría.</p>
+            {% endfor %}
+          </details>
+
+          {# En computadora los filtros se aplican al instante; el botón queda para el celular (o sin JavaScript). #}
+          <button type="submit" class="btn btn-primary w-100 mt-3 filtros__aplicar">Ver resultados</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  {# ---------- Favoritos ---------- #}
+  <div class="col-lg-9">
+    <div class="barra-catalogo d-lg-none">
+      <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#panel-filtros" aria-controls="panel-filtros">
+        <i class="bi bi-sliders" aria-hidden="true"></i> Filtrar{% if hay_filtros %} <span class="badge rounded-pill text-bg-primary">✓</span>{% endif %}
+      </button>
+    </div>
+
+    {% if pagina.object_list %}
+      <div class="catalogo-grilla" data-vista="3">
+        {% for favorito in pagina %}
+          {% with producto=favorito.producto %}
+          <div class="card h-100 shadow-sm tarjeta-producto tarjeta-favorito{% if not favorito.disponible %} tarjeta-favorito--no-disponible{% endif %}">
+            {% if producto.en_oferta and favorito.disponible %}
+              <span class="badge text-bg-danger position-absolute top-0 start-0 m-2" style="z-index:2">Oferta</span>
+            {% endif %}
+            <div class="tarjeta-producto__foto">
+              {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}" loading="lazy">
+              {% else %}
+                <div class="foto-vacia card-img-top">📦</div>
+              {% endif %}
+            </div>
+            <div class="card-body d-flex flex-column">
+              <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
+              <h2 class="h6 card-title mt-1">
+                {% if favorito.disponible %}
+                  {# Toda la tarjeta (foto incluida) lleva al detalle del producto. #}
+                  <a href="{% url 'catalogo:detalle' producto.pk %}" class="tarjeta-producto__nombre stretched-link">{{ producto.nombre }}</a>
+                {% else %}
+                  {{ producto.nombre }}
+                {% endif %}
+              </h2>
+              <p class="fs-5 mb-1">
+                {% include "catalogo/_precio.html" %}
+                {% if favorito.bajo_de_precio %}
+                  <small class="text-muted fw-normal text-decoration-line-through fs-6" title="Precio cuando lo guardaste">{{ favorito.precio_guardado|soles }}</small>
+                {% endif %}
+              </p>
+              <div class="d-flex flex-wrap gap-1 mb-2">
+                {% if not favorito.disponible %}
+                  <span class="badge text-bg-secondary">No disponible</span>
+                {% elif producto.agotado %}
+                  <span class="badge text-bg-secondary">Agotado</span>
+                {% else %}
+                  <span class="badge text-bg-light border">Stock: {{ producto.stock }}</span>
+                {% endif %}
+                {% if favorito.bajo_de_precio %}<span class="badge text-bg-success">Bajó de precio</span>{% endif %}
+                {% if favorito.aviso_stock %}<span class="badge text-bg-info">Volvió a tener stock</span>{% endif %}
+              </div>
+              <small class="text-muted mb-3 tarjeta-producto__tienda">🏪
+                {% if favorito.disponible %}
+                  <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="link-secondary">{{ producto.tienda }}</a>
+                {% else %}
+                  {{ producto.tienda }}
+                {% endif %}
+              </small>
+              <div class="mt-auto d-flex gap-2 tarjeta-favorito__acciones">
+                {% if favorito.disponible %}
+                  <a href="{{ producto.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-sm flex-grow-1"><i class="bi bi-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+                {% endif %}
+                <form method="post" action="{% url 'favoritos:alternar' producto.pk %}" class="{% if not favorito.disponible %}flex-grow-1{% endif %}" data-quitar-favorito data-nombre="{{ producto.nombre }}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit" class="btn btn-outline-danger btn-sm w-100">Quitar</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="catalogo-vacio">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <h2 class="h5">No tienes favoritos con esos filtros</h2>
+        <p class="text-muted mb-3">Prueba quitando alguno.</p>
+        <a href="{% url 'favoritos:lista' %}" class="btn btn-primary">Ver todos mis favoritos</a>
+      </div>
+    {% endif %}
+
+    {% include "catalogo/_paginacion.html" %}
+  </div>
+</div>
+
+{# Confirmación antes de quitar un producto de favoritos. #}
+<div class="modal fade" id="modal-quitar-favorito" tabindex="-1" aria-labelledby="titulo-quitar-favorito" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content modal-marca">
+      <div class="modal-body text-center p-4">
+        <div class="modal-marca__icono modal-marca__icono--peligro" aria-hidden="true"><i class="bi bi-heartbreak"></i></div>
+        <h2 class="h5 fw-bold" id="titulo-quitar-favorito">¿Quitar de favoritos?</h2>
+        <p class="small text-muted mb-4"><strong id="quitar-favorito-nombre"></strong> dejará de estar en tu lista. Podrás guardarlo de nuevo con 🤍.</p>
+        <div class="d-grid gap-2">
+          <button type="button" class="btn btn-danger" id="confirmar-quitar-favorito">Sí, quitar</button>
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/catalogo.js' %}?v=1"></script>
+<script>
+  // «Quitar» pide confirmación: el formulario de la tarjeta se envía recién al tocar «Sí, quitar».
+  (function () {
+    var modal = document.getElementById("modal-quitar-favorito");
+    if (!modal || !window.bootstrap) return;
+    var pendiente = null;
+    document.querySelectorAll("form[data-quitar-favorito]").forEach(function (form) {
+      form.addEventListener("submit", function (evento) {
+        if (form.dataset.confirmado === "1") return;
+        evento.preventDefault();
+        evento.stopImmediatePropagation();  // aún no: que no se marque como «Procesando…»
+        pendiente = form;
+        document.getElementById("quitar-favorito-nombre").textContent = form.dataset.nombre;
+        bootstrap.Modal.getOrCreateInstance(modal).show();
+      });
+    });
+    document.getElementById("confirmar-quitar-favorito").addEventListener("click", function () {
+      if (!pendiente) return;
+      pendiente.dataset.confirmado = "1";
+      if (pendiente.requestSubmit) pendiente.requestSubmit(); else pendiente.submit();
+    });
+  })();
+</script>
 {% endblock %}

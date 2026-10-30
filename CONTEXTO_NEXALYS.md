@@ -76,8 +76,8 @@
 - Respetar los finales de línea de cada archivo (algunos son CRLF).
 - Al escribir de vuelta, usar la fecha de modificación esperada (expectedMtimeMs) para no pisar
   cambios suyos.
-- Claude no puede ejecutar Django en su entorno: revisa con `py_compile`, balance de etiquetas de
-  plantillas y `node --check` para JS. **Las pruebas las corre el usuario** y manda capturas.
+- Claude corre las pruebas de Django y revisa las pantallas (Playwright) en su propio entorno antes de
+  entregar; aun así, el usuario las vuelve a correr en su PC (`python manage.py test`) y manda capturas.
 - Claude no puede borrar archivos en su PC; si algo sobra, le indica cuál borrar.
 
 ## 6. Convenciones del código
@@ -110,7 +110,25 @@
   solo en «Todas las categorías». Visor de fotos con fondo claro difuminado y miniaturas.
 - Galería al editar: «Hacer principal» o arrastrar una adicional a la principal las intercambia en la
   pantalla al instante (arrastrarla de vuelta lo deshace); un archivo de la PC reemplaza.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **465 pruebas**.
+  La principal también se puede arrastrar sobre una adicional: se intercambian igual.
+  Arrastrar una adicional sobre otra adicional las **cambia de lugar** (con «Deshacer orden»); cada foto
+  muestra un número con el orden en que la ve el cliente (1 = principal). El orden viaja en el campo
+  oculto `orden_fotos` y se guarda en `FotoProducto.orden` (`ProductoForm.ordenar_fotos`).
+- Detalle del producto: las fotos cambian solas cada **5 segundos** (se pausan con el mouse encima y no
+  se mueven si el sistema pide «reducir movimiento»); la miniatura de la foto que se ve queda resaltada.
+- **Centro de cuenta** (`templates/cuentas/_centro.html`, bloque `centro`): cabecera simple (logo,
+  «Volver a la página» y menú de la cuenta, sin buscador ni barra de categorías) y menú lateral con
+  Mi perfil, Datos de mi tienda (antes «Mi tienda»: datos, logo, horario y números), Seguridad,
+  Ayuda y soporte, Privacidad y términos. En el celular el menú lateral es una fila de pestañas.
+  En el desplegable de la cuenta, «Mi tienda» abre la **página pública** de la tienda (si está activa;
+  si no, «Datos de mi tienda»).
+- **Cuenta de tienda**: al iniciar sesión entra directo a «Mis productos» (salvo que viniera de un enlace
+  con `?next=`; vista `cuentas.views.IngresoView`). Su menú es «Mis productos», «Inicio», «Catálogo», y en
+  toda su zona de trabajo (Mis productos, crear/editar producto e inventario) no aparece la barra de categorías.
+- **Mis favoritos** tiene la forma del catálogo: filtros a la izquierda (categoría con su ícono y tienda,
+  varias a la vez, con su cantidad) que se aplican al hacer clic (reusa `static/js/catalogo.js`); toda la
+  tarjeta abre el producto y el nombre de la tienda abre su página; «Quitar» pide confirmación.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **494 pruebas**.
 
 ## 7. Pendientes e ideas
 

@@ -127,3 +127,87 @@ class GaleriaEdicionTests(BaseCatalogo):
         self.assertContains(respuesta, 'data-galeria="producto"', count=2)
         for parte in ('id="visor-anterior"', 'id="visor-siguiente"', 'id="visor-contador"'):
             self.assertContains(respuesta, parte)
+
+
+@override_settings(MEDIA_ROOT=CARPETA_MEDIA)
+class OrdenDeFotosTests(BaseCatalogo):
+    """Las fotos adicionales se intercambian de lugar arrastrándolas y llevan un número de orden."""
+
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.tienda.usuario)
+        self.producto = self.crear_producto(imagen=foto("principal.png", color="red"))
+        self.f1, self.f2, self.f3 = (
+            FotoProducto.objects.create(producto=self.producto, imagen=foto(f"extra{n}.png"), orden=n) for n in (1, 2, 3))
+        self.url = reverse("catalogo:editar", args=[self.producto.pk])
+
+    def guardar(self, **cambios):
+        version = self.client.get(self.url).context["form"]["version"].value()
+        datos = self.datos_formulario(nombre="Galaxy A15", version=version)
+        datos.update(cambios)
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(self.url, datos)
+
+    def orden(self):
+        return list(self.producto.fotos.values_list("pk", flat=True))
+
+    def test_cada_foto_muestra_su_numero(self):
+        respuesta = self.client.get(self.url)
+        self.assertContains(respuesta, 'name="orden_fotos"')
+        self.assertContains(respuesta, '<span class="numero-foto" title="Se ve primero">1</span>', html=True)
+        for numero in (2, 3, 4):
+            self.assertContains(respuesta, f'title="Orden en que se ve">{numero}</span>')
+        self.assertContains(respuesta, "Suelta para cambiarlas de lugar")
+
+    def test_la_principal_tambien_se_arrastra(self):
+        respuesta = self.client.get(self.url)
+        self.assertContains(respuesta, 'alt="Foto principal de Galaxy A15" data-vista draggable="true"')
+        self.assertContains(respuesta, "galeria-edicion--arrastrando-principal")
+        # La principal soltada sobre una adicional las intercambia (lo mismo que «Hacer principal»).
+        respuesta = self.guardar(principal_foto=str(self.f2.pk))
+        self.assertRedirects(respuesta, reverse("catalogo:mis_productos"))
+        self.producto.refresh_from_db()
+        self.f2.refresh_from_db()
+        self.assertEqual(color(self.f2.imagen), "rojo")
+
+    def test_guardar_el_nuevo_orden(self):
+        respuesta = self.guardar(orden_fotos=f"{self.f3.pk},{self.f1.pk},{self.f2.pk}")
+        self.assertRedirects(respuesta, reverse("catalogo:mis_productos"))
+        self.assertEqual(self.orden(), [self.f3.pk, self.f1.pk, self.f2.pk])
+
+    def test_ids_ajenos_o_repetidos_se_ignoran(self):
+        ajena = FotoProducto.objects.create(producto=self.crear_producto(nombre="Otro"), imagen=foto("x.png"), orden=1)
+        self.guardar(orden_fotos=f"{ajena.pk},{self.f2.pk},{self.f2.pk},abc")
+        self.assertEqual(self.orden(), [self.f2.pk, self.f1.pk, self.f3.pk])  # las que faltan van al final
+        ajena.refresh_from_db()
+        self.assertEqual(ajena.orden, 1)
+
+    def test_sin_cambios_no_se_toca_el_orden(self):
+        self.guardar(orden_fotos="")
+        self.assertEqual(self.orden(), [self.f1.pk, self.f2.pk, self.f3.pk])
+
+    def test_las_fotos_nuevas_van_despues(self):
+        self.guardar(orden_fotos=f"{self.f2.pk},{self.f1.pk},{self.f3.pk}", fotos_nuevas=[foto("nueva.png")])
+        orden = self.orden()
+        self.assertEqual(orden[:3], [self.f2.pk, self.f1.pk, self.f3.pk])
+        self.assertEqual(len(orden), 4)
+
+    def test_el_cliente_ve_las_fotos_en_ese_orden(self):
+        self.guardar(orden_fotos=f"{self.f3.pk},{self.f1.pk},{self.f2.pk}")
+        html = self.client.get(reverse("catalogo:detalle", args=[self.producto.pk])).content.decode()
+        self.f1.refresh_from_db(); self.f2.refresh_from_db(); self.f3.refresh_from_db()
+        posiciones = [html.index(f.imagen.url) for f in (self.f3, self.f1, self.f2)]
+        self.assertEqual(posiciones, sorted(posiciones))
+
+
+@override_settings(MEDIA_ROOT=CARPETA_MEDIA)
+class CarruselAutomaticoTests(BaseCatalogo):
+    def test_las_fotos_cambian_solas_cada_5_segundos_y_la_miniatura_se_resalta(self):
+        producto = self.crear_producto(imagen=foto("principal.png"))
+        FotoProducto.objects.create(producto=producto, imagen=foto("extra.png"), orden=1)
+        respuesta = self.client.get(reverse("catalogo:detalle", args=[producto.pk]))
+        self.assertContains(respuesta, 'data-bs-interval="5000"')
+        self.assertContains(respuesta, 'data-bs-pause="hover"')
+        self.assertContains(respuesta, 'class="miniatura-galeria activa"')
+        self.assertContains(respuesta, 'class="miniatura-galeria"')
+        self.assertContains(respuesta, "prefers-reduced-motion")

@@ -1,17 +1,13 @@
-{% extends "base.html" %}
+{% extends "cuentas/_centro.html" %}
 {% block titulo %}Editar mis datos | NEXALYS Tec{% endblock %}
-{% block contenido %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <a href="{% url 'mi_cuenta' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a mi cuenta</a>
-    <div class="card shadow-sm mt-2"><div class="card-body p-4">
-      <h2 class="h4 mb-3">Editar mis datos</h2>
-      <form method="post" novalidate>
-        {% csrf_token %}
-        {% include "_campos_formulario.html" %}
-        <button type="submit" class="btn btn-primary w-100">Guardar cambios</button>
-      </form>
-    </div></div>
-  </div>
+{% block centro %}
+<a href="{% url 'mi_cuenta' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a mi perfil</a>
+<div class="tarjeta-cuenta tarjeta-cuenta--formulario">
+  <h1 class="h4 mb-3">Editar mis datos</h1>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "_campos_formulario.html" %}
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+  </form>
 </div>
 {% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% comment %}
+Centro de cuenta: Mi perfil, Datos de mi tienda, Seguridad, Ayuda y soporte, Privacidad y términos.
+Es una zona aparte: la cabecera es simple (logo, «Volver a la página» y el menú de la cuenta),
+sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «centro».
+{% endcomment %}
+{% block cabecera %}
+<header class="cabecera-marca cabecera-cuenta" id="cabecera">
+  <nav class="navbar navbar-expand navbar-dark navbar-marca" aria-label="Menú de la cuenta">
+    <div class="container flex-nowrap gap-2">
+      <a class="navbar-brand" href="{% url 'inicio' %}" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" %}</a>
+      <a href="{% url 'inicio' %}" class="cabecera-cuenta__volver ms-auto" aria-label="Volver a la página"><i class="bi bi-arrow-left" aria-hidden="true"></i><span class="d-none d-sm-inline">Volver a la página</span></a>
+      <ul class="navbar-nav flex-row align-items-center menu-usuario">
+        {% include "_menu_usuario.html" %}
+      </ul>
+    </div>
+  </nav>
+</header>
+{% endblock %}
+
+{% block contenido %}
+{% with vista=request.resolver_match.url_name ns=request.resolver_match.namespace %}
+<div class="row g-4 centro-cuenta">
+  <aside class="col-lg-3">
+    <nav class="centro-cuenta__menu" aria-label="Secciones de la cuenta">
+      {% if user.is_authenticated %}
+        <div class="centro-cuenta__usuario">
+          <span class="centro-cuenta__avatar" aria-hidden="true">{% if tienda_actual and tienda_actual.logo %}<img src="{{ tienda_actual.logo.url }}" alt="">{% elif tienda_actual %}{{ tienda_actual.nombre|first|upper }}{% else %}{{ user.get_username|first|upper }}{% endif %}</span>
+          <div class="min-w-0">
+            <div class="fw-bold text-truncate">{% if tienda_actual %}{{ tienda_actual.nombre }}{% else %}{{ user.get_full_name|default:user.username }}{% endif %}</div>
+            <div class="d-flex flex-wrap gap-1 mt-1">
+              <span class="badge rounded-pill text-bg-light border">{% if es_admin %}Administrador{% elif tienda_actual %}Tienda{% else %}Cliente{% endif %}</span>
+              {% if tienda_actual %}
+                {% if tienda_actual.estado == "activa" %}<span class="badge rounded-pill text-bg-success">Activa</span>
+                {% elif tienda_actual.estado == "pendiente" %}<span class="badge rounded-pill text-bg-warning">Pendiente</span>
+                {% else %}<span class="badge rounded-pill text-bg-danger">Suspendida</span>{% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      <ul class="centro-cuenta__enlaces">
+        {% if user.is_authenticated %}
+          <li><a href="{% url 'mi_cuenta' %}" class="{% if not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta' %}activo{% endif %}"{% if not ns and vista == 'mi_cuenta' %} aria-current="page"{% endif %}><i class="bi bi-person" aria-hidden="true"></i>Mi perfil</a></li>
+          {% if tienda_actual %}
+            <li><a href="{% url 'tiendas:panel' %}" class="{% if ns == 'tiendas' %}activo{% endif %}"{% if ns == 'tiendas' and vista == 'panel' %} aria-current="page"{% endif %}><i class="bi bi-shop" aria-hidden="true"></i>Datos de mi tienda</a></li>
+          {% endif %}
+          <li><a href="{% url 'password_change' %}" class="{% if vista == 'password_change' or vista == 'password_change_done' %}activo{% endif %}"{% if vista == 'password_change' %} aria-current="page"{% endif %}><i class="bi bi-shield-lock" aria-hidden="true"></i>Seguridad</a></li>
+        {% endif %}
+        <li><a href="{% url 'ayuda' %}" class="{% if vista == 'ayuda' %}activo{% endif %}"{% if vista == 'ayuda' %} aria-current="page"{% endif %}><i class="bi bi-question-circle" aria-hidden="true"></i>Ayuda y soporte</a></li>
+        <li><a href="{% url 'privacidad' %}" class="{% if vista == 'privacidad' %}activo{% endif %}"{% if vista == 'privacidad' %} aria-current="page"{% endif %}><i class="bi bi-file-earmark-lock" aria-hidden="true"></i>Privacidad y términos</a></li>
+      </ul>
+      {% if user.is_authenticated %}
+        <ul class="centro-cuenta__enlaces centro-cuenta__enlaces--accesos">
+          {% if tienda_actual and tienda_actual.estado == "activa" %}
+            <li><a href="{% url 'tiendas:perfil' tienda_actual.pk %}"><i class="bi bi-shop-window" aria-hidden="true"></i>Ver mi tienda pública <i class="bi bi-arrow-up-right ms-auto small" aria-hidden="true"></i></a></li>
+          {% endif %}
+          {% if es_tienda %}
+            <li><a href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i>Mis productos</a></li>
+          {% endif %}
+          {% if es_cliente %}
+            <li><a href="{% url 'favoritos:lista' %}"><i class="bi bi-heart" aria-hidden="true"></i>Mis favoritos</a></li>
+          {% endif %}
+          {% if es_admin %}
+            <li><a href="{% url 'panel_admin' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i>Administración</a></li>
+          {% endif %}
+        </ul>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn btn-primary w-100 mt-3">Iniciar sesión</a>
+      {% endif %}
+    </nav>
+    <script>
+      // En el celular las secciones son una fila que se desliza: se deja a la vista la que está abierta.
+      (function () {
+        var activo = document.querySelector(".centro-cuenta__enlaces a.activo");
+        if (!activo) return;
+        var fila = activo.closest("ul");
+        if (fila.scrollWidth > fila.clientWidth) fila.scrollLeft = activo.offsetLeft - (fila.clientWidth - activo.offsetWidth) / 2;
+      })();
+    </script>
+  </aside>
+  <div class="col-lg-9">
+    {% block centro %}{% endblock %}
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

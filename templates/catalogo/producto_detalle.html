@@ -6,7 +6,8 @@
   <div class="col-md-5">
     {% if fotos %}
       {# Galería: se pasa de una foto a otra con las flechas o tocando las miniaturas. #}
-      <div id="galeria" class="carousel slide bg-white rounded shadow-sm" data-bs-ride="false">
+      {# Las fotos avanzan solas cada 5 s (se pausan al pasar el cursor) y la miniatura de la que se ve queda resaltada. #}
+      <div id="galeria" class="carousel slide bg-white rounded shadow-sm" data-bs-ride="false" data-bs-interval="5000" data-bs-pause="hover">
         <div class="carousel-inner">
           {% for foto in fotos %}
             <div class="carousel-item{% if forloop.first %} active{% endif %}">
@@ -28,7 +29,7 @@
       {% if fotos|length > 1 %}
         <div class="d-flex flex-wrap gap-2 mt-2">
           {% for foto in fotos %}
-            <button type="button" class="btn p-0 border rounded bg-white" data-bs-target="#galeria" data-bs-slide-to="{{ forloop.counter0 }}" aria-label="Ver foto {{ forloop.counter }}">
+            <button type="button" class="miniatura-galeria{% if forloop.first %} activa{% endif %}" data-bs-target="#galeria" data-bs-slide-to="{{ forloop.counter0 }}" data-miniatura aria-label="Ver foto {{ forloop.counter }}"{% if forloop.first %} aria-current="true"{% endif %}>
               <img src="{{ foto.url }}" alt="" width="64" height="64" style="object-fit:contain" loading="lazy">
             </button>
           {% endfor %}
@@ -102,6 +103,24 @@
 
 {% block scripts %}
 <script>
+  // Galería del producto: resalta la miniatura de la foto que se ve y avanza sola cada 5 segundos
+  // (no avanza si el sistema tiene activado «reducir movimiento»).
+  (function () {
+    var galeria = document.getElementById("galeria");
+    var miniaturas = document.querySelectorAll("[data-miniatura]");
+    if (!galeria || miniaturas.length < 2) return;
+    galeria.addEventListener("slide.bs.carousel", function (evento) {
+      miniaturas.forEach(function (boton, indice) {
+        boton.classList.toggle("activa", indice === evento.to);
+        if (indice === evento.to) boton.setAttribute("aria-current", "true"); else boton.removeAttribute("aria-current");
+      });
+    });
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      galeria.dataset.automatico = "1";
+      bootstrap.Carousel.getOrCreateInstance(galeria, { interval: 5000, pause: "hover" }).cycle();
+    }
+  })();
+
   // Si la descripción entra completa, se quita el recorte y no se muestra el botón.
   (function () {
     var texto = document.getElementById("descripcion");

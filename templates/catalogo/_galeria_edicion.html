@@ -3,6 +3,8 @@ Galería de fotos al EDITAR un producto.
   - La foto PRINCIPAL va grande a la izquierda; las adicionales, más pequeñas a su derecha.
   - Arrastrar y soltar:
       · una foto adicional sobre la principal  → la intercambia (igual que «Hacer principal»);
+      · una foto adicional sobre otra adicional → cambian de lugar (el número indica el orden
+        en que el cliente las ve: 1 es la principal);
       · una imagen de tu carpeta sobre la principal o sobre una adicional → la reemplaza;
       · imágenes de tu carpeta en cualquier otro lugar de la galería → se agregan como fotos nuevas.
   - La «X» (aparece al pasar el cursor; en celular se ve siempre) marca la foto para quitarla.
@@ -17,7 +19,7 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
   </div>
   <p class="small text-muted mb-3">
     {% if form.fotos_libres > 0 %}<span id="fotos-libres">Puedes agregar {{ form.fotos_libres }} más.</span>{% else %}Ya tienes el máximo de fotos adicionales. Quita o reemplaza una para cambiarla.{% endif %}
-    <span class="d-none d-md-inline">Consejo: arrastra una foto sobre la principal para cambiarla, o suelta imágenes de tu carpeta aquí.</span>
+    <span class="d-none d-md-inline">Consejo: arrastra una foto sobre otra para cambiarlas de lugar, o suelta imágenes de tu carpeta aquí.</span>
   </p>
   <input type="file" name="{{ form.fotos_nuevas.html_name }}" id="{{ form.fotos_nuevas.id_for_label }}" accept="image/*" multiple class="visually-hidden" data-agregar>
 
@@ -28,14 +30,14 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
   <div class="galeria-edicion__cuerpo">
     {# ---- Foto principal (grande) ---- #}
     <div class="tarjeta-foto tarjeta-foto--principal" data-tarjeta="principal" data-soltar-texto="Suelta para que sea la foto principal">
-      <span class="etiqueta-principal"><span aria-hidden="true">★</span> Foto principal</span>
+      <span class="etiqueta-principal"><span class="numero-foto" title="Se ve primero">1</span><span aria-hidden="true">★</span> Foto principal</span>
       <button type="button" class="tarjeta-foto__x{% if not producto.imagen %} d-none{% endif %}" data-x aria-label="Quitar la foto principal" title="Quitar">&times;</button>
       <div class="tarjeta-foto__imagen">
         {% if producto.imagen %}
-          <img src="{{ producto.imagen.url }}" alt="Foto principal de {{ producto.nombre }}" data-vista>
+          <img src="{{ producto.imagen.url }}" alt="Foto principal de {{ producto.nombre }}" data-vista draggable="true" title="Arrástrala a otra foto para cambiarlas de lugar">
         {% else %}
           <span class="text-muted small text-center px-3" data-vacia>Sin foto principal.<br>Arrastra una imagen aquí.</span>
-          <img src="" alt="" class="d-none" data-vista>
+          <img src="" alt="" class="d-none" data-vista draggable="true">
         {% endif %}
       </div>
       <p class="small text-muted mb-0">Es la que se ve en el catálogo y en el inicio.</p>
@@ -52,9 +54,10 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
     <div class="galeria-edicion__secundarias">
       {% for item in form.galeria %}
         <div class="tarjeta-foto tarjeta-foto--secundaria" data-tarjeta="{{ item.foto.pk }}" data-soltar-texto="Suelta para reemplazarla">
+          <span class="numero-foto numero-foto--secundaria" data-numero title="Orden en que se ve">{{ forloop.counter|add:1 }}</span>
           <button type="button" class="tarjeta-foto__x" data-x aria-label="Quitar la foto {{ forloop.counter }}" title="Quitar">&times;</button>
           <div class="tarjeta-foto__imagen">
-            <img src="{{ item.foto.imagen.url }}" alt="Foto {{ forloop.counter }} de {{ producto.nombre }}" data-vista draggable="true" title="Arrástrala a la foto principal para intercambiarlas">
+            <img src="{{ item.foto.imagen.url }}" alt="Foto {{ forloop.counter }} de {{ producto.nombre }}" data-vista draggable="true" title="Arrástrala a la principal o a otra foto para cambiarlas de lugar">
           </div>
           <div class="tarjeta-foto__estado small" data-estado></div>
           {% for error in item.reemplazo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
@@ -81,6 +84,10 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
     <div class="small text-primary fw-semibold mb-2" id="nuevas-fotos-texto"></div>
     <div class="d-flex flex-wrap gap-2" id="nuevas-fotos-lista"></div>
   </div>
+  <div class="aviso-orden d-none mt-3" id="aviso-orden" aria-live="polite">
+    <span><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Cambiaste el orden de las fotos: se guardará al presionar «Guardar».</span>
+    <button type="button" class="btn btn-sm btn-link p-0" id="deshacer-orden">Deshacer orden</button>
+  </div>
   <div class="small text-danger mt-2 d-none" id="aviso-galeria" role="alert"></div>
   <p class="small text-muted mt-2 mb-0">Los cambios en las fotos se aplican al presionar <strong>«Guardar»</strong>. JPG, PNG o WEBP de máximo 2 MB.</p>
 </section>
@@ -92,6 +99,8 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
   const principalOculto = document.getElementById("{{ form.principal_foto.id_for_label }}");  // campo oculto del formulario
   const tarjetaPrincipal = galeria.querySelector('[data-tarjeta="principal"]');
   const aviso = document.getElementById("aviso-galeria");
+  const ordenOculto = document.getElementById("{{ form.orden_fotos.id_for_label }}");  // ids de las adicionales en orden
+  const contenedorSecundarias = galeria.querySelector(".galeria-edicion__secundarias");
   var pendientes = [];  // fotos nuevas elegidas o soltadas, aún sin guardar
   const TIPO_FOTO = "application/x-nexalys-foto";  // arrastre de una foto adicional (no es un archivo)
 
@@ -311,28 +320,65 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
     input.dispatchEvent(new Event("change"));
   }
 
-  // Las fotos adicionales se pueden arrastrar hasta la principal.
-  galeria.querySelectorAll(".tarjeta-foto--secundaria [data-vista]").forEach(function (img) {
+  // ---- Orden de las fotos adicionales ----
+  // Cada tarjeta lleva un número: el orden en que el cliente ve las fotos (1 es la principal).
+  const ordenOriginal = Array.from(contenedorSecundarias.querySelectorAll(".tarjeta-foto--secundaria"));
+  const avisoOrden = document.getElementById("aviso-orden");
+
+  function renumerar() {
+    const tarjetas = Array.from(contenedorSecundarias.querySelectorAll(".tarjeta-foto--secundaria"));
+    tarjetas.forEach(function (tarjeta, indice) { tarjeta.querySelector("[data-numero]").textContent = indice + 2; });
+    const cambio = tarjetas.some(function (tarjeta, indice) { return tarjeta !== ordenOriginal[indice]; });
+    ordenOculto.value = cambio ? tarjetas.map(function (t) { return t.dataset.tarjeta; }).join(",") : "";
+    avisoOrden.classList.toggle("d-none", !cambio);
+  }
+
+  // Dos fotos adicionales cambian de lugar (las tarjetas se mueven con todo lo que tienen marcado).
+  function cambiarDeLugar(a, b) {
+    const marcador = document.createElement("span");
+    a.before(marcador);
+    b.before(a);
+    marcador.replaceWith(b);
+    renumerar();
+  }
+
+  document.getElementById("deshacer-orden").addEventListener("click", function () {
+    const zona = contenedorSecundarias.querySelector("[data-zona-agregar]");
+    ordenOriginal.forEach(function (tarjeta) { contenedorSecundarias.insertBefore(tarjeta, zona); });
+    renumerar();
+  });
+
+  // Cualquier foto se puede arrastrar sobre otra: con la principal se intercambian (la que llega a la
+  // principal pasa a ser la portada) y entre adicionales cambian de lugar.
+  let arrastrada = null;
+  galeria.querySelectorAll("[data-tarjeta] [data-vista]").forEach(function (img) {
     img.addEventListener("dragstart", function (evento) {
       const tarjeta = img.closest("[data-tarjeta]");
-      if (tarjeta.classList.contains("tarjeta-foto--quitada")) { evento.preventDefault(); return; }
+      const sinFoto = img.classList.contains("d-none") || !img.getAttribute("src");
+      if (sinFoto || tarjeta.classList.contains("tarjeta-foto--quitada")) { evento.preventDefault(); return; }
       evento.dataTransfer.setData(TIPO_FOTO, tarjeta.dataset.tarjeta);
       evento.dataTransfer.effectAllowed = "move";
-      galeria.classList.add("galeria-edicion--arrastrando");
+      arrastrada = tarjeta;
+      galeria.classList.add(tarjeta === tarjetaPrincipal ? "galeria-edicion--arrastrando-principal" : "galeria-edicion--arrastrando");
     });
     img.addEventListener("dragend", function () {
-      galeria.classList.remove("galeria-edicion--arrastrando");
-      tarjetaPrincipal.classList.remove("tarjeta-foto--soltar");
+      arrastrada = null;
+      galeria.classList.remove("galeria-edicion--arrastrando", "galeria-edicion--arrastrando-principal");
+      galeria.querySelectorAll(".tarjeta-foto--soltar").forEach(function (t) { t.classList.remove("tarjeta-foto--soltar"); });
     });
   });
 
   galeria.querySelectorAll("[data-tarjeta]").forEach(function (tarjeta) {
-    const aceptaFoto = tarjeta === tarjetaPrincipal;
-    function acepta(evento) { return traeArchivos(evento) || (aceptaFoto && traeFoto(evento)); }
+    const esPrincipal = tarjeta === tarjetaPrincipal;
+    function acepta(evento) { return traeArchivos(evento) || (traeFoto(evento) && tarjeta !== arrastrada); }
     tarjeta.addEventListener("dragover", function (evento) {
       if (!acepta(evento)) return;
       evento.preventDefault();
       evento.stopPropagation();
+      if (!esPrincipal) {
+        tarjeta.dataset.soltarTexto = !traeFoto(evento) ? "Suelta para reemplazarla"
+          : arrastrada === tarjetaPrincipal ? "Suelta para que sea la foto principal" : "Suelta para cambiarlas de lugar";
+      }
       tarjeta.classList.add("tarjeta-foto--soltar");
     });
     tarjeta.addEventListener("dragleave", function (evento) {
@@ -345,10 +391,18 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
       tarjeta.classList.remove("tarjeta-foto--soltar");
       galeria.classList.remove("galeria-edicion--soltar");
       const fotoId = evento.dataTransfer.getData(TIPO_FOTO);
-      if (aceptaFoto && fotoId) {
+      if (fotoId) {
         const origen = tarjetaDe(fotoId);
-        if (origen && origen === tarjetaDe(principalOculto.value)) deshacerIntercambio();  // la devolvió
-        else if (origen) hacerPrincipal(origen);
+        if (!origen) return;
+        if (origen === tarjetaPrincipal) {
+          // La principal soltada sobre una adicional: se intercambian (o se deshace si vuelve a su lugar).
+          if (tarjeta === tarjetaDe(principalOculto.value)) deshacerIntercambio();
+          else hacerPrincipal(tarjeta);
+          return;
+        }
+        if (!esPrincipal) cambiarDeLugar(origen, tarjeta);
+        else if (origen === tarjetaDe(principalOculto.value)) deshacerIntercambio();  // la devolvió
+        else hacerPrincipal(origen);
         return;
       }
       ponerArchivo(tarjeta, evento.dataTransfer.files[0]);
