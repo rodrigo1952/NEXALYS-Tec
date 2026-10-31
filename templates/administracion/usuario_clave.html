@@ -1,0 +1,59 @@
+{% extends "administracion/_consola.html" %}
+{% block titulo %}Restablecer contraseña | Administración | NEXALYS Tec{% endblock %}
+{% block consola %}
+<a href="{% url 'administracion:usuarios' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a usuarios</a>
+<div class="consola-cabecera mt-2">
+  <div>
+    <p class="consola-cabecera__antetitulo">Usuarios</p>
+    <h1 class="h3 mb-0">Restablecer contraseña</h1>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-7">
+    <section class="panel-consola">
+      <div class="ficha-usuario">
+        <span class="ficha-usuario__avatar" aria-hidden="true">{{ usuario.username|first|upper }}</span>
+        <div class="min-w-0">
+          <div class="fw-bold text-truncate">{{ usuario.username }}{% if usuario.get_full_name %} · {{ usuario.get_full_name }}{% endif %}</div>
+          <div class="small text-muted text-truncate">{{ rol }}{% if tienda %} · {{ tienda.nombre }}{% endif %} · {{ usuario.email|default:"sin correo" }}</div>
+        </div>
+      </div>
+      {% if anterior %}
+        <div class="alert alert-info small mt-3 mb-0">
+          Ya tiene una clave temporal {% if anterior.vencida %}que <strong>venció</strong> el {{ anterior.vence|date:"d/m/Y H:i" }}{% else %}que vence el <strong>{{ anterior.vence|date:"d/m/Y H:i" }}</strong>{% endif %}. Si generas otra, la anterior deja de servir.
+        </div>
+      {% endif %}
+      <form method="post" novalidate class="mt-3">
+        {% csrf_token %}
+        <fieldset class="mb-3">
+          <legend class="form-label fs-6">Motivo <span class="text-danger">*</span></legend>
+          <div class="opciones-motivo">
+            {% for opcion in form.motivo %}
+              <label class="opcion-motivo" for="{{ opcion.id_for_label }}">{{ opcion.tag }}<span>{{ opcion.choice_label }}</span></label>
+            {% endfor %}
+          </div>
+          {% for error in form.motivo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </fieldset>
+        {% include "_campos_formulario.html" %}
+        <div class="d-flex flex-wrap gap-2">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-key" aria-hidden="true"></i> Generar clave temporal</button>
+          <a href="{% url 'administracion:usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </section>
+  </div>
+  <div class="col-xl-5">
+    <section class="panel-consola">
+      <h2 class="h6">Esto es lo que va a pasar</h2>
+      <ul class="lista-pasos">
+        <li><i class="bi bi-key" aria-hidden="true"></i><span>Se crea una <strong>clave temporal</strong> al azar y la verás una sola vez para pasársela a la persona.</span></li>
+        <li><i class="bi bi-hourglass-split" aria-hidden="true"></i><span>Sirve por <strong>{{ horas }} horas</strong>. Después ya no deja entrar y hay que generar otra.</span></li>
+        <li><i class="bi bi-shield-lock" aria-hidden="true"></i><span>Al entrar con ella, la persona está <strong>obligada a crear su propia contraseña</strong>.</span></li>
+        <li><i class="bi bi-box-arrow-right" aria-hidden="true"></i><span>Se cierra su sesión en los equipos donde estaba conectada.</span></li>
+        <li><i class="bi bi-clock-history" aria-hidden="true"></i><span>Queda en el <strong>Historial</strong> con el motivo. Nadie (ni tú) puede ver la contraseña que ella cree.</span></li>
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

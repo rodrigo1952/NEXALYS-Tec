@@ -44,6 +44,8 @@
         </div>
       {% elif form.tipo_equivocado %}
         <div class="alert alert-warning">{{ form.non_field_errors.0 }}</div>
+      {% elif form.clave_vencida %}
+        <div class="alert alert-warning"><strong>{{ form.non_field_errors.0 }}</strong></div>
       {% elif form.errors %}
         <div class="alert alert-danger">Usuario o contraseña incorrectos.</div>
       {% endif %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load consola %}
+{% comment %}
+Consola de administración: una zona aparte de la tienda pública.
+- Cabecera simple: logo, «Ver página pública ↗» y el menú de la cuenta (sin buscador ni categorías).
+- Menú lateral con las secciones (en el celular se abre con el botón ☰).
+Cada página llena el bloque «consola».
+{% endcomment %}
+{% block clase_body %} consola-cuerpo{% endblock %}
+{% block clase_main %}consola{% endblock %}
+
+{% block cabecera %}
+<header class="cabecera-consola" id="cabecera">
+  <nav class="navbar navbar-expand navbar-dark cabecera-consola__fila" aria-label="Menú de la consola">
+    <button class="cabecera-consola__menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#consola-menu" aria-controls="consola-menu" aria-label="Abrir el menú de la consola">
+      <i class="bi bi-list" aria-hidden="true"></i>
+    </button>
+    <a class="navbar-brand" href="{% url 'panel_admin' %}" aria-label="NEXALYS Tec, ir al resumen de la consola">{% include "_logo.html" %}</a>
+    <span class="cabecera-consola__etiqueta d-none d-sm-inline-flex">Administración</span>
+    <a href="{% url 'inicio' %}" class="cabecera-cuenta__volver ms-auto" target="_blank" rel="noopener" aria-label="Ver página pública (se abre en otra pestaña)">
+      <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="d-none d-md-inline">Ver página pública</span>
+    </a>
+    <ul class="navbar-nav flex-row align-items-center menu-usuario">
+      {% include "_menu_usuario.html" %}
+    </ul>
+  </nav>
+</header>
+{% endblock %}
+
+{% block mensajes %}{% endblock %}
+
+{% block contenido %}
+{% with vista=request.resolver_match.url_name ns=request.resolver_match.namespace tipo=request.resolver_match.kwargs.tipo %}
+{% tiendas_por_verificar as globo_tiendas %}
+<div class="consola__marco">
+  <aside class="consola__lateral offcanvas-lg offcanvas-start" tabindex="-1" id="consola-menu" aria-labelledby="titulo-consola-menu">
+    <div class="offcanvas-header">
+      <span class="h6 mb-0" id="titulo-consola-menu">Administración</span>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#consola-menu" aria-label="Cerrar"></button>
+    </div>
+    <nav class="offcanvas-body consola__nav" aria-label="Secciones de la consola">
+      <p class="consola__grupo">General</p>
+      <a href="{% url 'panel_admin' %}" class="{% if vista == 'panel_admin' %}activo{% endif %}"{% if vista == 'panel_admin' %} aria-current="page"{% endif %}><i class="bi bi-speedometer2" aria-hidden="true"></i>Resumen</a>
+
+      <p class="consola__grupo">Marketplace</p>
+      <a href="{% url 'administracion:tiendas' %}" class="{% if ns == 'administracion' and 'tienda' in vista %}activo{% endif %}"{% if ns == 'administracion' and vista == 'tiendas' %} aria-current="page"{% endif %}><i class="bi bi-shop" aria-hidden="true"></i>Tiendas{% if globo_tiendas %}<span class="consola__globo" title="Tiendas por verificar">{{ globo_tiendas }}</span>{% endif %}</a>
+      <a href="{% url 'administracion:productos' %}" class="{% if ns == 'administracion' and 'producto' in vista %}activo{% endif %}"{% if ns == 'administracion' and vista == 'productos' %} aria-current="page"{% endif %}><i class="bi bi-box-seam" aria-hidden="true"></i>Productos</a>
+      <a href="{% url 'administracion:ventas' %}" class="{% if ns == 'administracion' and vista == 'ventas' %}activo{% endif %}"{% if ns == 'administracion' and vista == 'ventas' %} aria-current="page"{% endif %}><i class="bi bi-graph-up-arrow" aria-hidden="true"></i>Ventas</a>
+
+      <p class="consola__grupo">Personas</p>
+      <a href="{% url 'administracion:usuarios' %}" class="{% if ns == 'administracion' and 'usuario' in vista %}activo{% endif %}"{% if ns == 'administracion' and vista == 'usuarios' %} aria-current="page"{% endif %}><i class="bi bi-people" aria-hidden="true"></i>Usuarios</a>
+
+      <p class="consola__grupo">Catálogo</p>
+      <a href="{% url 'catalogo:gestion_lista' 'categorias' %}" class="{% if ns == 'catalogo' and tipo == 'categorias' %}activo{% endif %}"{% if ns == 'catalogo' and tipo == 'categorias' and vista == 'gestion_lista' %} aria-current="page"{% endif %}><i class="bi bi-grid" aria-hidden="true"></i>Categorías</a>
+      <a href="{% url 'catalogo:gestion_lista' 'marcas' %}" class="{% if ns == 'catalogo' and tipo == 'marcas' %}activo{% endif %}"{% if ns == 'catalogo' and tipo == 'marcas' and vista == 'gestion_lista' %} aria-current="page"{% endif %}><i class="bi bi-tags" aria-hidden="true"></i>Marcas</a>
+
+      <p class="consola__grupo">Control</p>
+      <a href="{% url 'administracion:historial' %}" class="{% if ns == 'administracion' and vista == 'historial' %}activo{% endif %}"{% if ns == 'administracion' and vista == 'historial' %} aria-current="page"{% endif %}><i class="bi bi-clock-history" aria-hidden="true"></i>Historial</a>
+
+      <div class="consola__pie">
+        <a href="{% url 'admin:index' %}" title="Base de datos completa: úsalo solo si la consola no tiene la opción que necesitas."><i class="bi bi-database-gear" aria-hidden="true"></i>Django Admin</a>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="consola__contenido">
+    {% include "_mensajes.html" %}
+    {% block consola %}{% endblock %}
+  </div>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block pie %}{% endblock %}

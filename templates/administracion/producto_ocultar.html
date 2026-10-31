@@ -1,12 +1,11 @@
-{% extends "base.html" %}
+{% extends "administracion/_consola.html" %}
 {% block titulo %}Ocultar producto | Administración | NEXALYS Tec{% endblock %}
-{% block contenido %}
-{% include "administracion/_menu.html" %}
+{% block consola %}
 <div class="row justify-content-center">
-  <div class="col-lg-7">
+  <div class="col-xl-8">
     <a href="{% url 'administracion:productos' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a productos</a>
-    <div class="card border-danger shadow-sm mt-2"><div class="card-body p-4">
-      <h3 class="h5 text-danger">Ocultar producto del catálogo</h3>
+    <section class="panel-consola panel-consola--danger mt-2">
+      <h1 class="h4 text-danger">Ocultar producto del catálogo</h1>
       <p class="mb-1"><strong>{{ producto.nombre }}</strong></p>
       <p class="small text-muted">Tienda: {{ producto.tienda }}</p>
       <p class="small">El producto dejará de verse en el catálogo y la tienda no podrá volver a publicarlo hasta que lo muestres de nuevo. La tienda verá el motivo.</p>
@@ -18,7 +17,7 @@
           <a href="{% url 'administracion:productos' %}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
       </form>
-    </div></div>
+    </section>
   </div>
 </div>
 {% endblock %}

@@ -19,6 +19,7 @@ class AccionAdmin(models.Model):
         OCULTAR_PRODUCTO = "ocultar_producto", "Ocultó un producto"
         MOSTRAR_PRODUCTO = "mostrar_producto", "Volvió a mostrar un producto"
         ELIMINACION_AUTOMATICA = "eliminacion_auto", "Eliminación automática (90 días suspendida)"
+        RESTABLECER_CLAVE = "restablecer_clave", "Restableció una contraseña"
 
     fecha = models.DateTimeField("fecha", auto_now_add=True, db_index=True)
     admin = models.ForeignKey(

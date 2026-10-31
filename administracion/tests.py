@@ -59,7 +59,7 @@ class AccesoTests(BaseAdministracion):
             with self.subTest(nombre):
                 respuesta = self.client.get(reverse(nombre, args=args))
                 self.assertEqual(respuesta.status_code, 200)
-                self.assertContains(respuesta, "⚙️ Administración")  # mismo menú en todas
+                self.assertContains(respuesta, 'class="consola__lateral offcanvas-lg offcanvas-start"')  # mismo menú en todas
 
     def test_cliente_y_tienda_no_entran(self):
         for usuario in (crear_cliente(), self.tienda.usuario):

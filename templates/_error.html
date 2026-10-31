@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% comment %}
+Diseño común de las páginas de error (403 y 404): cabecera solo con el logo,
+sin buscador, sin secciones ni categorías, y una tarjeta centrada con el mensaje.
+Cada página llena: icono, codigo, titulo_error, mensaje y acciones.
+{% endcomment %}
+{% block clase_body %} pagina-error{% endblock %}
+
+{% block cabecera %}
+<header class="cabecera-error">
+  <div class="container d-flex align-items-center justify-content-between gap-3">
+    <a class="navbar-brand" href="{% url 'inicio' %}" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" %}</a>
+    {% if user.is_authenticated %}<span class="cabecera-error__cuenta">{% include "_avatar.html" %}<span class="d-none d-sm-inline">{{ user.username }}</span></span>{% endif %}
+  </div>
+</header>
+{% endblock %}
+
+{% block mensajes %}{% endblock %}
+
+{% block contenido %}
+<div class="error-caja">
+  <span class="error-caja__icono error-caja__icono--{% block tono %}aviso{% endblock %}" aria-hidden="true"><i class="bi bi-{% block icono %}exclamation-circle{% endblock %}"></i></span>
+  <p class="error-caja__codigo">{% block codigo %}{% endblock %}</p>
+  <h1 class="error-caja__titulo">{% block titulo_error %}{% endblock %}</h1>
+  <div class="error-caja__texto">{% block mensaje %}{% endblock %}</div>
+  <div class="error-caja__acciones">{% block acciones %}{% endblock %}</div>
+</div>
+{% endblock %}
+
+{% block pie %}
+<footer class="pie-error">NEXALYS Tec · Productos tecnológicos de las tiendas de tu ciudad</footer>
+{% endblock %}

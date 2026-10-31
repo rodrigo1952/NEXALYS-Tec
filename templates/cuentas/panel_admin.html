@@ -1,89 +1,174 @@
-{% extends "base.html" %}
+{% extends "administracion/_consola.html" %}
 {% load formato %}
-{% block titulo %}Administración | NEXALYS Tec{% endblock %}
-{% block contenido %}
-{% include "administracion/_menu.html" %}
+{% block titulo %}Resumen | Administración | NEXALYS Tec{% endblock %}
+{% block consola %}
+<div class="consola-cabecera">
+  <div>
+    <p class="consola-cabecera__antetitulo">Hola, {{ user.get_full_name|default:user.username }}</p>
+    <h1 class="h3 mb-0">Resumen del marketplace</h1>
+  </div>
+  <span class="consola-cabecera__fecha"><i class="bi bi-calendar3" aria-hidden="true"></i> {% now "j \d\e F \d\e Y" %}</span>
+</div>
 
-<h3 class="h6 text-muted text-uppercase mb-3">Tiendas</h3>
-<div class="row g-3 mb-4">
-  <div class="col-sm-4">
-    <a href="{% url 'administracion:tiendas' %}?estado=activa" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
-      <div class="display-6 fw-bold text-success">{{ tiendas_activas }}</div><div class="text-muted">Activas</div>
-    </div></a>
+{# ---------- Números clave ---------- #}
+<div class="kpis">
+  <a href="{% url 'administracion:tiendas' %}?estado=activa" class="kpi">
+    <span class="kpi__icono kpi__icono--cian"><i class="bi bi-shop" aria-hidden="true"></i></span>
+    <span class="kpi__dato">{{ tiendas_activas }}</span>
+    <span class="kpi__nombre">Tiendas activas</span>
+    <span class="kpi__detalle">{{ tiendas_pendientes }} pendiente{{ tiendas_pendientes|pluralize }} · {{ tiendas_suspendidas }} suspendida{{ tiendas_suspendidas|pluralize }}</span>
+  </a>
+  <a href="{% url 'administracion:productos' %}?estado=publicado" class="kpi">
+    <span class="kpi__icono kpi__icono--azul"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
+    <span class="kpi__dato">{{ productos_publicados }}</span>
+    <span class="kpi__nombre">Productos en el catálogo</span>
+    <span class="kpi__detalle">{{ productos_ocultos }} oculto{{ productos_ocultos|pluralize }} por el administrador</span>
+  </a>
+  <a href="{% url 'administracion:usuarios' %}?rol=cliente" class="kpi">
+    <span class="kpi__icono kpi__icono--verde"><i class="bi bi-people" aria-hidden="true"></i></span>
+    <span class="kpi__dato">{{ clientes }}</span>
+    <span class="kpi__nombre">Clientes registrados</span>
+    <span class="kpi__detalle">{{ clientes_nuevos }} nuevo{{ clientes_nuevos|pluralize }} este mes</span>
+  </a>
+  <a href="{% url 'administracion:ventas' %}" class="kpi">
+    <span class="kpi__icono kpi__icono--ambar"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
+    <span class="kpi__dato">{{ ventas_mes|soles }}</span>
+    <span class="kpi__nombre">Vendido este mes</span>
+    <span class="kpi__detalle">
+      {% if variacion_ventas is not None %}
+        <span class="kpi__variacion {% if variacion_ventas >= 0 %}kpi__variacion--sube{% else %}kpi__variacion--baja{% endif %}">{% if variacion_ventas >= 0 %}▲{% else %}▼{% endif %} {{ variacion_ventas }} %</span> vs. mes anterior ·
+      {% endif %}
+      {{ tiendas_con_ventas }} tienda{{ tiendas_con_ventas|pluralize }} con ventas
+    </span>
+  </a>
+</div>
+
+<div class="row g-3 mt-0">
+  {# ---------- Gráfico de ventas ---------- #}
+  <div class="col-xl-8">
+    <section class="panel-consola h-100" aria-labelledby="titulo-grafico">
+      <div class="panel-consola__cabecera">
+        <div>
+          <h2 class="h6 mb-0" id="titulo-grafico">Ventas de todas las tiendas</h2>
+          <p class="small text-muted mb-0">Últimos 6 meses · {{ total_seis_meses|soles }} en total · solo totales, sin costos ni ganancias</p>
+        </div>
+        <a href="{% url 'administracion:ventas' %}" class="enlace-accion small">Ver por tienda</a>
+      </div>
+      <div class="grafico-consola">
+        <canvas id="grafico-ventas-admin" aria-label="Gráfico de barras con el total vendido por mes" role="img"></canvas>
+      </div>
+      {# Si no carga el gráfico (sin internet), se ven los mismos datos como lista. #}
+      <ul class="grafico-consola__respaldo list-inline small text-muted mb-0" id="grafico-respaldo">
+        {% for mes, monto in grafico_filas %}<li class="list-inline-item">{{ mes }}: {{ monto|soles }}</li>{% endfor %}
+      </ul>
+    </section>
   </div>
-  <div class="col-sm-4">
-    <a href="{% url 'administracion:tiendas' %}?estado=pendiente" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
-      <div class="display-6 fw-bold text-warning">{{ tiendas_pendientes }}</div><div class="text-muted">Pendientes de verificar</div>
-    </div></a>
-  </div>
-  <div class="col-sm-4">
-    <a href="{% url 'administracion:tiendas' %}?estado=suspendida" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
-      <div class="display-6 fw-bold text-danger">{{ tiendas_suspendidas }}</div><div class="text-muted">Suspendidas</div>
-    </div></a>
+
+  {# ---------- Tareas pendientes ---------- #}
+  <div class="col-xl-4">
+    <section class="panel-consola h-100" aria-labelledby="titulo-pendientes">
+      <div class="panel-consola__cabecera">
+        <h2 class="h6 mb-0" id="titulo-pendientes">Tareas pendientes</h2>
+        {% if num_pendientes %}<span class="badge rounded-pill text-bg-warning">{{ num_pendientes }}</span>{% endif %}
+      </div>
+      {% if not por_verificar and not por_eliminarse %}
+        <div class="vacio-consola">
+          <i class="bi bi-check2-circle" aria-hidden="true"></i>
+          <p class="mb-0">Todo al día: no hay tiendas por verificar ni por eliminarse.</p>
+        </div>
+      {% else %}
+        <ul class="tareas">
+          {% for t in por_verificar %}
+            <li>
+              <a href="{% url 'administracion:tienda_detalle' t.pk %}">
+                <span class="tareas__icono tareas__icono--ambar"><i class="bi bi-envelope-exclamation" aria-hidden="true"></i></span>
+                <span class="min-w-0"><strong class="text-truncate d-block">{{ t.nombre }}</strong><small>No verificó su correo · registrada el {{ t.creada_en|date:"d/m/Y" }}</small></span>
+              </a>
+            </li>
+          {% endfor %}
+          {% for t in por_eliminarse %}
+            <li>
+              <a href="{% url 'administracion:tienda_detalle' t.pk %}">
+                <span class="tareas__icono tareas__icono--rojo"><i class="bi bi-trash3" aria-hidden="true"></i></span>
+                <span class="min-w-0"><strong class="text-truncate d-block">{{ t.nombre }}</strong><small>Suspendida · se elimina el {{ t.fecha_eliminacion|date:"d/m/Y" }}</small></span>
+                <span class="badge ms-auto {% if t.dias_para_eliminacion <= 7 %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{{ t.dias_para_eliminacion }} día{{ t.dias_para_eliminacion|pluralize }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+        {% if por_eliminarse %}<p class="small text-muted mt-2 mb-0">Las tiendas suspendidas se eliminan solas a los 90 días si no las reactivas.</p>{% endif %}
+      {% endif %}
+    </section>
   </div>
 </div>
 
-<h3 class="h6 text-muted text-uppercase mb-3">Catálogo y clientes</h3>
-<div class="row g-3 mb-4">
-  <div class="col-6 col-lg-3">
-    <a href="{% url 'administracion:productos' %}?estado=publicado" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
-      <div class="h2 fw-bold mb-0">{{ productos_publicados }}</div><div class="text-muted small">Productos en el catálogo</div>
-    </div></a>
+{# ---------- Últimas acciones ---------- #}
+<section class="panel-consola mt-3" aria-labelledby="titulo-acciones">
+  <div class="panel-consola__cabecera">
+    <h2 class="h6 mb-0" id="titulo-acciones">Últimas acciones</h2>
+    <a href="{% url 'administracion:historial' %}" class="enlace-accion small">Ver historial completo</a>
   </div>
-  <div class="col-6 col-lg-3">
-    <a href="{% url 'administracion:productos' %}?estado=oculto_admin" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
-      <div class="h2 fw-bold mb-0">{{ productos_ocultos }}</div><div class="text-muted small">Ocultos por el administrador</div>
-    </div></a>
-  </div>
-  <div class="col-6 col-lg-3">
-    <a href="{% url 'administracion:usuarios' %}?rol=cliente" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
-      <div class="h2 fw-bold mb-0">{{ clientes }}</div><div class="text-muted small">Clientes registrados</div>
-    </div></a>
-  </div>
-  <div class="col-6 col-lg-3">
-    <div class="card text-center shadow-sm h-100"><div class="card-body">
-      <div class="h2 fw-bold mb-0">{{ categorias }} / {{ marcas }}</div><div class="text-muted small">Categorías / marcas</div>
-    </div></div>
-  </div>
+  {% if ultimas_acciones %}
+    <ul class="linea-tiempo">
+      {% for accion in ultimas_acciones %}
+        <li>
+          <span class="linea-tiempo__punto linea-tiempo__punto--{{ accion.tipo }}" aria-hidden="true"></span>
+          <div class="min-w-0">
+            <div><strong>{{ accion.get_tipo_display }}</strong> · {{ accion.objetivo }}</div>
+            <small class="text-muted">{{ accion.fecha|date:"d/m/Y H:i" }} · por {{ accion.admin_nombre|default:"—" }}{% if accion.motivo %} · «{{ accion.motivo|truncatechars:70 }}»{% endif %}</small>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="small text-muted mb-0">Todavía no hay acciones registradas.</p>
+  {% endif %}
+</section>
+
+<div class="consola-datos mt-3 small text-muted">
+  <span><i class="bi bi-grid" aria-hidden="true"></i> {{ categorias }} categorías</span>
+  <span><i class="bi bi-tags" aria-hidden="true"></i> {{ marcas }} marcas</span>
 </div>
 
-<h3 class="h6 text-muted text-uppercase mb-3">Este mes</h3>
-<div class="row g-3 mb-4">
-  <div class="col-sm-6">
-    <a href="{% url 'administracion:ventas' %}" class="card text-center shadow-sm text-decoration-none h-100"><div class="card-body">
-      <div class="h2 fw-bold mb-0">{{ ventas_mes|soles }}</div><div class="text-muted small">Vendido por todas las tiendas</div>
-    </div></a>
-  </div>
-  <div class="col-sm-6">
-    <div class="card text-center shadow-sm h-100"><div class="card-body">
-      <div class="h2 fw-bold mb-0">{{ tiendas_con_ventas }}</div><div class="text-muted small">Tiendas que registraron ventas</div>
-    </div></div>
-  </div>
-</div>
+{{ grafico_meses|json_script:"datos-meses" }}
+{{ grafico_montos|json_script:"datos-montos" }}
+{% endblock %}
 
-{% if por_eliminarse %}
-  <h3 class="h6 text-muted text-uppercase mb-3">Tiendas suspendidas · se eliminan solas a los 90 días</h3>
-  <div class="table-responsive bg-white rounded shadow-sm mb-4">
-    <table class="table align-middle mb-0">
-      <thead class="table-light"><tr><th>Tienda</th><th>Suspendida el</th><th>Se elimina el</th><th class="text-end">Faltan</th><th></th></tr></thead>
-      <tbody>
-        {% for t in por_eliminarse %}
-          <tr>
-            <td><strong>{{ t.nombre }}</strong><div class="small text-muted">{{ t.motivo_suspension|truncatechars:80 }}</div></td>
-            <td class="small text-nowrap">{{ t.suspendida_en|date:"d/m/Y" }}</td>
-            <td class="small text-nowrap">{{ t.fecha_eliminacion|date:"d/m/Y" }}</td>
-            <td class="text-end text-nowrap"><span class="badge {% if t.dias_para_eliminacion <= 7 %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{{ t.dias_para_eliminacion }} día{{ t.dias_para_eliminacion|pluralize }}</span></td>
-            <td class="text-end"><a href="{% url 'administracion:tienda_detalle' t.pk %}" class="btn btn-sm btn-outline-secondary">Ver</a></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-{% endif %}
-
-<p class="small text-muted mb-0 mt-5 border-top pt-3">
-  Herramientas avanzadas:
-  <a href="{% url 'admin:index' %}" class="link-secondary">Django Admin</a>
-  (base de datos completa; úsalo solo si el panel no tiene la opción que necesitas).
-</p>
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function () {
+  if (!window.Chart) return;  // sin internet: queda la lista con los mismos datos
+  var meses = JSON.parse(document.getElementById("datos-meses").textContent);
+  var montos = JSON.parse(document.getElementById("datos-montos").textContent);
+  document.getElementById("grafico-respaldo").classList.add("visually-hidden");
+  var estilos = getComputedStyle(document.documentElement);
+  var cian = estilos.getPropertyValue("--nx-acento").trim() || "#19C3E6";
+  var marino = estilos.getPropertyValue("--nx-oscuro").trim() || "#0B1B3A";
+  new Chart(document.getElementById("grafico-ventas-admin"), {
+    type: "bar",
+    data: {
+      labels: meses,
+      datasets: [{
+        label: "Vendido (S/)",
+        data: montos,
+        backgroundColor: montos.map(function (_, i) { return i === montos.length - 1 ? cian : marino; }),
+        borderRadius: 6,
+        maxBarThickness: 46
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: function (c) { return "S/ " + c.parsed.y.toLocaleString("es-PE", { minimumFractionDigits: 2 }); } } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { callback: function (v) { return "S/ " + v.toLocaleString("es-PE"); } } }
+      }
+    }
+  });
+})();
+</script>
 {% endblock %}

@@ -128,7 +128,25 @@
 - **Mis favoritos** tiene la forma del catálogo: filtros a la izquierda (categoría con su ícono y tienda,
   varias a la vez, con su cantidad) que se aplican al hacer clic (reusa `static/js/catalogo.js`); toda la
   tarjeta abre el producto y el nombre de la tienda abre su página; «Quitar» pide confirmación.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **494 pruebas**.
+- **Consola del administrador** (`templates/administracion/_consola.html`, bloque `consola`): al iniciar
+  sesión entra directo al Resumen (`cuentas.views.destino_por_rol`). Cabecera simple (logo, etiqueta
+  «Administración», «Ver página pública ↗» y su cuenta), menú lateral oscuro (Resumen, Tiendas, Productos,
+  Ventas, Usuarios, Categorías, Marcas, Historial y Django Admin abajo); en el celular el menú se abre con ☰.
+  No tiene Inicio/Catálogo, buscador, barra de categorías ni pie. El Resumen muestra números clave, tareas
+  pendientes (tiendas por verificar y por eliminarse), gráfico de ventas de 6 meses (Chart.js, solo totales)
+  y las 5 últimas acciones. `base.html` tiene los bloques `clase_body`, `clase_main`, `mensajes` y `pie`.
+- **Clave temporal** (`cuentas/clave_temporal.py`, modelo `ClaveTemporal`): el admin la genera para clientes
+  y tiendas activos (no para administradores) eligiendo un motivo; se muestra una sola vez, nunca se
+  guarda, vence en 24 horas y queda en el Historial. Al entrar con ella, `cuentas.middleware.ClaveTemporalMiddleware`
+  obliga a crear una contraseña propia (`/mi-cuenta/nueva-clave/`). Si la persona cambia su contraseña por
+  otro camino, la clave temporal deja de contar (se compara la «huella»).
+- **Páginas de error** (`templates/_error.html`): 403 y 404 con cabecera solo con el logo (sin buscador,
+  secciones ni categorías) y una tarjeta centrada. La 403 explica a qué zona se quiso entrar
+  (administración, tienda o clientes), dice con qué cuenta se entró y ofrece «Ir a Mis productos / al
+  inicio / a la consola» y «Entrar con otra cuenta» (cierra sesión y vuelve al login). La 500 no usa
+  plantillas ni base de datos. Ojo: con `DEBUG = True` Django muestra su propia página amarilla para el 404.
+- En la tabla de Tiendas de la consola, el logo y el nombre abren el detalle (ya no hay botón «Ver»).
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **514 pruebas**.
 
 ## 7. Pendientes e ideas
 

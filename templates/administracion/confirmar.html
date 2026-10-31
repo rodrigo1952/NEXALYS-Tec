@@ -1,16 +1,15 @@
-{% extends "base.html" %}
+{% extends "administracion/_consola.html" %}
 {% block titulo %}{{ titulo }} | Administración | NEXALYS Tec{% endblock %}
-{% block contenido %}
-{% include "administracion/_menu.html" %}
+{% block consola %}
 {% comment %}
 Paso 2 de las acciones delicadas (suspender, reactivar, desactivar).
 Nada cambia hasta que se presiona el botón de este formulario.
 {% endcomment %}
 <div class="row justify-content-center">
-  <div class="col-lg-7">
+  <div class="col-xl-8">
     <a href="{{ cancelar }}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver</a>
-    <div class="card border-{{ color }} shadow-sm mt-2"><div class="card-body p-4">
-      <h3 class="h5 {% if color == 'warning' %}text-body{% else %}text-{{ color }}{% endif %}">{{ titulo }}</h3>
+    <section class="panel-consola panel-consola--{{ color }} mt-2">
+      <h1 class="h4 {% if color == 'warning' %}text-body{% else %}text-{{ color }}{% endif %}">{{ titulo }}</h1>
       {% if aviso %}<p class="small text-muted mb-3">{{ aviso }}</p>{% endif %}
       <p class="mb-1 fw-semibold">Esto es lo que va a pasar:</p>
       <ul class="mb-3">
@@ -24,7 +23,7 @@ Nada cambia hasta que se presiona el botón de este formulario.
           <a href="{{ cancelar }}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
       </form>
-    </div></div>
+    </section>
   </div>
 </div>
 {% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titulo %}Crea tu nueva contraseña | NEXALYS Tec{% endblock %}
+{% comment %}
+Paso obligatorio después de entrar con la clave temporal que dio el administrador.
+Hasta crear su contraseña, la persona no puede ir a otra página (solo cerrar sesión).
+{% endcomment %}
+{% block cabecera %}
+<header class="cabecera-marca cabecera-cuenta" id="cabecera">
+  <nav class="navbar navbar-expand navbar-dark navbar-marca" aria-label="Menú">
+    <div class="container flex-nowrap gap-2">
+      <span class="navbar-brand">{% include "_logo.html" %}</span>
+      <button type="button" class="cabecera-cuenta__volver ms-auto" data-bs-toggle="modal" data-bs-target="#modal-cerrar-sesion">
+        <i class="bi bi-box-arrow-right" aria-hidden="true"></i><span>Cerrar sesión</span>
+      </button>
+    </div>
+  </nav>
+</header>
+{% endblock %}
+
+{% block contenido %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6 col-xl-5">
+    <div class="tarjeta-cuenta tarjeta-cuenta--formulario clave-temporal">
+      <span class="clave-temporal__icono" aria-hidden="true"><i class="bi bi-shield-lock"></i></span>
+      <h1 class="h4 text-center mb-1">Crea tu nueva contraseña</h1>
+      <p class="text-muted text-center small mb-4">
+        Hola, <strong>{{ user.get_full_name|default:user.username }}</strong>. Entraste con una clave temporal
+        que te dio el administrador. Para proteger tu cuenta, crea ahora una contraseña que solo tú conozcas.
+      </p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "_campos_formulario.html" %}
+        <button type="submit" class="btn btn-primary w-100">Guardar mi contraseña</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

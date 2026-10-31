@@ -1,10 +1,11 @@
-{% extends "base.html" %}
-{% block titulo %}Eliminar {{ singular }} | NEXALYS Tec{% endblock %}
-{% block contenido %}
+{% extends "administracion/_consola.html" %}
+{% block titulo %}Eliminar {{ singular }} | Administración | NEXALYS Tec{% endblock %}
+{% block consola %}
 <div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card shadow-sm border-danger"><div class="card-body p-4">
-      <h2 class="h4">¿Eliminar la {{ singular }} "{{ registro }}"?</h2>
+  <div class="col-xl-8">
+    <a href="{% url 'catalogo:gestion_lista' tipo %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver</a>
+    <section class="panel-consola panel-consola--danger mt-2">
+      <h1 class="h4">¿Eliminar la {{ singular }} "{{ registro }}"?</h1>
       {% if num_productos %}
         <div class="alert alert-warning">
           Tiene <strong>{{ num_productos }} producto(s)</strong> asociados, por eso <strong>no se puede eliminar</strong>.
@@ -20,7 +21,7 @@
           <a href="{% url 'catalogo:gestion_lista' tipo %}" class="btn btn-outline-secondary">Cancelar</a>
         </form>
       {% endif %}
-    </div></div>
+    </section>
   </div>
 </div>
 {% endblock %}

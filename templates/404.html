@@ -1,11 +1,13 @@
-{% extends "base.html" %}
+{% extends "_error.html" %}
 {% block titulo %}Página no encontrada | NEXALYS Tec{% endblock %}
-{% block contenido %}
-<div class="text-center py-5">
-  <div class="display-1 fw-bold text-primary">404</div>
-  <h2 class="h4 mb-3">No encontramos esta página</h2>
-  <p class="text-muted mb-4">Puede que el producto ya no esté publicado, que la tienda haya sido suspendida o que el enlace esté mal escrito.</p>
-  <a href="{% url 'catalogo:catalogo' %}" class="btn btn-primary">Ir al catálogo</a>
-  <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">Volver al inicio</a>
-</div>
+{% block tono %}info{% endblock %}
+{% block icono %}signpost-split{% endblock %}
+{% block codigo %}Error 404 · Página no encontrada{% endblock %}
+{% block titulo_error %}No encontramos esta página{% endblock %}
+{% block mensaje %}
+  <p>Puede que el producto ya no esté publicado, que la tienda haya sido suspendida o que el enlace esté mal escrito.</p>
+{% endblock %}
+{% block acciones %}
+  <a href="{% url 'catalogo:catalogo' %}" class="btn btn-primary"><i class="bi bi-grid" aria-hidden="true"></i> Ir al catálogo</a>
+  <a href="{% url 'inicio' %}" class="btn btn-outline-primary">Volver al inicio</a>
 {% endblock %}

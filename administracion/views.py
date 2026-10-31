@@ -19,15 +19,17 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from catalogo.models import Categoria, Marca, Producto, borrar_archivo_al_confirmar
+from cuentas import clave_temporal
 from cuentas.views import rol_requerido
 from inventario.models import Venta
 from tiendas.models import DIAS_PARA_ELIMINAR_SUSPENDIDA, Tienda
 
 from . import acciones, limpieza
-from .forms import EliminarUsuarioForm, FiltroHistorialForm, MotivoForm, MotivoOpcionalForm
+from .forms import EliminarUsuarioForm, FiltroHistorialForm, MotivoForm, MotivoOpcionalForm, RestablecerClaveForm
 from .models import AccionAdmin
 
 solo_admin = rol_requerido("Administrador")
@@ -99,21 +101,54 @@ def _limpiar(request):
 
 @solo_admin
 def resumen(request):
+    """
+    Portada de la consola: números clave, tareas pendientes, ventas de los últimos
+    6 meses (solo totales) y las últimas acciones del historial.
+    """
     _limpiar(request)
     estados = dict(Tienda.objects.order_by().values_list("estado").annotate(n=Count("id")))
-    ventas_mes = _ventas_validas().filter(fecha__gte=_inicio_mes_actual())
+    inicio_mes = _inicio_mes_actual()
+    ventas_mes = _ventas_validas().filter(fecha__gte=inicio_mes)
+    total_mes = ventas_mes.aggregate(t=Sum("total"))["t"] or Decimal("0")
+
+    # Ventas de todas las tiendas por mes (últimos 6 meses), para el gráfico.
+    meses = _meses_atras(MESES_VENTAS)
+    desde = timezone.make_aware(datetime.combine(meses[0], time.min))
+    por_mes = {}
+    for fila in (_ventas_validas().filter(fecha__gte=desde).annotate(mes=TruncMonth("fecha"))
+                 .order_by().values("mes").annotate(total=Sum("total"))):
+        mes = fila["mes"]
+        mes = (timezone.localtime(mes) if timezone.is_aware(mes) else mes).date().replace(day=1)
+        por_mes[mes] = por_mes.get(mes, Decimal("0")) + fila["total"]
+    montos = [por_mes.get(m, Decimal("0")) for m in meses]
+    anterior = montos[-2] if len(montos) > 1 else Decimal("0")
+    variacion = round((total_mes - anterior) / anterior * 100) if anterior else None
+
+    clientes = User.objects.filter(groups__name="Cliente")
+    por_verificar = list(Tienda.objects.filter(estado=Tienda.Estado.PENDIENTE).select_related("usuario").order_by("creada_en")[:5])
+    por_eliminarse = list(limpieza.por_eliminarse_pronto()[:5])
+    etiquetas = [f"{NOMBRES_MES[m.month - 1]} {m:%y}" for m in meses]
     return render(request, "cuentas/panel_admin.html", {
         "tiendas_activas": estados.get(Tienda.Estado.ACTIVA, 0),
         "tiendas_pendientes": estados.get(Tienda.Estado.PENDIENTE, 0),
         "tiendas_suspendidas": estados.get(Tienda.Estado.SUSPENDIDA, 0),
         "productos_publicados": Producto.objects.visibles().count(),
         "productos_ocultos": Producto.objects.filter(oculto_por_admin=True).count(),
-        "clientes": User.objects.filter(groups__name="Cliente").count(),
-        "ventas_mes": ventas_mes.aggregate(t=Sum("total"))["t"] or 0,
+        "clientes": clientes.count(),
+        "clientes_nuevos": clientes.filter(date_joined__gte=inicio_mes).count(),
+        "ventas_mes": total_mes,
+        "variacion_ventas": variacion,
         "tiendas_con_ventas": ventas_mes.exclude(tienda=None).values("tienda").distinct().count(),
         "categorias": Categoria.objects.count(),
         "marcas": Marca.objects.count(),
-        "por_eliminarse": limpieza.por_eliminarse_pronto()[:10],
+        "por_verificar": por_verificar,
+        "por_eliminarse": por_eliminarse,
+        "num_pendientes": len(por_verificar) + len(por_eliminarse),
+        "grafico_meses": etiquetas,
+        "grafico_filas": list(zip(etiquetas, montos)),
+        "grafico_montos": [float(m) for m in montos],
+        "total_seis_meses": sum(montos),
+        "ultimas_acciones": AccionAdmin.objects.all()[:5],
     })
 
 
@@ -374,7 +409,7 @@ def _motivo_no_se_puede_modificar(admin, usuario):
 @solo_admin
 def usuarios(request):
     lista = (
-        User.objects.select_related("tienda", "correo_pendiente").prefetch_related("groups").order_by("-date_joined")
+        User.objects.select_related("tienda", "correo_pendiente", "clave_temporal").prefetch_related("groups").order_by("-date_joined")
     )
     rol = request.GET.get("rol", "")
     estado = request.GET.get("estado", "")
@@ -400,6 +435,9 @@ def usuarios(request):
         usuario.rol = rol_de(usuario)
         usuario.sin_confirmar = hasattr(usuario, "correo_pendiente")
         usuario.protegido = _motivo_no_se_puede_modificar(request.user, usuario) is not None
+        usuario.puede_clave = _motivo_no_se_puede_restablecer(request.user, usuario) is None
+        registro = getattr(usuario, "clave_temporal", None)
+        usuario.clave_pendiente = registro if registro is not None and registro.sigue_puesta() else None
     return render(request, "administracion/usuarios.html", {
         "pagina": pagina, "q": texto, "rol": rol, "estado": estado,
     })
@@ -562,3 +600,52 @@ def historial(request):
     return render(request, "administracion/historial.html", {
         "pagina": pagina, "tipo": tipo, "q": texto, "tipos": AccionAdmin.Tipo.choices,
     })
+
+
+# ---------------------------------------------------------------------------
+# Restablecer la contraseña (clave temporal)
+# ---------------------------------------------------------------------------
+
+def _motivo_no_se_puede_restablecer(admin, usuario):
+    """Solo a clientes y tiendas con la cuenta activa (nunca a administradores ni a uno mismo)."""
+    if usuario.pk == admin.pk:
+        return "Tu propia contraseña la cambias en Mi cuenta > Seguridad."
+    if rol_de(usuario) not in ("Cliente", "Tienda"):
+        return "Solo se puede restablecer la contraseña de clientes y tiendas."
+    if not usuario.is_active:
+        return f"La cuenta \"{usuario}\" está desactivada o sin confirmar: reactívala antes de darle una clave temporal."
+    return None
+
+
+@never_cache
+@solo_admin
+def usuario_clave(request, pk):
+    """
+    Da una clave temporal a un cliente o una tienda que no puede entrar.
+    Paso 1: confirmar con el motivo. Paso 2: se muestra la clave UNA sola vez.
+    """
+    usuario = get_object_or_404(User.objects.select_related("tienda"), pk=pk)
+    problema = _motivo_no_se_puede_restablecer(request.user, usuario)
+    if problema:
+        messages.error(request, problema)
+        return redirect("administracion:usuarios")
+
+    form = RestablecerClaveForm(_datos(request))
+    if request.method == "POST" and form.is_valid():
+        clave, vence = clave_temporal.restablecer(usuario)
+        acciones.registrar(
+            request.user, AccionAdmin.Tipo.RESTABLECER_CLAVE, acciones.texto_cuenta(usuario), form.texto_motivo(), usuario
+        )
+        return render(request, "administracion/clave_generada.html", {
+            "usuario": usuario, "rol": rol_de(usuario), "clave": clave, "vence": vence,
+            "horas": clave_temporal.HORAS_CLAVE_TEMPORAL,
+        })
+
+    return render(request, "administracion/usuario_clave.html", {
+        "usuario": usuario,
+        "rol": rol_de(usuario),
+        "tienda": getattr(usuario, "tienda", None),
+        "form": form,
+        "horas": clave_temporal.HORAS_CLAVE_TEMPORAL,
+        "anterior": clave_temporal.vigente(usuario),
+    }, status=400 if request.method == "POST" else 200)

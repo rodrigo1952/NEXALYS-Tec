@@ -31,6 +31,9 @@ Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
           <li><a class="dropdown-item" href="{% url 'tiendas:panel' %}"><span aria-hidden="true">🏪</span> Mi tienda</a></li>
         {% endif %}
       {% endif %}
+      {% if es_admin %}
+        <li><a class="dropdown-item" href="{% url 'panel_admin' %}"><span aria-hidden="true">📊</span> Consola de administración</a></li>
+      {% endif %}
       <li><a class="dropdown-item" href="{% url 'mi_cuenta' %}"><span aria-hidden="true">⚙️</span> Mi cuenta</a></li>
       <li><a class="dropdown-item" href="{% url 'ayuda' %}"><span aria-hidden="true">❓</span> Ayuda y soporte</a></li>
       <li><a class="dropdown-item" href="{% url 'privacidad' %}"><span aria-hidden="true">🔒</span> Privacidad y términos</a></li>

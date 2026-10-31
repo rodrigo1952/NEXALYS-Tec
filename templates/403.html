@@ -1,9 +1,46 @@
-{% extends "base.html" %}
-{% block titulo %}Acceso denegado | NEXALYS Tec{% endblock %}
-{% block contenido %}
-<div class="text-center py-5">
-  <h1 class="display-4 fw-bold">403</h1>
-  <p class="lead">No tienes permiso para acceder a esta sección.</p>
-  <a href="{% url 'inicio' %}" class="btn btn-primary">Volver al inicio</a>
-</div>
+{% extends "_error.html" %}
+{% comment %}
+Sin permiso. El mensaje depende de la zona a la que se quiso entrar (administración,
+zona de la tienda o de clientes) y los botones, de quién es la persona.
+{% endcomment %}
+{% block titulo %}Acceso restringido | NEXALYS Tec{% endblock %}
+{% block tono %}restringido{% endblock %}
+{% block icono %}shield-lock{% endblock %}
+{% block codigo %}Error 403 · Acceso restringido{% endblock %}
+{% block titulo_error %}No tienes acceso a esta sección{% endblock %}
+{% block mensaje %}
+  {% with ruta=request.path %}
+    {% if ruta|slice:":16" == "/administracion/" or ruta|slice:":13" == "/panel/admin/" or ruta|slice:":18" == "/catalogo/gestion/" %}
+      <p>Esta sección es solo para el <strong>equipo de administración</strong> de NEXALYS Tec.</p>
+    {% elif ruta|slice:":12" == "/inventario/" or ruta|slice:":23" == "/catalogo/mis-productos" or ruta|slice:":14" == "/tiendas/panel" %}
+      <p>Esta sección es solo para <strong>cuentas de tienda</strong>: ahí cada tienda maneja sus productos, ventas e inventario.</p>
+    {% elif ruta|slice:":11" == "/favoritos/" %}
+      <p>Esta sección es solo para <strong>cuentas de cliente</strong>.</p>
+    {% else %}
+      <p>Tu cuenta no tiene permiso para ver esta página.</p>
+    {% endif %}
+  {% endwith %}
+  {% if user.is_authenticated %}
+    <p class="error-caja__cuenta">Entraste como <strong>{{ user.username }}</strong> ({% if es_admin %}administrador{% elif tienda_actual %}tienda{% elif es_cliente %}cliente{% else %}sin rol{% endif %}). Si crees que es un error, escríbenos desde <a href="{% url 'ayuda' %}">Ayuda y soporte</a>.</p>
+  {% endif %}
+{% endblock %}
+{% block acciones %}
+  {% if user.is_authenticated %}
+    {% if es_admin %}
+      <a href="{% url 'panel_admin' %}" class="btn btn-primary"><i class="bi bi-speedometer2" aria-hidden="true"></i> Ir a la consola</a>
+    {% elif tienda_actual %}
+      <a href="{% url 'catalogo:mis_productos' %}" class="btn btn-primary"><i class="bi bi-box-seam" aria-hidden="true"></i> Ir a Mis productos</a>
+    {% else %}
+      <a href="{% url 'inicio' %}" class="btn btn-primary"><i class="bi bi-house" aria-hidden="true"></i> Ir al inicio</a>
+    {% endif %}
+    {# Cierra la sesión y abre el inicio de sesión para volver a esta misma página. #}
+    <form method="post" action="{% url 'logout' %}" class="d-inline">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'login' %}?next={{ request.path|urlencode }}">
+      <button type="submit" class="btn btn-outline-primary"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Entrar con otra cuenta</button>
+    </form>
+  {% else %}
+    <a href="{% url 'login' %}?next={{ request.path|urlencode }}" class="btn btn-primary"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Iniciar sesión</a>
+    <a href="{% url 'inicio' %}" class="btn btn-outline-primary">Ir al inicio</a>
+  {% endif %}
 {% endblock %}

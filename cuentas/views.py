@@ -2,11 +2,11 @@ import logging
 from functools import wraps
 
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.contrib.auth.views import LoginView
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -14,9 +14,10 @@ from django.views.decorators.http import require_POST
 from catalogo.models import Producto
 from favoritos.permisos import es_cliente
 
+from .clave_temporal import CLAVE_SESION
 from .concurrencia import validar_y_guardar
-from .forms import EliminarCuentaForm, IngresoForm, PerfilForm, RegistroForm
-from .models import DIAS_PARA_CONFIRMAR_CORREO, CorreoPendiente
+from .forms import EliminarCuentaForm, IngresoForm, NuevaClaveForm, PerfilForm, RegistroForm
+from .models import DIAS_PARA_CONFIRMAR_CORREO, ClaveTemporal, CorreoPendiente
 from .reautenticacion import confirmada_recientemente, marcar_confirmada
 from .verificacion import enviar_correo_confirmacion, horas_validez, leer_token
 
@@ -203,12 +204,45 @@ def privacidad(request):
 class IngresoView(LoginView):
     """
     Iniciar sesión. Si la persona llegó desde un enlace (?next=...), vuelve a ese enlace;
-    si no, la tienda entra directo a «Mis productos» y los demás al inicio.
+    si no, cada rol entra a su lugar de trabajo (ver destino_por_rol).
     """
 
     authentication_form = IngresoForm
 
     def get_default_redirect_url(self):
-        if getattr(self.request.user, "tienda", None) is not None:
-            return reverse("catalogo:mis_productos")
-        return super().get_default_redirect_url()
+        return destino_por_rol(self.request.user)
+
+
+def destino_por_rol(user):
+    """A dónde va cada rol al entrar: administrador → consola, tienda → Mis productos, cliente → inicio."""
+    if tiene_rol(user, "Administrador"):
+        return reverse("panel_admin")
+    if getattr(user, "tienda", None) is not None:
+        return reverse("catalogo:mis_productos")
+    return reverse("inicio")
+
+
+class NuevaClavePropiaForm(NuevaClaveForm):
+    """Crear la contraseña propia después de entrar con una clave temporal (no puede repetirla)."""
+
+    def clean_new_password1(self):
+        clave = self.cleaned_data.get("new_password1")
+        if clave and self.user.check_password(clave):
+            raise ValidationError("Escribe una contraseña distinta a la clave temporal.", code="misma_clave")
+        return clave
+
+
+@login_required
+def clave_temporal(request):
+    """Paso obligatorio tras entrar con una clave temporal: crear la propia contraseña."""
+    if not request.session.get(CLAVE_SESION):
+        return redirect(destino_por_rol(request.user))
+    form = NuevaClavePropiaForm(request.user, request.POST if request.method == "POST" else None)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        ClaveTemporal.objects.filter(usuario=request.user).delete()
+        update_session_auth_hash(request, request.user)  # sigue con la sesión iniciada
+        request.session.pop(CLAVE_SESION, None)
+        messages.success(request, "¡Listo! Creaste tu nueva contraseña. Úsala desde ahora para entrar.")
+        return redirect(destino_por_rol(request.user))
+    return render(request, "registration/clave_temporal.html", {"form": form})

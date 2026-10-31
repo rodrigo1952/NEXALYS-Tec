@@ -1,3 +1,3 @@
-{% if t.estado == "activa" %}<span class="badge text-bg-success">Activa</span>
-{% elif t.estado == "pendiente" %}<span class="badge text-bg-warning">Pendiente</span>
-{% else %}<span class="badge text-bg-danger">Suspendida</span>{% endif %}
+{% if t.estado == "activa" %}<span class="estado estado--ok">Activa</span>
+{% elif t.estado == "pendiente" %}<span class="estado estado--aviso">Pendiente</span>
+{% else %}<span class="estado estado--peligro">Suspendida</span>{% endif %}

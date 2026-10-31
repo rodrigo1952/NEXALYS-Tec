@@ -12,7 +12,7 @@
   {# Íconos (categorías del menú y otros detalles). #}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   {# Colores, letra y logo de la marca. Si cambias marca.css, sube el número de ?v= para que los navegadores lo recarguen. #}
-  <link href="{% static 'css/marca.css' %}?v=18" rel="stylesheet">
+  <link href="{% static 'css/marca.css' %}?v=20" rel="stylesheet">
   <style>
     .formulario input:not([type=checkbox]):not([type=hidden]) {
       display: block; width: 100%; padding: .5rem .75rem;
@@ -34,7 +34,7 @@
     [data-ampliar] { cursor: zoom-in; }
   </style>
 </head>
-<body class="fondo-marca d-flex flex-column min-vh-100">
+<body class="fondo-marca d-flex flex-column min-vh-100{% block clase_body %}{% endblock %}">
 {% with ns=request.resolver_match.namespace vista=request.resolver_match.url_name %}
 {% block cabecera %}
 <header class="cabecera-marca" id="cabecera">
@@ -66,7 +66,12 @@
     {# Segunda fila: las secciones según el tipo de usuario. En el celular se abren con ☰. #}
     <div class="collapse navbar-collapse menu-fila order-3 order-lg-0" id="menu">
       <ul class="navbar-nav menu-secciones me-auto">
-        {# La tienda ve primero su zona de trabajo: Mis productos, Inicio y Catálogo. #}
+        {# La tienda ve primero su zona de trabajo (Mis productos) y el administrador su consola. #}
+        {% if es_admin %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'panel_admin' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Administración</a>
+          </li>
+        {% endif %}
         {% if es_tienda %}
           <li class="nav-item">
             <a class="nav-link{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}">Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %} <span class="badge rounded-pill text-bg-warning" title="Productos agotados o con stock bajo">{{ num_alertas }}<span class="visually-hidden"> alertas de stock</span></span>{% endif %}</a>
@@ -83,11 +88,6 @@
             <a class="nav-link{% if ns == 'favoritos' %} active" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}">❤️ Mis favoritos
               {% if avisos_favoritos %}<span class="badge rounded-pill text-bg-danger" title="Favoritos con novedades">{{ avisos_favoritos }}</span>{% endif %}
             </a>
-          </li>
-        {% endif %}
-        {% if es_admin %}
-          <li class="nav-item">
-            <a class="nav-link{% if vista == 'panel_admin' or ns == 'administracion' or ns == 'catalogo' and 'gestion' in vista %} active" aria-current="page{% endif %}" href="{% url 'panel_admin' %}">Administración</a>
           </li>
         {% endif %}
       </ul>
@@ -135,18 +135,12 @@
 {% endblock %}
 {% endwith %}
 
-<main class="container py-4 flex-grow-1">
-  {% for m in messages %}
-    {# Los mensajes se pueden cerrar con la X; los de éxito e información se ocultan solos. #}
-    <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show" role="alert"
-         {% if m.tags == 'success' or m.tags == 'info' %}data-autocierre{% endif %}>
-      {{ m }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-    </div>
-  {% endfor %}
+<main class="{% block clase_main %}container py-4{% endblock %} flex-grow-1">
+  {% block mensajes %}{% include "_mensajes.html" %}{% endblock %}
   {% block contenido %}{% endblock %}
 </main>
 
+{% block pie %}
 <footer class="pie-marca py-4 mt-auto">
   <div class="container d-flex flex-column flex-md-row justify-content-between gap-2 small">
     <div>
@@ -159,6 +153,7 @@
     </div>
   </div>
 </footer>
+{% endblock %}
 
 {# Ventana para ver una imagen en grande (logos y fotos de productos). #}
 {% if user.is_authenticated %}

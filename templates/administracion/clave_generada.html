@@ -1,0 +1,42 @@
+{% extends "administracion/_consola.html" %}
+{% block titulo %}Clave temporal generada | Administración | NEXALYS Tec{% endblock %}
+{% block consola %}
+{% comment %}La clave se muestra solo aquí (la página no se guarda en el navegador) y nunca en la base de datos.{% endcomment %}
+<div class="row justify-content-center">
+  <div class="col-xl-8">
+    <section class="panel-consola clave-generada">
+      <span class="clave-generada__icono" aria-hidden="true"><i class="bi bi-check2-circle"></i></span>
+      <h1 class="h4 mb-1">Clave temporal lista</h1>
+      <p class="text-muted mb-3">Para <strong>{{ usuario.username }}</strong> ({{ rol }}). Pásasela en persona, por llamada o por WhatsApp.</p>
+
+      <div class="clave-generada__caja">
+        <code id="clave-temporal">{{ clave }}</code>
+        <button type="button" class="btn btn-acento" id="copiar-clave"><i class="bi bi-clipboard" aria-hidden="true"></i> <span>Copiar</span></button>
+      </div>
+
+      <ul class="lista-pasos text-start mt-3">
+        <li><i class="bi bi-hourglass-split" aria-hidden="true"></i><span>Vence el <strong>{{ vence|date:"d/m/Y" }} a las {{ vence|date:"H:i" }}</strong> ({{ horas }} horas).</span></li>
+        <li><i class="bi bi-person-check" aria-hidden="true"></i><span>Debe entrar con su usuario <strong>{{ usuario.username }}</strong>{% if rol == "Tienda" %} eligiendo «Soy tienda»{% else %} eligiendo «Soy cliente»{% endif %} y esta clave.</span></li>
+        <li><i class="bi bi-shield-lock" aria-hidden="true"></i><span>Al entrar, la página le pedirá crear su propia contraseña.</span></li>
+      </ul>
+      <div class="alert alert-warning small mb-3"><i class="bi bi-eye-slash" aria-hidden="true"></i> Esta clave <strong>no se volverá a mostrar</strong>. Si se pierde, genera otra.</div>
+      <a href="{% url 'administracion:usuarios' %}" class="btn btn-primary">Listo, volver a usuarios</a>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var boton = document.getElementById("copiar-clave");
+    if (!boton || !navigator.clipboard) { if (boton) boton.classList.add("d-none"); return; }
+    boton.addEventListener("click", function () {
+      navigator.clipboard.writeText(document.getElementById("clave-temporal").textContent.trim()).then(function () {
+        boton.querySelector("span").textContent = "¡Copiada!";
+        setTimeout(function () { boton.querySelector("span").textContent = "Copiar"; }, 2000);
+      });
+    });
+  })();
+</script>
+{% endblock %}

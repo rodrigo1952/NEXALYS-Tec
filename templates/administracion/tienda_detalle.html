@@ -1,62 +1,83 @@
-{% extends "base.html" %}
+{% extends "administracion/_consola.html" %}
 {% load formato %}
 {% block titulo %}{{ tienda.nombre }} | Administración | NEXALYS Tec{% endblock %}
-{% block contenido %}
-{% include "administracion/_menu.html" %}
+{% block consola %}
 <a href="{% url 'administracion:tiendas' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a tiendas</a>
 
-<div class="d-flex flex-wrap align-items-center gap-3 my-3">
-  {% if tienda.logo %}
-    <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" data-ampliar="{{ tienda.logo.url }}" width="64" height="64" class="rounded-circle border bg-white" style="object-fit:cover">
+<div class="consola-cabecera consola-cabecera--ficha mt-2">
+  <div class="d-flex align-items-center gap-3 min-w-0">
+    {% if tienda.logo %}
+      <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" data-ampliar="{{ tienda.logo.url }}" width="64" height="64" class="rounded-circle border bg-white flex-shrink-0" style="object-fit:cover">
+    {% else %}
+      <span class="avatar-tabla avatar-tabla--grande" aria-hidden="true">{{ tienda.nombre|first|upper }}</span>
+    {% endif %}
+    <div class="min-w-0">
+      <p class="consola-cabecera__antetitulo">Tienda</p>
+      <h1 class="h3 mb-1 text-truncate">{{ tienda.nombre }}</h1>
+      {% with t=tienda %}{% include "administracion/_estado_tienda.html" %}{% endwith %}
+      {% if not tienda.usuario.is_active %}<span class="estado estado--apagado">Cuenta desactivada</span>{% endif %}
+    </div>
+  </div>
+  {% if tienda.estado == "activa" %}
+    <a href="{% url 'tiendas:perfil' tienda.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Ver perfil público</a>
   {% endif %}
-  <h3 class="h4 mb-0">{{ tienda.nombre }}</h3>
-  {% with t=tienda %}{% include "administracion/_estado_tienda.html" %}{% endwith %}
 </div>
 
-<div class="row g-4">
-  <div class="col-lg-7">
-    <ul class="list-group shadow-sm mb-3">
-      <li class="list-group-item"><strong>Usuario:</strong> {{ tienda.usuario.username }} · {{ tienda.usuario.email }}{% if not tienda.usuario.is_active %} <span class="badge text-bg-secondary">Cuenta desactivada</span>{% endif %}</li>
-      <li class="list-group-item"><strong>WhatsApp:</strong> {{ tienda.whatsapp }}</li>
-      <li class="list-group-item"><strong>Dirección:</strong> {{ tienda.direccion }}</li>
-      <li class="list-group-item"><strong>Descripción:</strong> {{ tienda.descripcion|default:"—" }}</li>
-      <li class="list-group-item"><strong>Registrada:</strong> {{ tienda.creada_en|date:"d/m/Y H:i" }} · <strong>Correo verificado:</strong> {{ tienda.verificada_en|date:"d/m/Y"|default:"No" }}</li>
-      <li class="list-group-item"><strong>Productos:</strong> {{ total_productos }} ({{ publicados }} publicados{% if ocultos_admin %}, {{ ocultos_admin }} ocultos por el administrador{% endif %}) · <strong>Vendido este mes:</strong> {{ vendido_mes|soles }}</li>
-    </ul>
-    <div class="d-flex flex-wrap gap-2">
-      <a href="{% url 'administracion:productos' %}?tienda={{ tienda.pk }}" class="btn btn-outline-secondary btn-sm">Ver sus productos</a>
-      <a href="{% url 'administracion:ventas' %}" class="btn btn-outline-secondary btn-sm">Ver ventas por mes</a>
-      {% if tienda.estado == "activa" %}
-        <a href="{% url 'tiendas:perfil' tienda.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Ver perfil público ↗</a>
+<div class="kpis kpis--tres">
+  <div class="kpi"><span class="kpi__dato">{{ total_productos }}</span><span class="kpi__nombre">Productos</span><span class="kpi__detalle">{{ publicados }} publicados{% if ocultos_admin %} · {{ ocultos_admin }} ocultos por el administrador{% endif %}</span></div>
+  <div class="kpi"><span class="kpi__dato">{{ vendido_mes|soles }}</span><span class="kpi__nombre">Vendido este mes</span><span class="kpi__detalle">Solo el total (sin anuladas)</span></div>
+  <div class="kpi"><span class="kpi__dato">{{ tienda.creada_en|date:"d/m/Y" }}</span><span class="kpi__nombre">Registrada</span><span class="kpi__detalle">Correo verificado: {{ tienda.verificada_en|date:"d/m/Y"|default:"No" }}</span></div>
+</div>
+
+<div class="row g-3 mt-0">
+  <div class="col-xl-7">
+    <section class="panel-consola h-100">
+      <div class="panel-consola__cabecera"><h2 class="h6 mb-0">Datos de la tienda</h2></div>
+      <dl class="datos-cuenta">
+        <div><dt>Usuario</dt><dd>{{ tienda.usuario.username }} · {{ tienda.usuario.email }}</dd></div>
+        <div><dt>WhatsApp</dt><dd>{{ tienda.whatsapp }}</dd></div>
+        <div><dt>Dirección</dt><dd>{{ tienda.direccion }}</dd></div>
+        <div><dt>Descripción</dt><dd>{{ tienda.descripcion|default:"—" }}</dd></div>
+      </dl>
+      {% if tienda.tiene_horario %}
+        <h3 class="h6 mt-3">Horario de atención</h3>
+        <ul class="horario-cuenta">
+          {% for dia, texto in tienda.horario_semana %}<li><span>{{ dia }}</span><span class="{% if texto == 'Cerrado' %}text-muted{% endif %}">{{ texto }}</span></li>{% endfor %}
+        </ul>
       {% endif %}
-    </div>
-    {% if tienda.tiene_horario %}
-      <h4 class="h6 mt-4">Horario de atención</h4>
-      <table class="table table-sm bg-white shadow-sm">
-        <tbody>{% for dia, texto in tienda.horario_semana %}<tr><td>{{ dia }}</td><td class="text-end">{{ texto }}</td></tr>{% endfor %}</tbody>
-      </table>
-    {% endif %}
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <a href="{% url 'administracion:productos' %}?tienda={{ tienda.pk }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-seam" aria-hidden="true"></i> Ver sus productos</a>
+        <a href="{% url 'administracion:ventas' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> Ver ventas por mes</a>
+        <a href="{% url 'administracion:historial' %}?q={{ tienda.nombre|urlencode }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-clock-history" aria-hidden="true"></i> Ver su historial de acciones</a>
+      </div>
+    </section>
   </div>
 
-  <div class="col-lg-5">
+  <div class="col-xl-5 d-flex flex-column gap-3">
     {% if tienda.estado == "suspendida" %}
-      <div class="card border-danger shadow-sm"><div class="card-body">
-        <h4 class="h6 text-danger">Tienda suspendida</h4>
+      <section class="panel-consola panel-consola--peligro">
+        <h2 class="h6 text-danger">Tienda suspendida</h2>
         <p class="small mb-2"><strong>Motivo:</strong> {{ tienda.motivo_suspension|default:"(sin motivo registrado)"|linebreaksbr }}</p>
         {% if tienda.fecha_eliminacion %}
           <p class="small mb-2"><strong>Suspendida el</strong> {{ tienda.suspendida_en|date:"d/m/Y" }}. Si no la reactivas, se eliminará automáticamente el <strong>{{ tienda.fecha_eliminacion|date:"d/m/Y" }}</strong> (faltan {{ tienda.dias_para_eliminacion }} día{{ tienda.dias_para_eliminacion|pluralize }}).</p>
         {% endif %}
         <a href="{% url 'administracion:tienda_reactivar' tienda.pk %}" class="btn btn-success">Reactivar tienda…</a>
         <p class="small text-muted mt-2 mb-0">Te pediremos confirmar.{% if not tienda.usuario.is_active %} Su cuenta también se reactivará.{% endif %}</p>
-      </div></div>
+      </section>
     {% else %}
-      <div class="card shadow-sm"><div class="card-body">
-        <h4 class="h6">Suspender tienda</h4>
+      <section class="panel-consola">
+        <h2 class="h6">Suspender tienda</h2>
         <p class="small text-muted">Sus productos dejan de verse en el catálogo hasta que la reactives. En el siguiente paso escribirás el motivo y confirmarás.</p>
         <a href="{% url 'administracion:tienda_suspender' tienda.pk %}" class="btn btn-danger">Suspender tienda…</a>
-      </div></div>
+      </section>
     {% endif %}
-    <p class="mt-3 mb-0"><a href="{% url 'administracion:historial' %}?q={{ tienda.nombre|urlencode }}" class="enlace-accion">Ver su historial de acciones</a></p>
+    {% if tienda.usuario.is_active %}
+      <section class="panel-consola">
+        <h2 class="h6">¿No puede entrar a su cuenta?</h2>
+        <p class="small text-muted">Dale una clave temporal de 24 horas; al entrar deberá crear su propia contraseña.</p>
+        <a href="{% url 'administracion:usuario_clave' tienda.usuario.pk %}" class="btn btn-outline-primary"><i class="bi bi-key" aria-hidden="true"></i> Restablecer contraseña…</a>
+      </section>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

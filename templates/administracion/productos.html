@@ -1,79 +1,83 @@
-{% extends "base.html" %}
+{% extends "administracion/_consola.html" %}
 {% load formato %}
 {% block titulo %}Productos | Administración | NEXALYS Tec{% endblock %}
-{% block contenido %}
-{% include "administracion/_menu.html" %}
+{% block consola %}
+<div class="consola-cabecera">
+  <div>
+    <p class="consola-cabecera__antetitulo">Marketplace</p>
+    <h1 class="h3 mb-0">Productos</h1>
+  </div>
+  <span class="text-muted small">{{ pagina.paginator.count }} producto(s)</span>
+</div>
 
-<form method="get" class="row g-2 mb-3">
-  <div class="col-lg-4"><input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar producto (sin tildes)"></div>
-  <div class="col-sm-4 col-lg-2">
-    <select name="tienda" class="form-select" aria-label="Tienda">
-      <option value="">Todas las tiendas</option>
-      {% for t in tiendas %}<option value="{{ t.pk }}"{% if t.pk == tienda_id %} selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
-    </select>
+<form method="get" class="filtros-consola" role="search">
+  <div class="filtros-consola__buscar">
+    <i class="bi bi-search" aria-hidden="true"></i>
+    <label for="productos-q" class="visually-hidden">Buscar</label>
+    <input id="productos-q" type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar producto (sin tildes)">
   </div>
-  <div class="col-sm-4 col-lg-2">
-    <select name="categoria" class="form-select" aria-label="Categoría">
-      <option value="">Todas las categorías</option>
-      {% for c in categorias %}<option value="{{ c.pk }}"{% if c.pk == categoria_id %} selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
-    </select>
-  </div>
-  <div class="col-sm-4 col-lg-2">
-    <select name="estado" class="form-select" aria-label="Estado">
-      <option value="">Todos los estados</option>
-      {% for valor, nombre in estados %}<option value="{{ valor }}"{% if valor == estado %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
-    </select>
-  </div>
-  <div class="col-lg-2 d-flex gap-2">
-    <button type="submit" class="btn btn-primary flex-grow-1">Filtrar</button>
-    <a href="{% url 'administracion:productos' %}" class="btn btn-outline-secondary" title="Quitar filtros">✕</a>
-  </div>
+  <select name="tienda" class="form-select" aria-label="Tienda">
+    <option value="">Todas las tiendas</option>
+    {% for t in tiendas %}<option value="{{ t.pk }}"{% if t.pk == tienda_id %} selected{% endif %}>{{ t.nombre }}</option>{% endfor %}
+  </select>
+  <select name="categoria" class="form-select" aria-label="Categoría">
+    <option value="">Todas las categorías</option>
+    {% for c in categorias %}<option value="{{ c.pk }}"{% if c.pk == categoria_id %} selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+  </select>
+  <select name="estado" class="form-select" aria-label="Estado">
+    <option value="">Todos los estados</option>
+    {% for valor, nombre in estados %}<option value="{{ valor }}"{% if valor == estado %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">Filtrar</button>
+  {% if q or tienda_id or categoria_id or estado %}<a href="{% url 'administracion:productos' %}" class="btn btn-outline-secondary" title="Quitar filtros">Limpiar</a>{% endif %}
 </form>
 
-<p class="small text-muted">{{ pagina.paginator.count }} producto(s). El administrador puede ocultar un producto del catálogo, pero no editarlo: los datos son responsabilidad de cada tienda.</p>
-
-<div class="table-responsive bg-white rounded shadow-sm">
-  <table class="table table-hover align-middle mb-0">
-    <thead class="table-light">
-      <tr><th>Producto</th><th>Tienda</th><th>Categoría</th><th class="text-end">Precio</th><th class="text-end">Stock</th><th>Estado</th><th class="text-end">Acción</th></tr>
-    </thead>
-    <tbody>
-      {% for producto in pagina %}
-        <tr>
-          <td style="max-width:320px">
-            <div class="d-flex align-items-center gap-2">
-              {% if producto.imagen %}<img src="{{ producto.imagen.url }}" alt="" width="40" height="40" class="border rounded bg-white" style="object-fit:contain" data-ampliar="{{ producto.imagen.url }}">{% endif %}
-              <span class="small">{{ producto.nombre }}</span>
-            </div>
-          </td>
-          <td class="small"><a href="{% url 'administracion:tienda_detalle' producto.tienda.pk %}">{{ producto.tienda }}</a></td>
-          <td class="small">{{ producto.categoria }}</td>
-          <td class="text-end text-nowrap small">{{ producto.precio_final|soles }}{% if producto.en_oferta %} <span class="badge text-bg-danger">Oferta</span>{% endif %}</td>
-          <td class="text-end">{{ producto.stock }}</td>
-          <td class="small">
-            {% if producto.oculto_por_admin %}
-              <span class="badge text-bg-danger">Oculto por el administrador</span>
-              {% if producto.motivo_ocultamiento %}<div class="text-muted">{{ producto.motivo_ocultamiento|truncatechars:80 }}</div>{% endif %}
-            {% elif not producto.activo %}<span class="badge text-bg-light border">Oculto por la tienda</span>
-            {% else %}<span class="badge text-bg-success">Publicado</span>{% endif %}
-          </td>
-          <td class="text-end text-nowrap">
-            {% if producto.oculto_por_admin %}
-              <form method="post" action="{% url 'administracion:producto_mostrar' producto.pk %}" class="d-inline">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                <button type="submit" class="btn btn-sm btn-outline-success">Volver a mostrar</button>
-              </form>
-            {% else %}
-              <a href="{% url 'administracion:producto_ocultar' producto.pk %}" class="btn btn-sm btn-outline-danger">Ocultar</a>
-            {% endif %}
-          </td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="7" class="text-center text-muted py-4">No hay productos con esos criterios.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="tabla-consola">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr><th>Producto</th><th>Tienda</th><th>Categoría</th><th class="text-end">Precio</th><th class="text-end">Stock</th><th>Estado</th><th class="text-end">Acción</th></tr>
+      </thead>
+      <tbody>
+        {% for producto in pagina %}
+          <tr>
+            <td style="max-width:320px">
+              <div class="d-flex align-items-center gap-2">
+                {% if producto.imagen %}<img src="{{ producto.imagen.url }}" alt="" width="42" height="42" class="border rounded bg-white flex-shrink-0" style="object-fit:contain" data-ampliar="{{ producto.imagen.url }}">
+                {% else %}<span class="avatar-tabla avatar-tabla--cuadrado" aria-hidden="true"><i class="bi bi-image"></i></span>{% endif %}
+                <span class="small">{{ producto.nombre }}</span>
+              </div>
+            </td>
+            <td class="small"><a href="{% url 'administracion:tienda_detalle' producto.tienda.pk %}">{{ producto.tienda }}</a></td>
+            <td class="small">{{ producto.categoria }}</td>
+            <td class="text-end text-nowrap small">{{ producto.precio_final|soles }}{% if producto.en_oferta %} <span class="estado estado--peligro">Oferta</span>{% endif %}</td>
+            <td class="text-end">{{ producto.stock }}</td>
+            <td class="small">
+              {% if producto.oculto_por_admin %}
+                <span class="estado estado--peligro">Oculto por el administrador</span>
+                {% if producto.motivo_ocultamiento %}<div class="text-muted mt-1">{{ producto.motivo_ocultamiento|truncatechars:80 }}</div>{% endif %}
+              {% elif not producto.activo %}<span class="estado estado--apagado">Oculto por la tienda</span>
+              {% else %}<span class="estado estado--ok">Publicado</span>{% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              {% if producto.oculto_por_admin %}
+                <form method="post" action="{% url 'administracion:producto_mostrar' producto.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit" class="btn btn-sm btn-outline-success">Volver a mostrar</button>
+                </form>
+              {% else %}
+                <a href="{% url 'administracion:producto_ocultar' producto.pk %}" class="btn btn-sm btn-outline-danger">Ocultar</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-5">No hay productos con esos criterios.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+<p class="nota-consola"><i class="bi bi-info-circle" aria-hidden="true"></i><span>El administrador puede ocultar un producto del catálogo, pero no editarlo: los datos son responsabilidad de cada tienda.</span></p>
 {% include "catalogo/_paginacion.html" %}
 {% endblock %}

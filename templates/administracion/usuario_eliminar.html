@@ -1,12 +1,11 @@
-{% extends "base.html" %}
+{% extends "administracion/_consola.html" %}
 {% block titulo %}Eliminar usuario | Administración | NEXALYS Tec{% endblock %}
-{% block contenido %}
-{% include "administracion/_menu.html" %}
+{% block consola %}
 <div class="row justify-content-center">
-  <div class="col-lg-7">
+  <div class="col-xl-8">
     <a href="{% url 'administracion:usuarios' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a usuarios</a>
-    <div class="card border-danger shadow-sm mt-2"><div class="card-body p-4">
-      <h3 class="h5 text-danger">Eliminar la cuenta «{{ usuario.username }}»</h3>
+    <section class="panel-consola panel-consola--danger mt-2">
+      <h1 class="h4 text-danger">Eliminar la cuenta «{{ usuario.username }}»</h1>
       <p class="mb-2">Rol: <strong>{{ rol }}</strong> · Correo: {{ usuario.email|default:"—" }}</p>
       <p class="mb-1">Se borrarán de forma permanente:</p>
       <ul>
@@ -26,7 +25,7 @@
           <a href="{% url 'administracion:usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
       </form>
-    </div></div>
+    </section>
   </div>
 </div>
 {% endblock %}

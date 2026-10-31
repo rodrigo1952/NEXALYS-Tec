@@ -37,6 +37,7 @@ class IngresoForm(AuthenticationForm):
     motivo_desactivacion = ""
     correo_sin_confirmar = False
     tipo_equivocado = ""  # "tienda" o "cliente": el tipo con el que SÍ debe entrar
+    clave_vencida = False  # entró con una clave temporal que ya venció
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -50,7 +51,20 @@ class IngresoForm(AuthenticationForm):
     def clean(self):
         datos = self._validar_clave()
         self._validar_tipo()
+        self._validar_clave_temporal()
         return datos
+
+    def _validar_clave_temporal(self):
+        """Una clave temporal del administrador sirve solo 24 horas."""
+        from .clave_temporal import vigente
+
+        usuario = self.get_user()
+        registro = vigente(usuario) if usuario is not None else None
+        if registro is not None and registro.vencida():
+            self.clave_vencida = True
+            raise ValidationError(
+                "Tu clave temporal venció (duraba 24 horas). Pide otra al administrador.", code="clave_vencida"
+            )
 
     def _validar_tipo(self):
         tipo = self.cleaned_data.get("tipo")
