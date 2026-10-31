@@ -171,10 +171,33 @@ class Tienda(models.Model):
     def tiene_horario(self):
         return any(h.abre is not None for h in self.horarios.all())
 
+    def horario_agrupado(self, ahora=None):
+        """
+        Horario para mostrar al público: los días con el mismo horario van juntos
+        («Lunes a sábado: 8:00 a. m. – 9:00 p. m.», «Domingo: Cerrado») y se marca el grupo de hoy.
+        """
+        por_dia = {h.dia: h for h in self.horarios.all()}
+        hoy = timezone.localtime(ahora).weekday()
+        grupos = {}
+        for dia, _nombre in HorarioDia.Dia.choices:
+            horario = por_dia.get(dia)
+            texto = horario.texto if horario else "Cerrado"
+            grupos.setdefault(texto, []).append(dia)
+        filas = [
+            {"dias": etiqueta_dias(dias), "texto": texto, "tramos": texto.split(" y "),  # mañana y tarde, en líneas
+             "cerrado": texto == "Cerrado", "hoy": hoy in dias, "primero": dias[0]}
+            for texto, dias in grupos.items()
+        ]
+        # Primero los días que abre, en el orden de la semana; los cerrados al final.
+        return sorted(filas, key=lambda f: (f["cerrado"], f["primero"]))
+
     def estado_atencion(self, ahora=None):
         """
-        Indica si la tienda está abierta según la hora de Perú (TIME_ZONE = America/Lima),
+        Si el LOCAL (la tienda física) está abierto según la hora de Perú (TIME_ZONE = America/Lima),
         teniendo en cuenta el refrigerio. Devuelve None si la tienda no registró su horario.
+
+        Devuelve: abierto (bool), refrigerio (bool), detalle («Cierra a las 9:00 p. m.» / «Abre el lunes
+        a las 8:00 a. m.») y texto (una línea corta, para listas).
         """
         por_dia = {h.dia: h for h in self.horarios.all() if h.abre is not None}
         if not por_dia:
@@ -182,25 +205,59 @@ class Tienda(models.Model):
         ahora = timezone.localtime(ahora)
         hoy, hora = ahora.weekday(), ahora.time()
 
+        def estado(abierto, detalle, refrigerio=False):
+            if abierto:
+                corto = "Local abierto ahora"
+            elif refrigerio:
+                corto = "Local cerrado por refrigerio"
+            else:
+                corto = "Local cerrado ahora"
+            return {"abierto": abierto, "refrigerio": refrigerio, "detalle": detalle, "texto": f"{corto} · {detalle[0].lower()}{detalle[1:]}"}
+
         horario_hoy = por_dia.get(hoy)
         if horario_hoy:
             for inicio, fin in horario_hoy.tramos():
                 if inicio <= hora < fin:
                     if horario_hoy.tiene_refrigerio and fin == horario_hoy.descanso_inicio:
-                        motivo = "cierra por refrigerio"
-                    else:
-                        motivo = "cierra"
-                    return {"abierto": True, "texto": f"Abierto ahora · {motivo} {a_las(fin)}"}
+                        return estado(True, f"Cierra por refrigerio {a_las(fin)}")
+                    return estado(True, f"Cierra {a_las(fin)}")
                 if hora < inicio:
                     if horario_hoy.tiene_refrigerio and inicio == horario_hoy.descanso_fin:
-                        return {"abierto": False, "texto": f"Cerrado por refrigerio · vuelve a abrir {a_las(inicio)}"}
-                    return {"abierto": False, "texto": f"Cerrado ahora · abre hoy {a_las(inicio)}"}
+                        return estado(False, f"Vuelve a abrir {a_las(inicio)}", refrigerio=True)
+                    return estado(False, f"Abre hoy {a_las(inicio)}")
         for dias_despues in range(1, 8):
             dia = (hoy + dias_despues) % 7
             if dia in por_dia:
                 cuando = "mañana" if dias_despues == 1 else f"el {HorarioDia.Dia(dia).label.lower()}"
-                return {"abierto": False, "texto": f"Cerrado ahora · abre {cuando} {a_las(por_dia[dia].abre)}"}
+                return estado(False, f"Abre {cuando} {a_las(por_dia[dia].abre)}")
         return None
+
+
+NOMBRES_DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+
+
+def etiqueta_dias(dias):
+    """
+    Nombra un conjunto de días en palabras: [0..5] -> «Lunes a sábado», [0, 1] -> «Lunes y martes»,
+    [0, 1, 2, 4] -> «Lunes a miércoles y viernes», los 7 -> «Todos los días».
+    """
+    dias = sorted(set(dias))
+    if len(dias) == 7:
+        return "Todos los días"
+    tramos = []
+    for dia in dias:
+        if tramos and dia == tramos[-1][-1] + 1:
+            tramos[-1].append(dia)
+        else:
+            tramos.append([dia])
+    partes = []
+    for tramo in tramos:
+        if len(tramo) >= 3:
+            partes.append(f"{NOMBRES_DIAS[tramo[0]]} a {NOMBRES_DIAS[tramo[-1]].lower()}")
+        else:
+            partes.extend(NOMBRES_DIAS[d] for d in tramo)
+    partes = [partes[0]] + [p.lower() for p in partes[1:]]
+    return partes[0] if len(partes) == 1 else ", ".join(partes[:-1]) + " y " + partes[-1]
 
 
 def hora_12(hora):

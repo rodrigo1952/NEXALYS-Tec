@@ -25,7 +25,16 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
     <nav class="centro-cuenta__menu" aria-label="Secciones de la cuenta">
       {% if user.is_authenticated %}
         <div class="centro-cuenta__usuario">
-          <span class="centro-cuenta__avatar" aria-hidden="true">{% if tienda_actual and tienda_actual.logo %}<img src="{{ tienda_actual.logo.url }}" alt="">{% elif tienda_actual %}{{ tienda_actual.nombre|first|upper }}{% else %}{{ user.get_username|first|upper }}{% endif %}</span>
+          {% if tienda_actual %}
+            {# La tienda cambia su logo tocando el círculo: se elige la imagen y se confirma en una ventana. #}
+            <button type="button" class="centro-cuenta__avatar centro-cuenta__avatar--editable" id="cambiar-logo" title="Cambiar logo" aria-label="Cambiar el logo de la tienda">
+              {% if tienda_actual.logo %}<img src="{{ tienda_actual.logo.url }}" alt="">{% else %}{{ tienda_actual.nombre|first|upper }}{% endif %}
+              <span class="centro-cuenta__avatar-capa" aria-hidden="true"><i class="bi bi-camera-fill"></i></span>
+              <span class="centro-cuenta__avatar-lapiz" aria-hidden="true"><i class="bi bi-pencil-fill"></i></span>
+            </button>
+          {% else %}
+            <span class="centro-cuenta__avatar" aria-hidden="true">{{ user.get_username|first|upper }}</span>
+          {% endif %}
           <div class="min-w-0">
             <div class="fw-bold text-truncate">{% if tienda_actual %}{{ tienda_actual.nombre }}{% else %}{{ user.get_full_name|default:user.username }}{% endif %}</div>
             <div class="d-flex flex-wrap gap-1 mt-1">
@@ -52,9 +61,6 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
       </ul>
       {% if user.is_authenticated %}
         <ul class="centro-cuenta__enlaces centro-cuenta__enlaces--accesos">
-          {% if tienda_actual and tienda_actual.estado == "activa" %}
-            <li><a href="{% url 'tiendas:perfil' tienda_actual.pk %}"><i class="bi bi-shop-window" aria-hidden="true"></i>Ver mi tienda pública <i class="bi bi-arrow-up-right ms-auto small" aria-hidden="true"></i></a></li>
-          {% endif %}
           {% if es_tienda %}
             <li><a href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i>Mis productos</a></li>
           {% endif %}
@@ -83,5 +89,59 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
     {% block centro %}{% endblock %}
   </div>
 </div>
+
+{% if tienda_actual %}
+{# Ventana para cambiar el logo: muestra la imagen elegida antes de guardarla. #}
+<form method="post" action="{% url 'tiendas:logo' %}" enctype="multipart/form-data" id="form-logo">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <input type="file" name="logo" id="archivo-logo" accept="image/jpeg,image/png,image/webp" class="visually-hidden" tabindex="-1">
+  <div class="modal fade" id="modal-logo" tabindex="-1" aria-labelledby="titulo-modal-logo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content modal-marca">
+        <div class="modal-body text-center p-4">
+          <h2 class="h5 fw-bold mb-3" id="titulo-modal-logo">Logo nuevo de tu tienda</h2>
+          <img src="" alt="Vista previa del logo nuevo" class="vista-logo" id="vista-logo">
+          <p class="small text-muted mt-3 mb-4">Así se verá en tu tienda, en tus productos y en el catálogo. JPG, PNG o WEBP de máximo 2 MB.</p>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check2" aria-hidden="true"></i> Guardar logo</button>
+            <button type="button" class="btn btn-outline-primary" id="elegir-otra"><i class="bi bi-images" aria-hidden="true"></i> Elegir otra</button>
+            {% if tienda_actual.logo %}<button type="submit" name="quitar" value="1" class="btn btn-outline-danger" formnovalidate><i class="bi bi-trash3" aria-hidden="true"></i> Quitar logo</button>{% endif %}
+            <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+<script>
+  (function () {
+    var boton = document.getElementById("cambiar-logo");
+    var archivo = document.getElementById("archivo-logo");
+    var modal = document.getElementById("modal-logo");
+    if (!boton || !archivo || !modal) return;
+    boton.addEventListener("click", function () { archivo.click(); });
+    document.getElementById("elegir-otra").addEventListener("click", function () { archivo.click(); });
+    archivo.addEventListener("change", function () {
+      if (!archivo.files.length) return;
+      var imagen = archivo.files[0];
+      if (!/^image\/(jpeg|png|webp)$/.test(imagen.type)) { alerta("Elige una imagen JPG, PNG o WEBP."); archivo.value = ""; return; }
+      if (imagen.size > 2 * 1024 * 1024) { alerta("La imagen pesa más de 2 MB. Elige una más liviana."); archivo.value = ""; return; }
+      document.getElementById("vista-logo").src = URL.createObjectURL(imagen);
+      bootstrap.Modal.getOrCreateInstance(modal).show();
+    });
+    // Al cerrar sin guardar, se descarta la imagen elegida.
+    modal.addEventListener("hidden.bs.modal", function () { archivo.value = ""; });
+    function alerta(texto) {
+      var aviso = document.createElement("div");
+      aviso.className = "alert alert-warning alert-dismissible fade show mt-2 small";
+      aviso.setAttribute("role", "alert");
+      aviso.textContent = texto;
+      boton.closest(".centro-cuenta__usuario").after(aviso);
+      setTimeout(function () { aviso.remove(); }, 6000);
+    }
+  })();
+</script>
+{% endif %}
 {% endwith %}
 {% endblock %}

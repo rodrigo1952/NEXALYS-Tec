@@ -146,7 +146,20 @@
   inicio / a la consola» y «Entrar con otra cuenta» (cierra sesión y vuelve al login). La 500 no usa
   plantillas ni base de datos. Ojo: con `DEBUG = True` Django muestra su propia página amarilla para el 404.
 - En la tabla de Tiendas de la consola, el logo y el nombre abren el detalle (ya no hay botón «Ver»).
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **514 pruebas**.
+- **Horario del local por grupos de días** (`tiendas/forms.py`: `GruposHorarioFormSet`, `static/js/horario.js`):
+  la tienda escribe un horario una vez y marca sus días (botones Lun…Dom); otro horario para días distintos;
+  los días sin marcar quedan cerrados. Las horas se eligen de una lista (cada hora) o se escriben
+  («8:30 a. m.», «8.30 pm», «20:30»; `leer_hora`). El refrigerio aparece solo si se marca. Resumen en vivo.
+  En la base de datos sigue habiendo un `HorarioDia` por día.
+- **Aviso del local** (`tiendas/_estado_local.html`): «El local (tienda física) está ABIERTO/CERRADO ahora» +
+  cuándo abre o cierra; si está cerrado, aclara que en la página se pueden ver productos y escribir por
+  WhatsApp a cualquier hora («te responderán en su horario»). Se usa en el perfil público y en el detalle.
+- **Horario agrupado** (`Tienda.horario_agrupado`, `tiendas/_horario_agrupado.html`): días iguales juntos
+  («Lunes a sábado»), mañana y tarde en líneas separadas y el día de hoy resaltado. Perfil público rediseñado.
+- La tienda cambia su logo tocando el círculo del menú de la cuenta (ventana con vista previa; `tiendas:logo`).
+  Se quitaron los botones «Ver mi tienda pública» (se llega con «Mi tienda» del menú de la cuenta).
+- «Mis productos» y los productos del perfil público van de la A a la Z.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **530 pruebas**.
 
 ## 7. Pendientes e ideas
 

@@ -60,11 +60,7 @@
         <strong>🏪 <a href="{% url 'tiendas:perfil' producto.tienda.pk %}">{{ producto.tienda }}</a></strong>
       </div>
       <span class="small text-muted mt-1">📍 {{ producto.tienda.direccion }}</span>
-      {% with estado=producto.tienda.estado_atencion %}
-        {% if estado %}
-          <span class="small mt-1 {% if estado.abierto %}text-success{% else %}text-danger{% endif %}">🕒 {{ estado.texto }}</span>
-        {% endif %}
-      {% endwith %}
+      <div class="mt-2">{% include "tiendas/_estado_local.html" with estado=producto.tienda.estado_atencion compacto=True %}</div>
       <div class="mt-2">
         <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="btn btn-outline-primary btn-sm">
           🏪 Ver tienda: horario, ubicación y más productos

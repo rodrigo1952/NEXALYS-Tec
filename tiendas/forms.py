@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from cuentas.estilos import EstiloBootstrapMixin
 from cuentas.reautenticacion import ConfirmarClaveMixin
 
-from .models import HorarioDia, Tienda, validar_whatsapp
+from .models import HorarioDia, Tienda, hora_12, validar_whatsapp
 
 
 def normalizar_whatsapp(valor):
@@ -132,126 +132,174 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
         return numero
 
 
-HORAS_12 = [("", "—")] + [
-    (f"{hora}:{minuto:02d}", f"{hora}:{minuto:02d}")
-    for hora in list(range(1, 13))
-    for minuto in (0, 30)
-]
-PERIODOS = [("", "—"), ("am", "a. m."), ("pm", "p. m.")]
+class LogoForm(forms.ModelForm):
+    """Solo el logo (se cambia desde el círculo del menú de la cuenta; no pide contraseña)."""
+
+    class Meta:
+        model = Tienda
+        fields = ["logo"]
 
 
-class HoraAmPmWidget(forms.MultiWidget):
-    """Dos listas: la hora (1:00 … 12:30) y si es a. m. o p. m."""
+# ---------------------------------------------------------------------------
+# Horario de atención por GRUPOS de días
+# ---------------------------------------------------------------------------
+# La tienda escribe un horario una sola vez y marca los días que lo usan (p. ej. lunes a sábado);
+# si un día es distinto (p. ej. domingo), agrega otro grupo. Los días sin marcar quedan cerrados.
+# En la base de datos se sigue guardando un HorarioDia por día (no cambia nada para el resto).
 
-    def __init__(self, attrs=None):
-        clase = {"class": "form-select form-select-sm"}
-        super().__init__(
-            [
-                forms.Select(choices=HORAS_12, attrs={**clase, "aria-label": "Hora"}),
-                forms.Select(choices=PERIODOS, attrs={**clase, "aria-label": "a. m. o p. m."}),
-            ],
-            attrs,
-        )
-
-    def decompress(self, valor):
-        if not valor:
-            return ["", ""]
-        return [f"{valor.hour % 12 or 12}:{valor.minute:02d}", "am" if valor.hour < 12 else "pm"]
+# Sugerencias cada hora (de 6:00 a. m. a 5:00 a. m. del día siguiente). Otra hora, como 8:30, se escribe.
+HORAS_SUGERIDAS = [hora_12(time(h % 24)) for h in range(6, 30)]
 
 
-class HoraAmPmField(forms.MultiValueField):
+def leer_hora(texto):
     """
-    Convierte lo elegido en las dos listas a una hora: ("9:00", "pm") -> 21:00.
-    Ambas vacías = sin hora. Si falta una de las dos, se pide completarla.
+    Entiende la hora como la escriben las personas: «8», «8:30», «8.30 pm», «8:30 p. m.», «20:30», «12 m».
+    Devuelve un datetime.time, o lanza ValidationError con un mensaje claro.
     """
+    original = (texto or "").strip()
+    limpio = re.sub(r"(\d)\.(\d)", r"\1:\2", original.lower())  # 8.30 -> 8:30
+    limpio = limpio.replace(".", "").replace(" ", "").replace("hrs", "").replace("h", ":")
+    coincide = re.fullmatch(r"(\d{1,2})(?::(\d{2}))?:?(am|pm|a|p|m)?", limpio)
+    if not coincide:
+        raise ValidationError(f"No entendimos «{original}». Escríbela así: 8:00 a. m. o 8:30 p. m.")
+    horas, minutos, periodo = int(coincide.group(1)), int(coincide.group(2) or 0), coincide.group(3)
+    if minutos > 59:
+        raise ValidationError("Los minutos van de 00 a 59.")
+    if periodo:
+        if not 1 <= horas <= 12:
+            raise ValidationError("Con a. m. o p. m. la hora va de 1 a 12.")
+        if periodo == "m":  # «12 m.» = mediodía
+            if horas != 12:
+                raise ValidationError("Escribe a. m. o p. m. después de la hora.")
+            return time(12, minutos)
+        if periodo.startswith("a"):
+            return time(0 if horas == 12 else horas, minutos)
+        return time(12 if horas == 12 else horas + 12, minutos)
+    if horas == 12 or 13 <= horas <= 23 or horas == 0:
+        return time(horas, minutos)  # 12 = mediodía; 13 a 23 = formato de 24 horas
+    raise ValidationError(f"¿{horas}:{minutos:02d} de la mañana o de la noche? Agrega a. m. o p. m.")
 
-    widget = HoraAmPmWidget
+
+class HoraTextoField(forms.CharField):
+    """Casilla para escribir la hora, con una lista de sugerencias cada hora (datalist)."""
 
     def __init__(self, **kwargs):
-        campos = (
-            forms.ChoiceField(choices=HORAS_12, required=False),
-            forms.ChoiceField(choices=PERIODOS, required=False),
-        )
-        super().__init__(campos, require_all_fields=False, required=False, **kwargs)
+        kwargs.setdefault("required", False)
+        kwargs.setdefault("widget", forms.TextInput(attrs={
+            "list": "horas-sugeridas", "placeholder": "ej. 8:00 a. m.", "autocomplete": "off", "maxlength": "20",
+            "class": "form-control", "data-hora": "",
+        }))
+        super().__init__(**kwargs)
 
-    def compress(self, valores):
-        hora, periodo = (list(valores) + ["", ""])[:2]
-        if not hora and not periodo:
-            return None
-        if not hora:
-            raise ValidationError("Elige la hora.")
-        if not periodo:
-            raise ValidationError("Elige si es a. m. o p. m.")
-        horas, minutos = (int(parte) for parte in hora.split(":"))
-        if periodo == "am":
-            horas = 0 if horas == 12 else horas  # 12:00 a. m. = medianoche
-        else:
-            horas = 12 if horas == 12 else horas + 12  # 12:00 p. m. = mediodía
-        return time(horas, minutos)
+    def prepare_value(self, valor):
+        return hora_12(valor) if isinstance(valor, time) else valor
+
+    def to_python(self, valor):
+        texto = super().to_python(valor)
+        return leer_hora(texto) if texto else None
 
 
-class HorarioForm(EstiloBootstrapMixin, forms.Form):
-    """
-    Horario de atención de lunes a domingo.
-    - Abre y cierra: si se dejan vacías, ese día la tienda no atiende.
-    - Refrigerio (opcional): el descanso del mediodía, p. ej. de 1:00 p. m. a 3:00 p. m.
-    """
+class GrupoHorarioForm(forms.Form):
+    """Un horario y los días que lo usan. Si no tiene días ni horas, se ignora."""
 
-    CAMPOS = (
-        ("abre", "abre"),
-        ("descanso_inicio", "refrigerio desde"),
-        ("descanso_fin", "refrigerio hasta"),
-        ("cierra", "cierra"),
+    dias = forms.TypedMultipleChoiceField(
+        label="Días", choices=HorarioDia.Dia.choices, coerce=int, required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "dia-chip__casilla"}),
     )
+    abre = HoraTextoField(label="Abre")
+    cierra = HoraTextoField(label="Cierra")
+    con_refrigerio = forms.BooleanField(
+        label="Cierra al mediodía (refrigerio)", required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input", "data-con-refrigerio": ""}),
+    )
+    descanso_inicio = HoraTextoField(label="Refrigerio desde")
+    descanso_fin = HoraTextoField(label="hasta")
 
-    def __init__(self, *args, tienda, **kwargs):
-        super().__init__(*args, **kwargs)
-        actuales = {h.dia: h for h in tienda.horarios.all()}
-        for dia, nombre in HorarioDia.Dia.choices:
-            horario = actuales.get(dia)
-            for campo, etiqueta in self.CAMPOS:
-                self.fields[f"{campo}_{dia}"] = HoraAmPmField(
-                    label=f"{nombre} ({etiqueta})",
-                    initial=getattr(horario, campo, None),
-                )
-
-    def dias(self):
-        """Para la plantilla: (nombre del día, abre, refrigerio desde, refrigerio hasta, cierra)."""
-        for dia, nombre in HorarioDia.Dia.choices:
-            yield (nombre, *(self[f"{campo}_{dia}"] for campo, _ in self.CAMPOS))
+    def esta_vacio(self):
+        """Sin horas escritas, el grupo no cuenta (aunque tenga días marcados): esos días quedan cerrados."""
+        datos = getattr(self, "cleaned_data", {})
+        return datos.get("abre") is None and datos.get("cierra") is None and not datos.get("con_refrigerio")
 
     def clean(self):
         datos = super().clean()
-        for dia, _nombre in HorarioDia.Dia.choices:
-            abre, cierra = datos.get(f"abre_{dia}"), datos.get(f"cierra_{dia}")
-            desde, hasta = datos.get(f"descanso_inicio_{dia}"), datos.get(f"descanso_fin_{dia}")
-
-            if (abre is None) != (cierra is None):
-                campo = f"cierra_{dia}" if cierra is None else f"abre_{dia}"
-                self.add_error(campo, "Completa la hora de apertura y la de cierre, o deja ambas vacías si ese día no abres.")
-                continue
-            if abre is not None and cierra <= abre:
-                self.add_error(f"cierra_{dia}", "La hora de cierre debe ser después de la de apertura.")
-                continue
-
-            if desde is None and hasta is None:
-                continue
-            if abre is None:
-                self.add_error(f"descanso_inicio_{dia}", "Indica primero a qué hora abres y cierras ese día.")
-            elif (desde is None) != (hasta is None):
-                campo = f"descanso_fin_{dia}" if hasta is None else f"descanso_inicio_{dia}"
-                self.add_error(campo, "Completa el inicio y el fin del refrigerio, o deja ambos vacíos.")
-            elif not (abre < desde < hasta < cierra):
+        dias, abre, cierra = datos.get("dias") or [], datos.get("abre"), datos.get("cierra")
+        if self.errors or self.esta_vacio():
+            return datos
+        if not dias:
+            self.add_error("dias", "Marca los días en que usas este horario.")
+        if abre is None:
+            self.add_error("abre", "Escribe a qué hora abres.")
+        if cierra is None:
+            self.add_error("cierra", "Escribe a qué hora cierras.")
+        if abre is not None and cierra is not None and cierra <= abre:
+            self.add_error("cierra", "La hora de cierre debe ser después de la de apertura.")
+        if datos.get("con_refrigerio"):
+            desde, hasta = datos.get("descanso_inicio"), datos.get("descanso_fin")
+            if desde is None or hasta is None:
+                self.add_error("descanso_inicio", "Escribe desde y hasta qué hora es el refrigerio (o desmarca la casilla).")
+            elif abre is not None and cierra is not None and not (abre < desde < hasta < cierra):
                 self.add_error(
-                    f"descanso_inicio_{dia}",
+                    "descanso_inicio",
                     "El refrigerio debe estar dentro del horario: después de abrir y antes de cerrar.",
                 )
+        else:
+            datos["descanso_inicio"] = datos["descanso_fin"] = None
         return datos
 
+
+class BaseGruposHorario(forms.BaseFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        usados = {}
+        for numero, form in enumerate(self.forms, start=1):
+            if self.can_delete and self._should_delete_form(form):
+                continue
+            for dia in form.cleaned_data.get("dias") or []:
+                if dia in usados:
+                    raise ValidationError(
+                        f"El {HorarioDia.Dia(dia).label.lower()} está marcado en el horario {usados[dia]} y en el {numero}. "
+                        "Déjalo marcado solo en uno."
+                    )
+                usados[dia] = numero
+
     def save(self, tienda):
+        """Guarda un HorarioDia por cada día de la semana (los días sin grupo quedan cerrados)."""
+        por_dia = {}
+        for form in self.forms:
+            if (self.can_delete and self._should_delete_form(form)) or form.esta_vacio():
+                continue
+            for dia in form.cleaned_data["dias"]:
+                por_dia[dia] = form.cleaned_data
         for dia, _nombre in HorarioDia.Dia.choices:
+            datos = por_dia.get(dia, {})
             HorarioDia.objects.update_or_create(
-                tienda=tienda,
-                dia=dia,
-                defaults={campo: self.cleaned_data.get(f"{campo}_{dia}") for campo, _ in self.CAMPOS},
+                tienda=tienda, dia=dia,
+                defaults={campo: datos.get(campo) for campo in ("abre", "cierra", "descanso_inicio", "descanso_fin")},
             )
+
+
+GruposHorarioFormSet = forms.formset_factory(
+    GrupoHorarioForm, formset=BaseGruposHorario, extra=0, max_num=7, can_delete=True,
+)
+
+
+def grupos_iniciales(tienda):
+    """Agrupa los días que hoy tienen el mismo horario, para mostrarlos como grupos al editar."""
+    grupos = {}
+    for horario in tienda.horarios.all():
+        if horario.abre is None:
+            continue
+        clave = (horario.abre, horario.cierra, horario.descanso_inicio, horario.descanso_fin)
+        grupos.setdefault(clave, []).append(horario.dia)
+    iniciales = [
+        {"dias": dias, "abre": abre, "cierra": cierra, "con_refrigerio": desde is not None,
+         "descanso_inicio": desde, "descanso_fin": hasta}
+        for (abre, cierra, desde, hasta), dias in sorted(grupos.items(), key=lambda par: min(par[1]))
+    ]
+    # Una tienda nueva empieza con un horario típico ya marcado de lunes a sábado.
+    return iniciales or [{"dias": [0, 1, 2, 3, 4, 5], "abre": None, "cierra": None}]
+
+
+def horario_formset(datos, tienda):
+    return GruposHorarioFormSet(datos, initial=None if datos else grupos_iniciales(tienda), prefix="horario")

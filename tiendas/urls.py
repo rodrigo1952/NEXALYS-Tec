@@ -10,5 +10,6 @@ urlpatterns = [
     path("reenviar-verificacion/", views.reenviar_verificacion, name="reenviar"),
     path("panel/", views.panel, name="panel"),
     path("panel/editar/", views.editar, name="editar"),
+    path("panel/logo/", views.cambiar_logo, name="logo"),
     path("<int:pk>/", views.perfil, name="perfil"),
 ]

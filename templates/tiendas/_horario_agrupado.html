@@ -1,0 +1,9 @@
+{% comment %}Horario del local con los días iguales juntos y el día de hoy resaltado.{% endcomment %}
+<ul class="horario-agrupado">
+  {% for fila in tienda.horario_agrupado %}
+    <li class="{% if fila.hoy %}hoy{% endif %}{% if fila.cerrado %} cerrado{% endif %}">
+      <span class="horario-agrupado__dias">{{ fila.dias }}{% if fila.hoy %} <span class="horario-agrupado__hoy">Hoy</span>{% endif %}</span>
+      <span class="horario-agrupado__horas">{% for tramo in fila.tramos %}<span>{{ tramo }}</span>{% endfor %}</span>
+    </li>
+  {% endfor %}
+</ul>

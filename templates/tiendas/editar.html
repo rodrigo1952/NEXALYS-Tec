@@ -1,4 +1,5 @@
 {% extends "cuentas/_centro.html" %}
+{% load static %}
 {% block titulo %}Editar mi tienda | NEXALYS Tec{% endblock %}
 {% block centro %}
 <a href="{% url 'tiendas:panel' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a datos de mi tienda</a>
@@ -18,33 +19,37 @@
     </div>
 
     <div class="col-12">
-      <div class="card shadow-sm"><div class="card-body p-4">
-        <h3 class="h6 mb-1">Horario de atención</h3>
-        <ul class="small text-muted ps-3">
-          <li>Deja <strong>Abre</strong> y <strong>Cierra</strong> vacíos los días que no atiendes.</li>
-          <li>Si cierras al mediodía para almorzar, indica el <strong>refrigerio</strong>; si no, déjalo vacío.</li>
-        </ul>
-        {% for error in horario.non_field_errors %}<div class="alert alert-danger py-2">{{ error }}</div>{% endfor %}
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
-            <thead class="small">
-              <tr><th>Día</th><th>Abre</th><th>Refrigerio desde</th><th>Refrigerio hasta</th><th>Cierra</th></tr>
-            </thead>
-            <tbody>
-              {% for dia, abre, desde, hasta, cierra in horario.dias %}
-                <tr>
-                  <td class="fw-semibold small">{{ dia }}</td>
-                  <td style="min-width:175px"><div class="d-flex gap-1">{{ abre }}</div>{% for e in abre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
-                  <td style="min-width:175px"><div class="d-flex gap-1">{{ desde }}</div>{% for e in desde.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
-                  <td style="min-width:175px"><div class="d-flex gap-1">{{ hasta }}</div>{% for e in hasta.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
-                  <td style="min-width:175px"><div class="d-flex gap-1">{{ cierra }}</div>{% for e in cierra.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      <section class="tarjeta-cuenta" aria-labelledby="titulo-horario">
+        <div class="tarjeta-cuenta__titulo">
+          <div>
+            <h2 class="h6 mb-1" id="titulo-horario"><i class="bi bi-clock" aria-hidden="true"></i> Horario del local</h2>
+            <p class="small text-muted mb-0">Escribe tu horario <strong>una sola vez</strong> y marca los días que lo usan. Si un día es distinto (por ejemplo, el domingo), agrega otro horario. <strong>Los días sin marcar quedan como cerrados.</strong></p>
+          </div>
         </div>
-        <p class="small text-muted mt-2 mb-0">Ejemplo: abre <strong>8:00 a. m.</strong>, refrigerio de <strong>1:00 p. m.</strong> a <strong>3:00 p. m.</strong>, cierra <strong>10:00 p. m.</strong> En cada casilla elige la hora y luego <strong>a. m.</strong> o <strong>p. m.</strong>; deja ambas en «—» para no poner hora.</p>
-      </div></div>
+        {{ horario.management_form }}
+        {% for error in horario.non_form_errors %}<div class="alert alert-danger py-2">{{ error }}</div>{% endfor %}
+
+        <div class="grupos-horario" id="grupos-horario">
+          {% for grupo in horario %}
+            {% include "tiendas/_grupo_horario.html" with numero=forloop.counter %}
+          {% endfor %}
+        </div>
+        <template id="plantilla-grupo">
+          {% with grupo=horario.empty_form %}{% include "tiendas/_grupo_horario.html" with numero="__numero__" %}{% endwith %}
+        </template>
+        <button type="button" class="btn btn-outline-primary mt-3" id="agregar-grupo"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar otro horario (para otros días)</button>
+
+        {# Resumen en vivo: así se verá en la página de la tienda. #}
+        <div class="resumen-horario mt-3" aria-live="polite">
+          <p class="resumen-horario__titulo"><i class="bi bi-eye" aria-hidden="true"></i> Así lo verán tus clientes</p>
+          <ul class="resumen-horario__lista" id="resumen-horario"></ul>
+        </div>
+
+        <datalist id="horas-sugeridas">
+          {% for hora in horas_sugeridas %}<option value="{{ hora }}"></option>{% endfor %}
+        </datalist>
+        <p class="small text-muted mt-2 mb-0"><i class="bi bi-lightbulb" aria-hidden="true"></i> Elige una hora de la lista o escríbela, por ejemplo <strong>8:30 a. m.</strong> o <strong>7:30 p. m.</strong></p>
+      </section>
     </div>
   </div>
 
@@ -53,4 +58,8 @@
     <a href="{% url 'tiendas:panel' %}" class="btn btn-outline-secondary">Cancelar</a>
   </div>
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/horario.js' %}?v=2"></script>
 {% endblock %}

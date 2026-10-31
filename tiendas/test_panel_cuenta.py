@@ -64,12 +64,11 @@ class PanelYMiCuentaTests(TestCase):
         self.tienda = crear_tienda()
         self.client.force_login(self.tienda.usuario)
 
-    def test_ver_mi_tienda_publica_junto_al_nombre(self):
+    def test_ya_no_hay_boton_ver_mi_tienda_publica(self):
+        # Se llega desde «Mi tienda» en el menú de la cuenta; aquí ya no se repite.
         respuesta = self.client.get(reverse("tiendas:panel"))
-        html = respuesta.content.decode()
-        self.assertIn('class="btn btn-tienda-publica"', html)
-        self.assertLess(html.index(self.tienda.nombre), html.index("Ver mi tienda pública"))
-        self.assertLess(html.index("Ver mi tienda pública"), html.index("Datos de la tienda"))
+        self.assertNotContains(respuesta, "Ver mi tienda pública")
+        self.assertContains(respuesta, "Editar datos, logo y horario")
         # Los datos y botones de la cuenta ya no están en el panel: están en Mi cuenta.
         self.assertNotContains(respuesta, "Datos de la cuenta")
         self.assertNotContains(respuesta, "Editar datos de mi cuenta")
@@ -80,7 +79,7 @@ class PanelYMiCuentaTests(TestCase):
     def test_mi_cuenta_tambien_para_la_tienda(self):
         respuesta = self.client.get(reverse("mi_cuenta"))
         self.assertEqual(respuesta.status_code, 200)
-        self.assertContains(respuesta, '<span class="centro-cuenta__avatar" aria-hidden="true">T</span>', html=True)
+        self.assertContains(respuesta, 'id="cambiar-logo"')  # el círculo del logo se puede tocar para cambiarlo
         for nombre in ("editar_datos", "password_change", "tiendas:panel"):
             self.assertContains(respuesta, f'href="{reverse(nombre)}"')
 

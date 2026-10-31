@@ -1,44 +1,44 @@
 {% extends "base.html" %}
 {% block titulo %}{{ tienda.nombre }} | NEXALYS Tec{% endblock %}
 {% block contenido %}
-<div class="p-4 bg-white rounded shadow-sm mb-4">
-  <div class="row g-4">
-    <div class="col-md-7">
-      <div class="d-flex align-items-center gap-3 mb-2">
-        {% if tienda.logo %}
-          <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" data-ampliar="{{ tienda.logo.url }}" title="Clic para ver el logo" width="72" height="72" class="rounded-circle border bg-white" style="object-fit:cover">
-        {% endif %}
-        <h2 class="mb-0">{% if not tienda.logo %}🏪 {% endif %}{{ tienda.nombre }}</h2>
+<div class="perfil-tienda">
+  {# ---------- Datos de la tienda ---------- #}
+  <section class="perfil-tienda__datos">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      {% if tienda.logo %}
+        <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" data-ampliar="{{ tienda.logo.url }}" title="Clic para ver el logo" width="80" height="80" class="perfil-tienda__logo">
+      {% else %}
+        <span class="perfil-tienda__logo perfil-tienda__logo--inicial" aria-hidden="true">{{ tienda.nombre|first|upper }}</span>
+      {% endif %}
+      <div class="min-w-0">
+        <p class="perfil-tienda__antetitulo">Tienda de tecnología en Quillabamba</p>
+        <h1 class="perfil-tienda__nombre">{{ tienda.nombre }}</h1>
       </div>
-      {% with estado=tienda.estado_atencion %}
-        {% if estado %}
-          <p class="mb-2 fw-semibold {% if estado.abierto %}text-success{% else %}text-danger{% endif %}">🕒 {{ estado.texto }}</p>
-        {% endif %}
-      {% endwith %}
-      {% if tienda.descripcion %}<p class="text-muted">{{ tienda.descripcion }}</p>{% endif %}
-      <p class="mb-2">📍 {{ tienda.direccion }}</p>
-      <a href="{{ tienda.enlace_mapa }}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Ver en Google Maps</a>
-      <a href="{{ tienda.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-sm">Escribir por WhatsApp</a>
     </div>
+    {% if tienda.descripcion %}<p class="text-muted">{{ tienda.descripcion }}</p>{% endif %}
+    <p class="perfil-tienda__direccion"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> {{ tienda.direccion }}</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ tienda.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir por WhatsApp</a>
+      <a href="{{ tienda.enlace_mapa }}" target="_blank" rel="noopener" class="btn btn-outline-secondary"><i class="bi bi-map" aria-hidden="true"></i> Ver en Google Maps</a>
+    </div>
+  </section>
+
+  {# ---------- Horario del local ---------- #}
+  <section class="perfil-tienda__horario" aria-labelledby="titulo-horario-local">
+    <h2 class="h6 mb-3" id="titulo-horario-local"><i class="bi bi-clock" aria-hidden="true"></i> Horario del local</h2>
     {% if tienda.tiene_horario %}
-      <div class="col-md-5">
-        <h3 class="h6">Horario de atención</h3>
-        <table class="table table-sm mb-0">
-          <tbody>
-            {% for dia, texto in tienda.horario_semana %}
-              <tr><td>{{ dia }}</td><td class="text-end{% if texto == 'Cerrado' %} text-muted{% endif %}">{{ texto }}</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      {% include "tiendas/_estado_local.html" with estado=tienda.estado_atencion %}
+      {% include "tiendas/_horario_agrupado.html" %}
+    {% else %}
+      <p class="small text-muted mb-0">Esta tienda aún no publicó su horario. Escríbele por WhatsApp para saber cuándo atiende su local.</p>
     {% endif %}
-  </div>
+  </section>
 </div>
 
-<h3 class="h5 mb-3">Productos de la tienda</h3>
-<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+<h2 class="h5 mb-3 mt-4">Productos de la tienda <span class="text-muted fw-normal fs-6">· {{ productos|length }} · de la A a la Z</span></h2>
+<div class="catalogo-grilla" data-vista="4">
   {% for producto in productos %}
-    <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
+    {% include "catalogo/_tarjeta_producto.html" %}
   {% empty %}
     <p class="text-muted">Esta tienda aún no tiene productos publicados.</p>
   {% endfor %}

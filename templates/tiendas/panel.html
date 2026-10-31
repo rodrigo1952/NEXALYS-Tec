@@ -19,12 +19,6 @@
     {% endif %}
   </div>
   <div class="d-flex flex-wrap gap-2">
-    {% if tienda.estado == "activa" %}
-      <a href="{% url 'tiendas:perfil' tienda.pk %}" class="btn btn-tienda-publica" target="_blank" rel="noopener">
-        <i class="bi bi-shop-window" aria-hidden="true"></i> Ver mi tienda pública
-        <span aria-hidden="true">↗</span><span class="visually-hidden">(se abre en otra pestaña)</span>
-      </a>
-    {% endif %}
     <a href="{% url 'tiendas:editar' %}" class="btn btn-primary"><i class="bi bi-pencil" aria-hidden="true"></i> Editar datos, logo y horario</a>
   </div>
 </div>
@@ -72,13 +66,9 @@
   </div>
   <div class="col-xl-5">
     <div class="tarjeta-cuenta h-100">
-      <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0">Horario de atención</h2></div>
+      <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0">Horario del local</h2><a href="{% url 'tiendas:editar' %}#titulo-horario" class="enlace-accion small">Cambiar</a></div>
       {% if tienda.tiene_horario %}
-        <ul class="horario-cuenta">
-          {% for dia, texto in tienda.horario_semana %}
-            <li><span>{{ dia }}</span><span class="{% if texto == 'Cerrado' %}text-muted{% endif %}">{{ texto }}</span></li>
-          {% endfor %}
-        </ul>
+        {% include "tiendas/_horario_agrupado.html" %}
       {% else %}
         <p class="small text-muted mb-0">Aún no registraste tu horario. Con él, los clientes verán si estás abierto en este momento.</p>
       {% endif %}

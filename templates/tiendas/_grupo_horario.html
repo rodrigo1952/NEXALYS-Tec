@@ -1,0 +1,53 @@
+{% comment %}
+Un grupo del horario: los días que lo usan, a qué hora abre y cierra y el refrigerio (opcional).
+Se usa para cada grupo y como plantilla para «Agregar otro horario» (numero="__numero__").
+{% endcomment %}
+<fieldset class="grupo-horario{% if grupo.errors %} grupo-horario--error{% endif %}" data-grupo>
+  <legend class="grupo-horario__cabecera">
+    <span class="grupo-horario__titulo">Horario <span data-numero-grupo>{{ numero }}</span></span>
+    <span class="grupo-horario__dias-texto" data-texto-dias></span>
+  </legend>
+  <div class="d-none">{{ grupo.DELETE }}</div>
+  <button type="button" class="grupo-horario__quitar" data-quitar-grupo title="Quitar este horario" aria-label="Quitar este horario"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+  {% for error in grupo.non_field_errors %}<div class="text-danger small mb-2">{{ error }}</div>{% endfor %}
+
+  <p class="grupo-horario__etiqueta mb-1">¿Qué días?</p>
+  <div class="dias-chips" role="group" aria-label="Días de este horario">
+    {% for opcion in grupo.dias %}
+      <label class="dia-chip" for="{{ opcion.id_for_label }}" title="{{ opcion.choice_label }}">
+        {{ opcion.tag }}<span class="dia-chip__corto" aria-hidden="true">{{ opcion.choice_label|slice:":3" }}</span><span class="visually-hidden">{{ opcion.choice_label }}</span>
+      </label>
+    {% endfor %}
+  </div>
+  {% for error in grupo.dias.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+
+  <div class="horas-grupo mt-3">
+    <div>
+      <label class="form-label small fw-semibold" for="{{ grupo.abre.id_for_label }}">Abre</label>
+      {{ grupo.abre }}
+      {% for error in grupo.abre.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+    </div>
+    <div>
+      <label class="form-label small fw-semibold" for="{{ grupo.cierra.id_for_label }}">Cierra</label>
+      {{ grupo.cierra }}
+      {% for error in grupo.cierra.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+    </div>
+  </div>
+
+  <div class="form-check mt-3">
+    {{ grupo.con_refrigerio }}
+    <label class="form-check-label" for="{{ grupo.con_refrigerio.id_for_label }}">Cierra al mediodía (refrigerio)</label>
+  </div>
+  <div class="horas-grupo horas-grupo--refrigerio mt-2" data-refrigerio>
+    <div>
+      <label class="form-label small fw-semibold" for="{{ grupo.descanso_inicio.id_for_label }}">Refrigerio desde</label>
+      {{ grupo.descanso_inicio }}
+      {% for error in grupo.descanso_inicio.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+    </div>
+    <div>
+      <label class="form-label small fw-semibold" for="{{ grupo.descanso_fin.id_for_label }}">hasta</label>
+      {{ grupo.descanso_fin }}
+      {% for error in grupo.descanso_fin.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+    </div>
+  </div>
+</fieldset>

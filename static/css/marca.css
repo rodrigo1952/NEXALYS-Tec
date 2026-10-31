@@ -1096,3 +1096,115 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 /* Tablas de la consola: logo + nombre como enlace */
 .enlace-fila { display: inline-flex; align-items: center; gap: .55rem; color: var(--nx-texto); text-decoration: none; }
 .enlace-fila:hover strong, .enlace-fila:focus-visible strong { color: var(--nx-acento-texto); text-decoration: underline; text-underline-offset: 3px; }
+
+/* =====================================================================
+   Horario del local: editor por grupos, aviso abierto/cerrado y vista agrupada
+   ===================================================================== */
+.grupos-horario { display: flex; flex-direction: column; gap: 1rem; }
+.grupo-horario {
+  position: relative; margin: 0; padding: 1.1rem 1.1rem 1.2rem; border: 1px solid var(--nx-borde-suave);
+  border-left: 4px solid var(--nx-acento); border-radius: .9rem; background: #FAFCFE;
+}
+.grupo-horario[hidden] { display: none !important; }
+.grupo-horario--error { border-left-color: #DC3545; }
+.grupo-horario__cabecera { float: none; width: auto; margin: 0 2.5rem .75rem 0; padding: 0; font-size: 1rem; }
+.grupo-horario__titulo { font-weight: 700; }
+.grupo-horario__dias-texto { color: var(--nx-texto-suave); font-weight: 500; }
+.grupo-horario__etiqueta { font-size: .85rem; font-weight: 600; }
+.grupo-horario__quitar {
+  position: absolute; top: .7rem; right: .7rem; display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border: 1px solid var(--nx-borde); border-radius: .6rem; background: var(--nx-blanco); color: #B02A37;
+}
+.grupo-horario__quitar:hover, .grupo-horario__quitar:focus-visible { background: #FDECEE; border-color: #DC3545; }
+
+/* Días como botones grandes que se marcan (fáciles de tocar) */
+.dias-chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+.dia-chip { position: relative; cursor: pointer; }
+.dia-chip__casilla { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.dia-chip__corto {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 3.3rem; height: 2.6rem; padding: 0 .7rem;
+  border: 2px solid var(--nx-borde); border-radius: .7rem; background: var(--nx-blanco); font-weight: 700; user-select: none;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.dia-chip:hover .dia-chip__corto { border-color: var(--nx-acento); }
+.dia-chip__casilla:checked + .dia-chip__corto { background: var(--nx-oscuro); border-color: var(--nx-oscuro); color: var(--nx-blanco); }
+.dia-chip__casilla:checked + .dia-chip__corto::before { content: "✓"; margin-right: .3rem; color: var(--nx-acento); }
+.dia-chip__casilla:focus-visible + .dia-chip__corto { outline: 3px solid rgba(var(--nx-acento-rgb), .5); outline-offset: 2px; }
+
+.horas-grupo { display: grid; grid-template-columns: repeat(2, minmax(0, 220px)); gap: .75rem 1rem; }
+.horas-grupo[hidden] { display: none; }
+.horas-grupo--refrigerio { padding: .75rem; border-radius: .7rem; background: var(--nx-blanco); border: 1px dashed var(--nx-borde); max-width: 480px; }
+.horas-grupo .form-control { font-size: 1.05rem; font-weight: 600; }
+@media (max-width: 420px) { .horas-grupo { grid-template-columns: 1fr 1fr; } }
+
+.resumen-horario { padding: .9rem 1rem; border-radius: .9rem; background: rgba(var(--nx-acento-rgb), .08); }
+.resumen-horario__titulo { margin: 0 0 .4rem; font-size: .85rem; font-weight: 700; color: var(--nx-acento-texto); }
+.resumen-horario__lista { list-style: none; margin: 0; padding: 0; }
+.resumen-horario__lista li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; padding: .3rem 0; font-size: .92rem; }
+.resumen-horario__lista li span:first-child { font-weight: 700; }
+.resumen-horario__lista li span:last-child { margin-left: auto; text-align: right; white-space: pre-line; }
+.resumen-horario__lista li.cerrado span:last-child { color: var(--nx-texto-suave); }
+
+/* Aviso del local: abierto / cerrado (letra grande y frases cortas) */
+.estado-local { margin-bottom: 1rem; padding: .9rem 1rem; border-radius: .9rem; border: 1px solid transparent; }
+.estado-local p { display: flex; gap: .6rem; margin: 0; line-height: 1.45; }
+.estado-local .bi { flex-shrink: 0; font-size: 1.3rem; line-height: 1.2; }
+.estado-local__principal { font-size: 1.02rem; }
+.estado-local__cuando { display: block; font-weight: 700; }
+.estado-local__extra { margin-top: .6rem !important; padding-top: .6rem; border-top: 1px solid rgba(0, 0, 0, .08); font-size: .92rem; color: var(--nx-texto); }
+.estado-local--abierto { background: #E3F6EA; border-color: #A7DDBA; color: #0F5132; }
+.estado-local--cerrado { background: #FDEFF0; border-color: #F2C0C5; color: #842029; }
+.estado-local--cerrado .estado-local__extra .bi { color: var(--nx-acento-texto); }
+.estado-local--compacto { margin-bottom: 0; padding: .65rem .8rem; }
+.estado-local--compacto .estado-local__principal { font-size: .92rem; }
+.estado-local--compacto .estado-local__extra { font-size: .82rem; }
+
+/* Horario agrupado (perfil público y Datos de mi tienda) */
+.horario-agrupado { list-style: none; margin: 0; padding: 0; }
+.horario-agrupado li {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: .2rem 1rem; padding: .65rem .75rem;
+  border-radius: .6rem; border-bottom: 1px solid var(--nx-borde-suave);
+}
+.horario-agrupado li:last-child { border-bottom: 0; }
+.horario-agrupado__dias { font-weight: 700; }
+.horario-agrupado__horas { display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; text-align: right; white-space: nowrap; }
+.horario-agrupado li.cerrado .horario-agrupado__horas { color: var(--nx-texto-suave); }
+.horario-agrupado li.hoy { background: rgba(var(--nx-acento-rgb), .12); border-bottom-color: transparent; }
+.horario-agrupado__hoy {
+  margin-left: .35rem; padding: .1rem .45rem; border-radius: 999px; background: var(--nx-oscuro); color: var(--nx-blanco);
+  font-size: .7rem; font-weight: 700; vertical-align: middle;
+}
+
+/* Perfil público de la tienda */
+.perfil-tienda { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 992px) { .perfil-tienda { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); } }
+.perfil-tienda__datos, .perfil-tienda__horario {
+  padding: 1.5rem; background: var(--nx-blanco); border: 1px solid var(--nx-borde-suave); border-radius: 1.1rem; box-shadow: var(--nx-sombra);
+}
+.perfil-tienda__datos { border-top: 4px solid var(--nx-acento); }
+.perfil-tienda__logo { width: 80px; height: 80px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--nx-borde); background: var(--nx-blanco); object-fit: cover; }
+.perfil-tienda__logo--inicial { display: inline-flex; align-items: center; justify-content: center; background: var(--nx-oscuro); color: var(--nx-acento); font-size: 2rem; font-weight: 800; }
+.perfil-tienda__antetitulo { margin: 0 0 .1rem; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--nx-acento-texto); }
+.perfil-tienda__nombre { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; overflow-wrap: anywhere; }
+.perfil-tienda__direccion { display: flex; gap: .4rem; font-weight: 500; }
+.perfil-tienda__direccion .bi { color: #DC3545; }
+.perfil-tienda__horario h2 .bi { color: var(--nx-acento-texto); }
+
+/* Logo editable en el menú de la cuenta */
+.centro-cuenta__avatar--editable { position: relative; padding: 0; border: 0; cursor: pointer; }
+.centro-cuenta__avatar-capa {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+  border-radius: 50%; background: rgba(var(--nx-oscuro-rgb), .72); color: var(--nx-blanco); font-size: .55rem; font-weight: 700;
+  opacity: 0; transition: opacity .15s ease;
+}
+.centro-cuenta__avatar-capa .bi { font-size: 1.15rem; }
+.centro-cuenta__avatar--editable:hover .centro-cuenta__avatar-capa,
+.centro-cuenta__avatar--editable:focus-visible .centro-cuenta__avatar-capa { opacity: 1; }
+.centro-cuenta__avatar--editable:focus-visible { outline: 3px solid rgba(var(--nx-acento-rgb), .6); outline-offset: 2px; }
+.centro-cuenta__avatar--editable { overflow: visible; }
+.centro-cuenta__avatar--editable img { border-radius: 50%; }
+.centro-cuenta__avatar-lapiz {
+  position: absolute; right: -4px; bottom: -4px; display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%; background: var(--nx-acento); color: var(--nx-oscuro); font-size: .62rem; border: 2px solid var(--nx-blanco);
+}
+.vista-logo { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--nx-acento); background: var(--nx-blanco); }

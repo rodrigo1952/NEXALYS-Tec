@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Max, Min, Q, Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Lower
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -200,7 +200,7 @@ def mis_productos(request):
             costo=F("ficha__costo"),
             codigo=Coalesce("ficha__codigo", Value("")),
         )
-        .order_by("-creado")  # orden fijo: así la paginación no repite ni salta productos
+        .order_by(Lower("nombre"), "pk")  # A → Z; el pk deja el orden fijo para la paginación
     )
     resumen = _resumen_inventario(request.tienda, bajo)
     # Filtros rápidos (reemplazan a las tarjetas: los números están en la pestaña Resumen).

@@ -1,0 +1,23 @@
+{% comment %}
+Aviso del LOCAL (la tienda física): abierto, cerrado o en refrigerio, en palabras simples.
+Deja claro que la página funciona siempre: se pueden ver productos y escribir por WhatsApp a cualquier hora.
+Uso: {% include "tiendas/_estado_local.html" with estado=tienda.estado_atencion %}  (compacto=True en listas pequeñas)
+{% endcomment %}
+{% if estado %}
+<div class="estado-local {% if estado.abierto %}estado-local--abierto{% else %}estado-local--cerrado{% endif %}{% if compacto %} estado-local--compacto{% endif %}" role="status">
+  <p class="estado-local__principal">
+    <i class="bi {% if estado.abierto %}bi-door-open{% else %}bi-door-closed{% endif %}" aria-hidden="true"></i>
+    <span>
+      El local (tienda física) está
+      {% if estado.abierto %}<strong>ABIERTO</strong> ahora.{% elif estado.refrigerio %}<strong>CERRADO por refrigerio</strong> (hora de almuerzo).{% else %}<strong>CERRADO</strong> ahora.{% endif %}
+      <span class="estado-local__cuando">{{ estado.detalle }}</span>
+    </span>
+  </p>
+  {% if not estado.abierto %}
+    <p class="estado-local__extra">
+      <i class="bi bi-phone" aria-hidden="true"></i>
+      <span>En esta página puedes ver sus productos y escribirle por WhatsApp <strong>a cualquier hora</strong>. Te responderán en su horario.</span>
+    </p>
+  {% endif %}
+</div>
+{% endif %}

@@ -41,7 +41,7 @@ class CentroDeCuentaTests(TestCase):
         self.assertContains(respuesta, 'class="numeros-tienda mt-3"')
         self.assertContains(respuesta, f'href="{reverse("catalogo:mis_productos")}" class="enlace-accion">Ver en Mis productos')
         self.assertContains(respuesta, "Editar datos, logo y horario")
-        self.assertContains(respuesta, "Horario de atención")
+        self.assertContains(respuesta, "Horario del local")
 
     def test_el_resto_de_la_pagina_sigue_igual(self):
         # El catálogo y el inicio conservan la cabecera completa.
