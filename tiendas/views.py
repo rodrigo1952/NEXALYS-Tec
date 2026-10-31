@@ -98,7 +98,7 @@ def panel(request):
         "tienda": tienda,
         "total_productos": productos.count(),
         "publicados": productos.filter(activo=True).count(),
-        "agotados": productos.filter(stock=0).count(),
+        "agotados": productos.filter(stock=0, activo=True, oculto_por_admin=False).count(),  # los que el cliente ve
         # Privacidad: solo cantidades, nunca quiénes guardaron cada producto.
         "mas_guardados": (
             productos.annotate(num_favoritos=Count("favoritos"))

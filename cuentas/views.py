@@ -11,6 +11,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from catalogo.destacados import destacados_en_turnos
 from catalogo.models import Producto
 from favoritos.permisos import es_cliente
 
@@ -47,10 +48,11 @@ def rol_requerido(*roles):
 
 def inicio(request):
     visibles = Producto.objects.visibles().select_related("tienda", "marca", "categoria")
+    destacados, total_destacados = destacados_en_turnos(visibles)
     return render(request, "inicio.html", {
-        # Cada tienda elige hasta 3 destacados; primero los más populares de los últimos
-        # 30 días (vistas + favoritos × 5) y, si empatan, el que se destacó antes.
-        "destacados": visibles.destacados_inicio()[:8],
+        # 8 lugares repartidos por turnos entre las tiendas (ver catalogo/destacados.py).
+        "destacados": destacados,
+        "total_destacados": total_destacados,
         # Ofertas: primero el mayor descuento.
         "ofertas": visibles.ofertas_inicio()[:8],
         "recientes": visibles[:8],

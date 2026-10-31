@@ -61,7 +61,7 @@ class GaleriaEdicionTests(BaseCatalogo):
 
     def test_hacer_principal_intercambia_las_fotos(self):
         respuesta = self.guardar(principal_foto=str(self.adicional.pk))
-        self.assertRedirects(respuesta, reverse("catalogo:mis_productos"))
+        self.assertRedirects(respuesta, reverse("catalogo:mis_productos") + f"#producto-{self.producto.pk}", fetch_redirect_response=False)
         self.producto.refresh_from_db()
         self.adicional.refresh_from_db()
         # La principal era roja y la adicional verde: ahora es al revés.
@@ -165,14 +165,14 @@ class OrdenDeFotosTests(BaseCatalogo):
         self.assertContains(respuesta, "galeria-edicion--arrastrando-principal")
         # La principal soltada sobre una adicional las intercambia (lo mismo que «Hacer principal»).
         respuesta = self.guardar(principal_foto=str(self.f2.pk))
-        self.assertRedirects(respuesta, reverse("catalogo:mis_productos"))
+        self.assertRedirects(respuesta, reverse("catalogo:mis_productos") + f"#producto-{self.producto.pk}", fetch_redirect_response=False)
         self.producto.refresh_from_db()
         self.f2.refresh_from_db()
         self.assertEqual(color(self.f2.imagen), "rojo")
 
     def test_guardar_el_nuevo_orden(self):
         respuesta = self.guardar(orden_fotos=f"{self.f3.pk},{self.f1.pk},{self.f2.pk}")
-        self.assertRedirects(respuesta, reverse("catalogo:mis_productos"))
+        self.assertRedirects(respuesta, reverse("catalogo:mis_productos") + f"#producto-{self.producto.pk}", fetch_redirect_response=False)
         self.assertEqual(self.orden(), [self.f3.pk, self.f1.pk, self.f2.pk])
 
     def test_ids_ajenos_o_repetidos_se_ignoran(self):

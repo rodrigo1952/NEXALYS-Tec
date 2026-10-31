@@ -237,9 +237,12 @@ def filtro_stock_bajo():
 
 
 def alertas_de_stock(tienda):
-    """Productos agotados o con stock bajo (stock ≤ stock mínimo de su ficha)."""
+    """
+    Productos agotados o con stock bajo (stock ≤ stock mínimo de su ficha). Solo los que el
+    cliente puede ver: los ocultos (por la tienda o por el administrador) no generan alertas.
+    """
     return (
-        Producto.objects.filter(tienda=tienda)
+        Producto.objects.filter(tienda=tienda, activo=True, oculto_por_admin=False)
         .filter(Q(stock=0) | filtro_stock_bajo())
         .annotate(stock_minimo=Coalesce("ficha__stock_minimo", 0))
         .order_by("stock", "nombre")
@@ -247,4 +250,7 @@ def alertas_de_stock(tienda):
 
 
 def cantidad_de_alertas(tienda):
-    return Producto.objects.filter(tienda=tienda).filter(Q(stock=0) | filtro_stock_bajo()).count()
+    return (
+        Producto.objects.filter(tienda=tienda, activo=True, oculto_por_admin=False)
+        .filter(Q(stock=0) | filtro_stock_bajo()).count()
+    )

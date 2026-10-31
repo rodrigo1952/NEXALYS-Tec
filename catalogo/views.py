@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Max, Min, Q, Sum, Value
 from django.db.models.functions import Coalesce, Lower
+from django.http import QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -35,7 +36,7 @@ def _entero(valor):
 # Catálogo público (CU-04 y CU-05): no requiere iniciar sesión
 # ---------------------------------------------------------------------------
 
-FILTROS = ("q", "categoria", "marca", "tienda", "precio_min", "precio_max", "solo_ofertas", "en_stock")
+FILTROS = ("q", "categoria", "marca", "tienda", "precio_min", "precio_max", "solo_ofertas", "en_stock", "destacados")
 MARCAS_VISIBLES = 8  # las demás marcas se muestran con «Ver todas»
 
 
@@ -55,6 +56,8 @@ def _filtrar(productos, datos, excepto=()):
         productos = productos.en_oferta()
     if datos.get("en_stock") and "en_stock" not in excepto:
         productos = productos.filter(stock__gt=0)
+    if datos.get("destacados") and "destacados" not in excepto:
+        productos = productos.filter(destacado=True)
     if "precio" not in excepto:
         if datos.get("precio_min") is not None:
             productos = productos.filter(precio_actual__gte=datos["precio_min"])
@@ -115,6 +118,7 @@ def catalogo(request):
     disponibilidad = {
         "en_stock": _filtrar(base, datos, {"en_stock"}).filter(stock__gt=0).count(),
         "ofertas": _filtrar(base, datos, {"solo_ofertas"}).en_oferta().count(),
+        "destacados": _filtrar(base, datos, {"destacados"}).filter(destacado=True).count(),
     }
 
     # Filtros elegidos, cada uno con su enlace para quitarlo.
@@ -135,11 +139,15 @@ def catalogo(request):
         chips.append({"texto": "En stock", "url": _sin(request, "en_stock")})
     if datos.get("solo_ofertas"):
         chips.append({"texto": "🔥 Ofertas", "url": _sin(request, "solo_ofertas")})
+    if datos.get("destacados"):
+        chips.append({"texto": "⭐ Destacados", "url": _sin(request, "destacados")})
 
     if datos.get("categoria"):
         titulo = datos["categoria"].nombre
     elif datos.get("q"):
         titulo = f"Resultados para «{datos['q']}»"
+    elif datos.get("destacados"):
+        titulo = "Productos destacados"
     else:
         titulo = "Todos los productos"
 
@@ -209,11 +217,13 @@ def mis_productos(request):
         ver = "alertas"  # enlaces antiguos y "Ver las alertas" del Resumen
     elif request.GET.get("sin_costo") == "1":
         ver = "sin_costo"
+    # «Agotados» y «Stock bajo» muestran solo lo que el cliente puede ver; lo oculto va solo en «Ocultos».
     filtros = {
-        "alertas": Q(stock=0) | bajo,
-        "bajo": bajo,
-        "agotados": Q(stock=0),
+        "alertas": (Q(stock=0) | bajo) & VISIBLES,
+        "bajo": bajo & VISIBLES,
+        "agotados": Q(stock=0) & VISIBLES,
         "sin_costo": Q(ficha__costo__isnull=True),
+        "ocultos": OCULTOS,
     }
     if ver in filtros:
         productos = productos.filter(filtros[ver])
@@ -254,8 +264,9 @@ def _resumen_inventario(tienda, bajo):
         unidades=Coalesce(Sum("stock"), 0),
         valor=Sum(ExpressionWrapper(F("stock") * F("ficha__costo"), output_field=DecimalField(max_digits=14, decimal_places=2))),
         sin_costo=Count("id", filter=Q(ficha__costo__isnull=True)),
-        agotados=Count("id", filter=Q(stock=0)),
-        stock_bajo=Count("id", filter=bajo),
+        agotados=Count("id", filter=Q(stock=0) & VISIBLES),
+        stock_bajo=Count("id", filter=bajo & VISIBLES),
+        ocultos=Count("id", filter=OCULTOS),
     )
     datos["valor"] = datos["valor"] or 0
     return datos
@@ -264,6 +275,29 @@ def _resumen_inventario(tienda, bajo):
 # Desde "Nuevo ingreso" o "Nueva venta" se puede crear un producto que aún no existe:
 # al guardarlo se vuelve a esa página con el producto ya elegido.
 VOLVER_A = {"ingreso": "inventario:ingreso_nuevo", "venta": "inventario:venta_nueva"}
+# Ocultos: los que la tienda desmarcó «Publicado» y los que ocultó el administrador.
+OCULTOS = Q(activo=False) | Q(oculto_por_admin=True)
+VISIBLES = Q(activo=True, oculto_por_admin=False)
+# Filtros de «Mis productos» que se recuerdan al editar o eliminar un producto.
+FILTROS_DE_LA_LISTA = ("ver", "q", "categoria", "marca", "page")
+
+
+def _lista_anterior(request):
+    """
+    Los filtros y la página de «Mis productos» desde donde se abrió el producto (llegan como
+    ?lista=page%3D2%26ver%3Dbajo). Solo se aceptan los filtros conocidos.
+    """
+    datos = QueryDict(request.POST.get("lista") or request.GET.get("lista") or "", mutable=True)
+    for clave in list(datos.keys()):
+        if clave not in FILTROS_DE_LA_LISTA:
+            del datos[clave]
+    return datos.urlencode()
+
+
+def _url_lista(lista, producto=None):
+    """Dirección para volver a la misma página y filtros (y bajar hasta el producto editado)."""
+    url = reverse("catalogo:mis_productos") + (f"?{lista}" if lista else "")
+    return url + (f"#producto-{producto.pk}" if producto else "")
 
 
 @tienda_requerida()
@@ -289,6 +323,7 @@ def producto_crear(request):
 @tienda_requerida()
 def producto_editar(request, pk):
     producto = get_object_or_404(Producto, pk=pk, tienda=request.tienda)
+    lista = _lista_anterior(request)
     if request.method == "POST":
         form = ProductoForm(request.POST, request.FILES, instance=producto, tienda=request.tienda)
         # La validación (incluida la versión) y el guardado van en una sola transacción,
@@ -300,24 +335,28 @@ def producto_editar(request, pk):
                 form.save()
         if guardado:
             messages.success(request, f"Producto \"{producto.nombre}\" actualizado.")
-            return redirect("catalogo:mis_productos")
+            return redirect(_url_lista(lista, producto))  # misma página y filtros, con el producto resaltado
     else:
         form = ProductoForm(instance=producto, tienda=request.tienda)
     return render(
         request,
         "catalogo/producto_form.html",
-        {"form": form, "titulo": "Editar producto", "producto": producto},
+        {"form": form, "titulo": "Editar producto", "producto": producto,
+         "lista": lista, "url_cancelar": _url_lista(lista, producto)},
     )
 
 
 @tienda_requerida()
 def producto_eliminar(request, pk):
     producto = get_object_or_404(Producto, pk=pk, tienda=request.tienda)
+    lista = _lista_anterior(request)
     # Sus ventas, ingresos y kardex NO se borran: guardan el nombre del producto (historial).
     if request.method == "POST":
         nombre = producto.nombre
         with transaction.atomic():
             producto.delete()  # el modelo borra la imagen solo si la eliminación se confirma
         messages.success(request, f"Producto \"{nombre}\" eliminado.")
-        return redirect("catalogo:mis_productos")
-    return render(request, "catalogo/producto_confirmar_eliminar.html", {"producto": producto})
+        return redirect(_url_lista(lista))
+    return render(request, "catalogo/producto_confirmar_eliminar.html", {
+        "producto": producto, "lista": lista, "url_cancelar": _url_lista(lista, producto),
+    })

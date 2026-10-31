@@ -80,10 +80,7 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
     </div>
   </div>
 
-  <div class="nuevas-fotos d-none mt-3" id="nuevas-fotos" aria-live="polite">
-    <div class="small text-primary fw-semibold mb-2" id="nuevas-fotos-texto"></div>
-    <div class="d-flex flex-wrap gap-2" id="nuevas-fotos-lista"></div>
-  </div>
+  <p class="small text-primary fw-semibold mt-2 mb-0 d-none" id="nuevas-fotos-texto" aria-live="polite"></p>
   <div class="aviso-orden d-none mt-3" id="aviso-orden" aria-live="polite">
     <span><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Cambiaste el orden de las fotos: se guardará al presionar «Guardar».</span>
     <button type="button" class="btn btn-sm btn-link p-0" id="deshacer-orden">Deshacer orden</button>
@@ -250,37 +247,54 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
 
   // ---- Fotos nuevas (+ Agregar fotos o soltarlas en la galería) ----
   const agregar = galeria.querySelector("[data-agregar]");
-  const nuevas = document.getElementById("nuevas-fotos");
-  const nuevasLista = document.getElementById("nuevas-fotos-lista");
   const nuevasTexto = document.getElementById("nuevas-fotos-texto");
   function espacioLibre() {
     const quitadas = galeria.querySelectorAll(".tarjeta-foto--secundaria.tarjeta-foto--quitada").length;
     return parseInt(galeria.dataset.libres || "0", 10) + quitadas;
   }
 
+  // Las fotos nuevas (aún sin guardar) se ven como tarjetas al final de las adicionales,
+  // con su número, la etiqueta «Nueva» y la X para no agregarla.
+  function lugarDeLasNuevas() {
+    return contenedorSecundarias.querySelector("[data-zona-agregar]");
+  }
   function actualizarNuevas() {
     const transferencia = new DataTransfer();
     pendientes.forEach(function (archivo) { transferencia.items.add(archivo); });
     agregar.files = transferencia.files;
-    nuevasLista.innerHTML = "";
+    contenedorSecundarias.querySelectorAll(".tarjeta-foto--nueva").forEach(function (t) { t.remove(); });
+    const guardadas = contenedorSecundarias.querySelectorAll(".tarjeta-foto--secundaria").length;
     pendientes.forEach(function (archivo, indice) {
-      const caja = document.createElement("div");
-      caja.className = "miniatura-nueva";
-      const img = document.createElement("img");
-      img.src = URL.createObjectURL(archivo);
-      img.alt = archivo.name;
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjeta-foto tarjeta-foto--secundaria tarjeta-foto--nueva";
+      const numero = document.createElement("span");
+      numero.className = "numero-foto numero-foto--secundaria";
+      numero.title = "Orden en que se ve";
+      numero.textContent = guardadas + indice + 2;
+      const etiqueta = document.createElement("span");
+      etiqueta.className = "etiqueta-nueva";
+      etiqueta.textContent = "Nueva";
       const x = document.createElement("button");
       x.type = "button";
       x.className = "tarjeta-foto__x";
       x.innerHTML = "&times;";
-      x.title = "Quitar";
+      x.title = "No agregar";
       x.setAttribute("aria-label", "No agregar " + archivo.name);
       x.addEventListener("click", function () { pendientes.splice(indice, 1); actualizarNuevas(); });
-      caja.append(img, x);
-      nuevasLista.appendChild(caja);
+      const marco = document.createElement("div");
+      marco.className = "tarjeta-foto__imagen";
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(archivo);
+      img.alt = "Foto nueva: " + archivo.name;
+      marco.appendChild(img);
+      const estadoNueva = document.createElement("div");
+      estadoNueva.className = "tarjeta-foto__estado small text-primary";
+      estadoNueva.textContent = "Se agregará al guardar";
+      tarjeta.append(numero, etiqueta, x, marco, estadoNueva);
+      contenedorSecundarias.insertBefore(tarjeta, lugarDeLasNuevas());
     });
-    nuevasTexto.textContent = pendientes.length + " foto(s) nueva(s): se agregarán al guardar.";
-    nuevas.classList.toggle("d-none", !pendientes.length);
+    nuevasTexto.textContent = pendientes.length ? pendientes.length + " foto(s) nueva(s): se agregarán al guardar." : "";
+    nuevasTexto.classList.toggle("d-none", !pendientes.length);
     actualizarZona();
   }
 
@@ -326,7 +340,7 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
   const avisoOrden = document.getElementById("aviso-orden");
 
   function renumerar() {
-    const tarjetas = Array.from(contenedorSecundarias.querySelectorAll(".tarjeta-foto--secundaria"));
+    const tarjetas = Array.from(contenedorSecundarias.querySelectorAll(".tarjeta-foto--secundaria:not(.tarjeta-foto--nueva)"));
     tarjetas.forEach(function (tarjeta, indice) { tarjeta.querySelector("[data-numero]").textContent = indice + 2; });
     const cambio = tarjetas.some(function (tarjeta, indice) { return tarjeta !== ordenOriginal[indice]; });
     ordenOculto.value = cambio ? tarjetas.map(function (t) { return t.dataset.tarjeta; }).join(",") : "";
@@ -343,8 +357,8 @@ Nada se aplica hasta presionar «Guardar»: cada tarjeta dice qué pasará y tie
   }
 
   document.getElementById("deshacer-orden").addEventListener("click", function () {
-    const zona = contenedorSecundarias.querySelector("[data-zona-agregar]");
-    ordenOriginal.forEach(function (tarjeta) { contenedorSecundarias.insertBefore(tarjeta, zona); });
+    const antes = contenedorSecundarias.querySelector(".tarjeta-foto--nueva") || contenedorSecundarias.querySelector("[data-zona-agregar]");
+    ordenOriginal.forEach(function (tarjeta) { contenedorSecundarias.insertBefore(tarjeta, antes); });
     renumerar();
   });
 

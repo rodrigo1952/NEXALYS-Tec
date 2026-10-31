@@ -159,7 +159,18 @@
 - La tienda cambia su logo tocando el círculo del menú de la cuenta (ventana con vista previa; `tiendas:logo`).
   Se quitaron los botones «Ver mi tienda pública» (se llega con «Mi tienda» del menú de la cuenta).
 - «Mis productos» y los productos del perfil público van de la A a la Z.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **530 pruebas**.
+- «Mis productos» recuerda la página y los filtros: Editar/Eliminar llevan `?lista=…` (solo ver, q, categoria,
+  marca y page) y al guardar o cancelar se vuelve ahí; la fila del producto editado se resalta (`#producto-<id>`).
+  Filtro rápido «Ocultos» (no publicados u ocultos por el administrador).
+- Paginación con números en todas las listas (`catalogo/_paginacion.html`, etiqueta `numeros_de_pagina`):
+  todas hasta 7 páginas; con más, la primera, la última y las cercanas («1 … 8 9 10 11 12 … 30»).
+- Las fotos nuevas que se agregan al editar aparecen como tarjetas al final de las adicionales («Nueva», con X).
+- «Agotados», «Stock bajo», el aviso amarillo del menú y las alertas del Resumen cuentan SOLO productos
+  visibles; lo que no ve el cliente (oculto por la tienda o por el administrador) va solo en «Ocultos».
+- **Destacados del Inicio por turnos** (`catalogo/destacados.py`): 8 lugares; primero 1 producto de cada tienda
+  (su destacado más popular), luego el 2.º de cada una, etc. El orden de las tiendas rota cada día.
+  «Ver todos los destacados (N)» lleva al catálogo con el filtro `destacados=on` («⭐ Destacados»).
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **548 pruebas**.
 
 ## 7. Pendientes e ideas
 

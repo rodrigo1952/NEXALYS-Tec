@@ -1,13 +1,32 @@
+{% load formato %}
+{% comment %}
+Paginación de todas las listas: «‹ Anterior», los números de página (todos hasta 7; si son más,
+recortados con «…») y «Siguiente ›». Conserva los filtros de la dirección con {% querystring %}.
+{% endcomment %}
 {% if pagina.has_other_pages %}
-<nav class="mt-4">
-  <ul class="pagination justify-content-center">
+<nav class="mt-4" aria-label="Páginas">
+  <ul class="pagination paginacion justify-content-center flex-wrap">
     {% if pagina.has_previous %}
-      <li class="page-item"><a class="page-link" href="{% querystring page=pagina.previous_page_number %}">Anterior</a></li>
+      <li class="page-item"><a class="page-link" href="{% querystring page=pagina.previous_page_number %}" aria-label="Página anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i><span class="d-none d-sm-inline"> Anterior</span></a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left" aria-hidden="true"></i><span class="d-none d-sm-inline"> Anterior</span></span></li>
     {% endif %}
-    <li class="page-item disabled"><span class="page-link">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
+    {% numeros_de_pagina pagina as numeros %}
+    {% for numero in numeros %}
+      {% if numero == pagina.paginator.ELLIPSIS %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% elif numero == pagina.number %}
+        <li class="page-item active" aria-current="page"><span class="page-link">{{ numero }}<span class="visually-hidden"> (página actual)</span></span></li>
+      {% else %}
+        <li class="page-item"><a class="page-link" href="{% querystring page=numero %}" aria-label="Ir a la página {{ numero }}">{{ numero }}</a></li>
+      {% endif %}
+    {% endfor %}
     {% if pagina.has_next %}
-      <li class="page-item"><a class="page-link" href="{% querystring page=pagina.next_page_number %}">Siguiente</a></li>
+      <li class="page-item"><a class="page-link" href="{% querystring page=pagina.next_page_number %}" aria-label="Página siguiente"><span class="d-none d-sm-inline">Siguiente </span><i class="bi bi-chevron-right" aria-hidden="true"></i></a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link"><span class="d-none d-sm-inline">Siguiente </span><i class="bi bi-chevron-right" aria-hidden="true"></i></span></li>
     {% endif %}
   </ul>
+  <p class="text-center small text-muted mb-0">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</p>
 </nav>
 {% endif %}

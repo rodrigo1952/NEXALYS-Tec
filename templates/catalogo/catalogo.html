@@ -6,7 +6,7 @@
 <nav aria-label="Ruta" class="ruta mb-2">
   <a href="{% url 'inicio' %}">Inicio</a>
   <i class="bi bi-chevron-right" aria-hidden="true"></i>
-  {% if form.cleaned_data.categoria or form.cleaned_data.q %}
+  {% if form.cleaned_data.categoria or form.cleaned_data.q or form.cleaned_data.destacados %}
     <a href="{% url 'catalogo:catalogo' %}">Catálogo</a>
     <i class="bi bi-chevron-right" aria-hidden="true"></i>
     <span aria-current="page">{{ titulo }}</span>
@@ -56,6 +56,10 @@
             <div class="form-check">
               <input class="form-check-input" type="checkbox" name="solo_ofertas" value="on" id="filtro-ofertas"{% if form.cleaned_data.solo_ofertas %} checked{% endif %}>
               <label class="form-check-label filtro__opcion" for="filtro-ofertas">🔥 En oferta <span class="filtro__cantidad">{{ disponibilidad.ofertas }}</span></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="destacados" value="on" id="filtro-destacados"{% if form.cleaned_data.destacados %} checked{% endif %}>
+              <label class="form-check-label filtro__opcion" for="filtro-destacados">⭐ Destacados <span class="filtro__cantidad">{{ disponibilidad.destacados }}</span></label>
             </div>
           </details>
 

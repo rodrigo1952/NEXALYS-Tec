@@ -1208,3 +1208,26 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
   width: 20px; height: 20px; border-radius: 50%; background: var(--nx-acento); color: var(--nx-oscuro); font-size: .62rem; border: 2px solid var(--nx-blanco);
 }
 .vista-logo { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--nx-acento); background: var(--nx-blanco); }
+
+/* Fotos nuevas (aún sin guardar) como tarjetas junto a las adicionales */
+.tarjeta-foto--nueva { border-style: dashed; border-color: var(--nx-acento); background: #F4FBFD; }
+.tarjeta-foto--nueva .tarjeta-foto__x { opacity: 1; }
+.etiqueta-nueva {
+  position: absolute; top: .55rem; left: 2.4rem; z-index: 3; padding: .1rem .45rem; border-radius: 999px;
+  background: var(--nx-acento); color: var(--nx-oscuro); font-size: .7rem; font-weight: 800;
+}
+
+/* Mis productos: al volver de «Editar», el producto editado se resalta un momento */
+.fila-producto { scroll-margin-top: 140px; }
+.fila-producto:target > td { animation: resaltar-fila 2.6s ease-out 1; }
+@keyframes resaltar-fila {
+  0%, 35% { background-color: rgba(var(--nx-acento-rgb), .28); }
+  100% { background-color: transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .fila-producto:target > td { animation: none; background-color: rgba(var(--nx-acento-rgb), .18); } }
+
+/* Paginación con números */
+.paginacion { gap: .35rem; margin-bottom: .4rem; }
+.paginacion .page-link { min-width: 2.6rem; height: 2.6rem; display: inline-flex; align-items: center; justify-content: center; gap: .25rem; border-radius: .6rem !important; font-weight: 600; }
+.paginacion .page-item.active .page-link { box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .3); }
+.paginacion .page-item.disabled .page-link { background: transparent; }

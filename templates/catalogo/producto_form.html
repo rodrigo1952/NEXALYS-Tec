@@ -20,6 +20,7 @@
       {% endif %}
       <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
+        {% if lista %}<input type="hidden" name="lista" value="{{ lista }}">{% endif %}
         {% include "_campos_formulario.html" %}
 
         {% if producto %}

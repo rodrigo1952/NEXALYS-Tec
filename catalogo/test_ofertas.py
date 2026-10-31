@@ -81,7 +81,7 @@ class OfertaFormularioTests(BaseCatalogo):
             nombre="Galaxy A15", precio="899.00", precio_oferta="799.00", oferta_hasta=ayer.isoformat(),
             stock="20", version=version,
         ))
-        self.assertRedirects(respuesta, reverse("catalogo:mis_productos"))
+        self.assertRedirects(respuesta, reverse("catalogo:mis_productos") + f"#producto-{producto.pk}", fetch_redirect_response=False)
         producto.refresh_from_db()
         self.assertEqual(producto.stock, 20)
 

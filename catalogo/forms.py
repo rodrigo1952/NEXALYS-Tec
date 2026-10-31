@@ -387,6 +387,7 @@ class BusquedaForm(EstiloBootstrapMixin, forms.Form):
     orden = forms.ChoiceField(label="Ordenar por", choices=ORDENES, required=False)
     solo_ofertas = forms.BooleanField(label="Solo ofertas", required=False)
     en_stock = forms.BooleanField(label="En stock", required=False)
+    destacados = forms.BooleanField(label="Destacados", required=False)
 
     def clean(self):
         datos = super().clean()

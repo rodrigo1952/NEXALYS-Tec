@@ -65,7 +65,7 @@ class FotosProductoTests(BaseCatalogo):
             respuesta = self.client.post(url, self.datos_formulario(
                 nombre="Galaxy A15", version=version, eliminar_fotos=[quitar.pk],
             ))
-        self.assertRedirects(respuesta, reverse("catalogo:mis_productos"))
+        self.assertRedirects(respuesta, reverse("catalogo:mis_productos") + f"#producto-{producto.pk}", fetch_redirect_response=False)
         self.assertEqual(list(producto.fotos.all()), [quedarse])
         self.assertFalse(os.path.exists(ruta))  # también se borró el archivo
 

@@ -56,7 +56,7 @@ class ConcurrenciaProductosTests(BaseCatalogo):
     def test_con_la_version_al_dia_se_guarda_normal(self):
         version = self.version_al_abrir()
         respuesta = self.client.post(self.url, self.datos_formulario(nombre="Galaxy A15", precio="600.00", version=version))
-        self.assertRedirects(respuesta, reverse("catalogo:mis_productos"))
+        self.assertRedirects(respuesta, reverse("catalogo:mis_productos") + f"#producto-{self.producto.pk}", fetch_redirect_response=False)
         self.producto.refresh_from_db()
         self.assertEqual(str(self.producto.precio), "600.00")
 

@@ -14,6 +14,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
   <a href="{% querystring ver=None alerta=None sin_costo=None page=None %}" class="filtro-rapido{% if not ver %} activo{% endif %}"{% if not ver %} aria-current="true"{% endif %}>Todos <span class="contador">{{ resumen.productos }}</span></a>
   <a href="{% querystring ver='bajo' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--aviso{% if ver == 'bajo' %} activo{% endif %}"{% if ver == 'bajo' %} aria-current="true"{% endif %}>Stock bajo <span class="contador">{{ resumen.stock_bajo }}</span></a>
   <a href="{% querystring ver='agotados' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--peligro{% if ver == 'agotados' %} activo{% endif %}"{% if ver == 'agotados' %} aria-current="true"{% endif %}>Agotados <span class="contador">{{ resumen.agotados }}</span></a>
+  <a href="{% querystring ver='ocultos' alerta=None sin_costo=None page=None %}" class="filtro-rapido{% if ver == 'ocultos' %} activo{% endif %}"{% if ver == 'ocultos' %} aria-current="true"{% endif %} title="No publicados u ocultos por el administrador">Ocultos <span class="contador">{{ resumen.ocultos }}</span></a>
   <a href="{% querystring ver='sin_costo' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--aviso{% if ver == 'sin_costo' %} activo{% endif %}"{% if ver == 'sin_costo' %} aria-current="true"{% endif %}>Sin precio de compra <span class="contador">{{ resumen.sin_costo }}</span></a>
   <a href="{% url 'inventario:resumen' %}" class="enlace-accion ms-auto">Ver números en Resumen</a>
 </nav>
@@ -46,6 +47,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
   </nav>
 {% endif %}
 {% if ver == 'alertas' %}<p class="small text-muted">Mostrando solo productos agotados o con stock bajo. <a href="{% url 'catalogo:mis_productos' %}" class="enlace-accion">Ver todos</a></p>{% endif %}
+{% if ver == 'ocultos' %}<p class="small text-muted">Estos productos no se ven en el catálogo. Para volver a mostrar uno, entra a «Editar» y marca «Publicado» (si lo ocultó el administrador, verás su motivo).</p>{% endif %}
 {% if ver == 'sin_costo' %}<p class="small text-muted">Agrega el precio de compra con «Editar» para que estos productos cuenten en tu ganancia y en el valor del inventario.</p>{% endif %}
 
 <div class="table-responsive bg-white rounded shadow-sm">
@@ -64,10 +66,12 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
       </tr>
     </thead>
     <tbody>
+      {% with lista=request.GET.urlencode %}
       {% for producto in pagina %}
-        <tr>
+        {# id: al volver de «Editar», la página baja hasta este producto y lo resalta. #}
+        <tr id="producto-{{ producto.pk }}" class="fila-producto">
           <td>{{ producto.nombre }}{% if producto.codigo %}<div class="small text-muted">Código: {{ producto.codigo }}</div>{% endif %}
-            {% if producto.costo is None %}<div><a href="{% url 'catalogo:editar' producto.pk %}" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle text-decoration-none sin-precio-compra" title="Solo tú ves este aviso">Falta precio de compra</a></div>{% endif %}</td>
+            {% if producto.costo is None %}<div><a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle text-decoration-none sin-precio-compra" title="Solo tú ves este aviso">Falta precio de compra</a></div>{% endif %}</td>
           <td class="d-none d-lg-table-cell">{{ producto.categoria }}</td>
           <td class="d-none d-lg-table-cell">{{ producto.marca }}</td>
           <td class="text-end text-nowrap">
@@ -94,14 +98,14 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
             {% endif %}</td>
           <td class="d-none d-md-table-cell text-end">{{ producto.num_favoritos }}</td>
           <td class="text-end text-nowrap">
-            <a href="{% url 'catalogo:editar' producto.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
+            <a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary">Editar</a>
             <div class="btn-group">
               <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Más opciones de {{ producto.nombre }}">Más</button>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{% url 'inventario:kardex' producto.pk %}">Kardex (historia del stock)</a></li>
                 <li><a class="dropdown-item" href="{% url 'inventario:ajuste_nuevo' %}?producto={{ producto.pk }}">Ajustar stock (daño, pérdida, devolución)</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="{% url 'catalogo:eliminar' producto.pk %}">Eliminar</a></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'catalogo:eliminar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}">Eliminar</a></li>
               </ul>
             </div>
           </td>
@@ -111,6 +115,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
           {% if q or categoria_id or marca_id or ver %}No hay productos con esos filtros.{% else %}Aún no registraste productos.{% endif %}
         </td></tr>
       {% endfor %}
+      {% endwith %}
     </tbody>
   </table>
 </div>

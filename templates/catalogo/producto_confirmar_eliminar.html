@@ -11,8 +11,9 @@
       <p class="small text-muted">Si solo quieres que no aparezca en el catálogo, edítalo y desmarca "publicado".</p>
       <form method="post" class="d-flex gap-2">
         {% csrf_token %}
+        {% if lista %}<input type="hidden" name="lista" value="{{ lista }}">{% endif %}
         <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-        <a href="{% url 'catalogo:mis_productos' %}" class="btn btn-outline-secondary">Cancelar</a>
+        <a href="{{ url_cancelar }}" class="btn btn-outline-secondary">Cancelar</a>
       </form>
     </div></div>
   </div>
