@@ -6,7 +6,9 @@ from django.core.validators import FileExtensionValidator
 from django.db import transaction
 from django.db.models import Case, IntegerField, Max, Q, Value, When
 from django.db.models.functions import Lower
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import format_html
 
 from cuentas.estilos import EstiloBootstrapMixin
 from inventario.models import FichaInventario
@@ -173,6 +175,19 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
             self.fields["precio_compra"].initial = ficha.costo if ficha else None
             self.fields["stock_minimo"].initial = ficha.stock_minimo if ficha else 0
             self.fields["codigo"].initial = ficha.codigo if ficha else ""
+            # El stock solo se escribe al CREAR el producto (inventario inicial). Después cambia
+            # únicamente con movimientos que tienen motivo (ventas, ingresos, ajustes y conteo),
+            # así cada cambio queda explicado en el kardex. Al editar se muestra sin poder cambiarlo.
+            stock = self.fields["stock"]
+            stock.disabled = True
+            stock.required = False
+            stock.help_text = format_html(
+                "Para cambiarlo usa <a href=\"{}\">Ajustar stock</a> o <a href=\"{}\">Registrar ingreso</a>: "
+                "así el motivo queda en el <a href=\"{}\">kardex</a>.",
+                reverse("inventario:ajuste_nuevo") + f"?producto={self.instance.pk}",
+                reverse("inventario:ingreso_nuevo") + f"?producto={self.instance.pk}",
+                reverse("inventario:kardex", args=[self.instance.pk]),
+            )
 
     def clean(self):
         datos = super().clean()

@@ -453,6 +453,16 @@ body:has(.visor.show) .modal-backdrop { opacity: 0; }
 }
 .selector-rol input:checked + label { background: var(--nx-blanco); color: var(--nx-oscuro); box-shadow: 0 1px 4px rgba(var(--nx-oscuro-rgb), .15); }
 .selector-rol input:focus-visible + label { outline: 2px solid var(--nx-acento); outline-offset: 2px; }
+/* Tipo de cuenta equivocado: la opción correcta brilla y una flechita la señala. */
+.selector-rol label.selector-rol__sugerida { position: relative; color: var(--nx-oscuro); box-shadow: 0 0 0 2px var(--nx-acento); animation: rol-sugerido 1.1s ease-in-out 4; }
+.selector-rol label.selector-rol__sugerida::after {
+  content: ""; position: absolute; left: 50%; top: -11px; transform: translateX(-50%);
+  border: 7px solid transparent; border-top-color: var(--nx-acento); border-bottom: 0;
+  animation: rol-flecha 1.1s ease-in-out 4;
+}
+@keyframes rol-sugerido { 50% { box-shadow: 0 0 0 5px rgba(25, 195, 230, .35); } }
+@keyframes rol-flecha { 50% { transform: translate(-50%, -4px); } }
+@media (prefers-reduced-motion: reduce) { .selector-rol label.selector-rol__sugerida, .selector-rol label.selector-rol__sugerida::after { animation: none; } }
 .ingreso__subtitulo { color: var(--nx-texto-suave); font-size: .95rem; margin-bottom: 1.25rem; }
 .ingreso .form-label { font-weight: 600; margin-bottom: .35rem; }
 .ingreso .form-control { padding: .65rem .85rem; }

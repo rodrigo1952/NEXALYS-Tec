@@ -76,10 +76,10 @@ class IngresoForm(AuthenticationForm):
         es_tienda = hasattr(usuario, "tienda")
         if tipo == "tienda" and not es_tienda:
             self.tipo_equivocado = "cliente"
-            raise ValidationError("Esta cuenta es de cliente. Elige «Soy cliente» para entrar.", code="tipo_cliente")
+            raise ValidationError("Esta cuenta es de cliente. Ya marcamos «Soy cliente»: escribe tu contraseña otra vez para entrar.", code="tipo_cliente")
         if tipo == "cliente" and es_tienda:
             self.tipo_equivocado = "tienda"
-            raise ValidationError("Esta cuenta es de una tienda. Elige «Soy tienda» para entrar.", code="tipo_tienda")
+            raise ValidationError("Esta cuenta es de una tienda. Ya marcamos «Soy tienda»: escribe tu contraseña otra vez para entrar.", code="tipo_tienda")
 
     def _validar_clave(self):
         try:

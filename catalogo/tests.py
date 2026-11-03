@@ -141,7 +141,8 @@ class CrudProductoTests(BaseCatalogo):
         )
         producto.refresh_from_db()
         self.assertEqual(producto.precio, Decimal("650.00"))
-        self.assertEqual(producto.stock, 2)
+        # El stock no se cambia al editar (se usa Ajustar stock, ingresos o ventas).
+        self.assertEqual(producto.stock, 5)
 
     def test_eliminar_producto_propio(self):
         producto = self.crear_producto()

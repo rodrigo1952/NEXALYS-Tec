@@ -25,14 +25,27 @@ class KardexAutomaticoTests(BaseCatalogo):
         for campo in ("precio_compra", "stock_minimo", "codigo"):
             self.assertIn(campo, campos)
 
-    def test_cambiar_el_stock_al_editar_queda_anotado(self):
+    def test_el_stock_no_se_cambia_al_editar(self):
+        # El stock solo se escribe al crear el producto; después cambia con ventas, ingresos,
+        # ajustes o conteo, que dejan su motivo en el kardex.
         producto = self.crear_producto(nombre="Galaxy A25", stock=10)
         self.client.force_login(self.tienda.usuario)
-        datos = self.datos_formulario(stock="7", version=producto.actualizado.isoformat())
+        datos = self.datos_formulario(nombre="Galaxy A25 nuevo", stock="7", version=producto.actualizado.isoformat())
         self.client.post(reverse("catalogo:editar", args=[producto.pk]), datos)
-        cambio = Movimiento.objects.get(tipo=Movimiento.Tipo.EDICION)
-        self.assertEqual((cambio.cantidad, cambio.stock_resultante), (-3, 7))
-        self.assertEqual(cambio.usuario, self.tienda.usuario)
+        producto.refresh_from_db()
+        self.assertEqual((producto.nombre, producto.stock), ("Galaxy A25 nuevo", 10))
+        self.assertFalse(Movimiento.objects.filter(tipo=Movimiento.Tipo.EDICION).exists())
+
+    def test_al_editar_el_stock_se_ve_bloqueado_con_enlaces_a_los_movimientos(self):
+        producto = self.crear_producto(nombre="Galaxy A25", stock=10)
+        self.client.force_login(self.tienda.usuario)
+        respuesta = self.client.get(reverse("catalogo:editar", args=[producto.pk]))
+        self.assertContains(respuesta, 'name="stock" value="10"')
+        self.assertTrue(respuesta.context["form"].fields["stock"].disabled)
+        self.assertContains(respuesta, reverse("inventario:ajuste_nuevo") + f"?producto={producto.pk}")
+        self.assertContains(respuesta, reverse("inventario:ingreso_nuevo") + f"?producto={producto.pk}")
+        # Al crear, el stock sí se escribe (inventario inicial).
+        self.assertFalse(self.client.get(reverse("catalogo:crear")).context["form"].fields["stock"].disabled)
 
     def test_guardar_sin_cambiar_el_stock_no_anota_nada(self):
         producto = self.crear_producto(stock=5)

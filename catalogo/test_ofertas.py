@@ -83,7 +83,7 @@ class OfertaFormularioTests(BaseCatalogo):
         ))
         self.assertRedirects(respuesta, reverse("catalogo:mis_productos") + f"#producto-{producto.pk}", fetch_redirect_response=False)
         producto.refresh_from_db()
-        self.assertEqual(producto.stock, 20)
+        self.assertEqual(producto.nombre, "Galaxy A15")
 
     def test_maximo_de_destacados_por_tienda(self):
         for numero in range(MAX_DESTACADOS):

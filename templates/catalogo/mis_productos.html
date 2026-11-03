@@ -99,8 +99,9 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
           <td class="d-none d-md-table-cell text-end">{{ producto.num_favoritos }}</td>
           <td class="text-end text-nowrap">
             <a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary">Editar</a>
+            {# strategy fixed: el menú se dibuja sobre la página y la tabla (que tiene desplazamiento propio) no lo recorta. #}
             <div class="btn-group">
-              <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Más opciones de {{ producto.nombre }}">Más</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-label="Más opciones de {{ producto.nombre }}">Más</button>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{% url 'inventario:kardex' producto.pk %}">Kardex (historia del stock)</a></li>
                 <li><a class="dropdown-item" href="{% url 'inventario:ajuste_nuevo' %}?producto={{ producto.pk }}">Ajustar stock (daño, pérdida, devolución)</a></li>

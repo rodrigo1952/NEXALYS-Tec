@@ -49,13 +49,18 @@ class IngresoPorTipoTests(TestCase):
 
     def test_tienda_que_elige_soy_cliente_no_entra(self):
         respuesta = self.entrar("tienda1", "cliente")
-        self.assertContains(respuesta, "Esta cuenta es de una tienda. Elige «Soy tienda» para entrar.")
+        self.assertContains(respuesta, "Esta cuenta es de una tienda. Ya marcamos «Soy tienda»: escribe tu contraseña otra vez para entrar.")
+        # La opción correcta queda marcada y resaltada.
+        self.assertContains(respuesta, 'value="tienda" id="tipo-tienda" checked')
+        self.assertContains(respuesta, '<label for="tipo-tienda" class="selector-rol__sugerida">')
         self.assertIsNone(self.sesion())
 
     def test_cliente_que_elige_soy_tienda_no_entra(self):
         respuesta = self.entrar("cliente1", "tienda")
-        self.assertContains(respuesta, "Esta cuenta es de cliente. Elige «Soy cliente» para entrar.")
-        self.assertContains(respuesta, 'id="tipo-tienda" checked')  # se mantiene lo que eligió
+        self.assertContains(respuesta, "Esta cuenta es de cliente. Ya marcamos «Soy cliente»: escribe tu contraseña otra vez para entrar.")
+        self.assertContains(respuesta, 'value="cliente" id="tipo-cliente" checked')
+        self.assertContains(respuesta, '<label for="tipo-cliente" class="selector-rol__sugerida">')
+        self.assertNotContains(respuesta, 'id="tipo-tienda" checked')  # ya no queda marcada la opción equivocada
         self.assertIsNone(self.sesion())
 
     def test_con_clave_incorrecta_no_revela_el_tipo(self):
