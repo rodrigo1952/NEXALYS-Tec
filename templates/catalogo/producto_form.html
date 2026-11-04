@@ -21,12 +21,9 @@
       <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         {% if lista %}<input type="hidden" name="lista" value="{{ lista }}">{% endif %}
+        {# Fotos arriba de todo, al agregar y al editar (los cambios se aplican al guardar). #}
+        {% include "catalogo/_galeria_edicion.html" %}
         {% include "_campos_formulario.html" %}
-
-        {% if producto %}
-          {# Al editar: galería con un botón para cada cambio de foto (se aplica al guardar). #}
-          {% include "catalogo/_galeria_edicion.html" %}
-        {% endif %}
 
         <div class="d-flex gap-2">
           <button type="submit" class="btn btn-primary">Guardar</button>
@@ -41,4 +38,6 @@
 {% block scripts %}
 {# Categoría y marca con buscador: escribe el nombre o la inicial. #}
 <script src="{% static 'js/lista_buscable.js' %}?v=1"></script>
+{# Galería de fotos: elegir varias, ordenar arrastrando y elegir la principal antes de guardar. #}
+<script src="{% static 'js/galeria_producto.js' %}?v=2"></script>
 {% endblock %}

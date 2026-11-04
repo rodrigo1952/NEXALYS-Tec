@@ -83,6 +83,11 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
     # Orden de las fotos adicionales (ids separados por comas) cuando se arrastran para
     # cambiarlas de lugar. Es el orden en que el cliente las ve después de la principal.
     orden_fotos = forms.CharField(widget=forms.HiddenInput, required=False, max_length=200)
+    # Galería (static/js/galeria_producto.js): el ORDEN FINAL de todas las fotos, la primera es la
+    # principal. Fichas separadas por comas: «p» = la foto principal actual, «f12» = la foto
+    # adicional 12, «n0» = la primera de «fotos_nuevas». «ninguna» = sin fotos. Vacío = no se usó
+    # la galería (se aplican los campos de antes: imagen, eliminar_fotos, principal_foto, etc.).
+    galeria_plan = forms.CharField(widget=forms.HiddenInput, required=False, max_length=200)
 
     # Precio de compra: dato PRIVADO de la tienda (es el "costo" de la ficha de inventario).
     # No es un campo de Producto: se guarda en la ficha. Se edita aquí o en la ficha; es el mismo dato.
@@ -155,6 +160,20 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
                             ("stock", "stock_minimo")):
             self.fields[inicio].fila = "inicio"
             self.fields[fin].fila = "fin"
+        # Las fotos se manejan en la galería (catalogo/_galeria_producto.html), arriba del formulario.
+        for nombre in ("imagen", "fotos_nuevas"):
+            self.fields[nombre].aparte = True
+        # «Publicado» y «Destacado» se ven como tarjetas con interruptor (_campos_formulario.html).
+        self.fields["activo"].interruptor = {
+            "si": "Sí: se ve en el catálogo", "no": "No: está oculto, los clientes no lo ven",
+            "icono": "eye-fill", "icono_no": "eye-slash", "color": "verde",
+        }
+        self.fields["destacado"].interruptor = {
+            "si": "Sí: aparece entre los destacados del inicio", "no": "No: no aparece entre los destacados",
+            "icono": "star-fill", "icono_no": "star", "color": "ambar",
+        }
+        for nombre in ("activo", "destacado"):
+            self.fields[nombre].widget.attrs["role"] = "switch"
         if self.instance.pk:
             self.fields["version"].initial = self.instance.actualizado.isoformat()
             self.fields["eliminar_fotos"].queryset = self.instance.fotos.all()
@@ -193,8 +212,11 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         datos = super().clean()
         self._validar_oferta(datos)
         self._validar_destacado(datos)
-        self._validar_cantidad_de_fotos(datos)
-        self._validar_principal(datos)
+        if datos.get("galeria_plan"):
+            datos["plan_fotos"] = self._leer_plan(datos)
+        else:
+            self._validar_cantidad_de_fotos(datos)
+            self._validar_principal(datos)
         self._validar_version(datos)
         return datos
 
@@ -204,8 +226,43 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
             return []
         return [{"foto": foto, "reemplazo": self[f"reemplazar_{foto.pk}"]} for foto in self.instance.fotos.all()]
 
+    def fotos_galeria(self):
+        """Fotos actuales en orden (la primera es la principal), con la ficha que usa el plan."""
+        if not self.instance.pk:
+            return []
+        fotos = [{"ficha": "p", "url": self.instance.imagen.url}] if self.instance.imagen else []
+        return fotos + [{"ficha": f"f{foto.pk}", "url": foto.imagen.url} for foto in self.instance.fotos.all() if foto.imagen]
+
+    def fotos_maximo(self):
+        return MAX_FOTOS_EXTRA + 1  # la principal y las adicionales
+
     def fotos_libres(self):
         return MAX_FOTOS_EXTRA - (self.instance.fotos.count() if self.instance.pk else 0)
+
+    def _leer_plan(self, datos):
+        """Convierte «p,f12,n0» en [("p", None), ("f", 12), ("n", 0)] y revisa que sea posible."""
+        texto = datos["galeria_plan"].strip()
+        if texto == "ninguna":
+            return []
+        nuevas = datos.get("fotos_nuevas") or []
+        propias = set(self.instance.fotos.values_list("pk", flat=True)) if self.instance.pk else set()
+        plan, vistos = [], set()
+        for ficha in [parte.strip() for parte in texto.split(",") if parte.strip()]:
+            if ficha in vistos:
+                continue
+            vistos.add(ficha)
+            if ficha == "p" and self.instance.pk and self.instance.imagen:
+                plan.append(("p", None))
+            elif ficha[:1] == "f" and ficha[1:].isdigit() and int(ficha[1:]) in propias:
+                plan.append(("f", int(ficha[1:])))
+            elif ficha[:1] == "n" and ficha[1:].isdigit() and int(ficha[1:]) < len(nuevas):
+                plan.append(("n", int(ficha[1:])))
+            else:
+                self.add_error(None, "Las fotos cambiaron mientras editabas. Revisa la galería y vuelve a guardar.")
+                return []
+        if len(plan) > MAX_FOTOS_EXTRA + 1:
+            self.add_error(None, f"Puedes tener hasta {MAX_FOTOS_EXTRA + 1} fotos en total (la principal y {MAX_FOTOS_EXTRA} más).")
+        return plan
 
     def _validar_principal(self, datos):
         foto_id = datos.get("principal_foto")
@@ -299,6 +356,9 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         ficha.save()
 
     def guardar_fotos(self, producto):
+        if self.cleaned_data.get("galeria_plan"):
+            self.aplicar_plan(producto, self.cleaned_data.get("plan_fotos") or [])
+            return
         quitadas = {foto.pk for foto in self.cleaned_data.get("eliminar_fotos") or []}
         for foto in self.cleaned_data.get("eliminar_fotos") or []:
             foto.delete()  # la señal borra también el archivo
@@ -314,6 +374,49 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         for posicion, archivo in enumerate(self.cleaned_data.get("fotos_nuevas") or []):
             FotoProducto.objects.create(producto=producto, imagen=archivo, orden=siguiente + posicion)
         self.hacer_principal(producto, self.cleaned_data.get("principal_foto"))
+
+    def aplicar_plan(self, producto, plan):
+        """
+        Deja las fotos en el orden del plan: la primera es la principal y las demás, adicionales.
+        Las fotos que ya existían solo cambian de lugar (se cambia el nombre del archivo en la base
+        de datos, sin volver a subirlo); las que no están en el plan se borran. Al terminar, cada
+        archivo se mueve a su carpeta y toma el nombre que le corresponde (reubicar_producto).
+        """
+        nuevas = self.cleaned_data.get("fotos_nuevas") or []
+        principal = Producto.objects.filter(pk=producto.pk).values_list("imagen", flat=True).first() or ""
+        fotos = {foto.pk: foto for foto in producto.fotos.all()}
+        # Las fotos nuevas se guardan primero como adicionales (así se optimizan y se nombran).
+        filas_nuevas = {}
+        for tipo, valor in plan:
+            if tipo == "n":
+                filas_nuevas[valor] = FotoProducto.objects.create(producto=producto, imagen=nuevas[valor], orden=0)
+        nombres = [
+            principal if tipo == "p" else fotos[valor].imagen.name if tipo == "f" else filas_nuevas[valor].imagen.name
+            for tipo, valor in plan
+        ]
+        # Fotos adicionales que ya no están en el plan: se borran (la señal borra su archivo).
+        en_plan = {valor for tipo, valor in plan if tipo == "f"}
+        for pk, foto in fotos.items():
+            if pk not in en_plan:
+                foto.delete()
+        filas = [fotos[valor] for tipo, valor in plan if tipo == "f"] + list(filas_nuevas.values())
+        # La principal anterior que no siguió en el plan: se borra su archivo al confirmar.
+        if principal and ("p", None) not in plan:
+            almacenamiento = producto.imagen.storage
+            transaction.on_commit(lambda: almacenamiento.delete(principal))
+        Producto.objects.filter(pk=producto.pk).update(imagen=nombres[0] if nombres else "")
+        producto.imagen.name = nombres[0] if nombres else ""
+        # Cada fila toma el archivo que le toca, en orden. Si sobra una fila (porque su foto subió a
+        # principal), se borra sin tocar el archivo.
+        for posicion, fila in enumerate(filas, start=1):
+            if posicion < len(nombres):
+                FotoProducto.objects.filter(pk=fila.pk).update(imagen=nombres[posicion], orden=posicion)
+            else:
+                FotoProducto.objects.filter(pk=fila.pk).update(imagen="")
+                FotoProducto.objects.get(pk=fila.pk).delete()
+        from .reubicar import reubicar_producto
+
+        transaction.on_commit(lambda: reubicar_producto(producto.pk))
 
     def ordenar_fotos(self, producto):
         """Guarda el nuevo orden de las fotos adicionales (solo las de este producto que siguen existiendo)."""

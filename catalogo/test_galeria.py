@@ -22,6 +22,14 @@ def color(campo):
     return "rojo" if r > g else "verde"
 
 
+def galeria_js():
+    """Código de la galería (static/js/galeria_producto.js): ahí se dibujan las tarjetas."""
+    from django.contrib.staticfiles import finders
+
+    with open(finders.find("js/galeria_producto.js"), encoding="utf-8") as archivo:
+        return archivo.read()
+
+
 @override_settings(MEDIA_ROOT=CARPETA_MEDIA)
 class GaleriaEdicionTests(BaseCatalogo):
     @classmethod
@@ -45,12 +53,17 @@ class GaleriaEdicionTests(BaseCatalogo):
 
     def test_la_galeria_muestra_todas_las_fotos_con_sus_botones(self):
         respuesta = self.client.get(self.url)
-        for texto in ("Fotos del producto", "Foto principal", "Cambiar foto principal", 'aria-label="Quitar la foto principal"',
-                      "Hacer principal", "Reemplazar", 'aria-label="Quitar la foto 1"', "+ Agregar fotos",
-                      "Puedes agregar 4 más", "o arrástralas aquí"):
+        for texto in ("Fotos del producto", "+ Agregar fotos", 'data-maximo="6"', 'name="galeria_plan"',
+                      'id="fotos-actuales"', "js/galeria_producto.js"):
             self.assertContains(respuesta, texto)
-        self.assertContains(respuesta, self.adicional.imagen.url)
-        self.assertContains(respuesta, f'name="reemplazar_{self.adicional.pk}"')
+        # Las fotos actuales, en orden (la principal primero), van a la galería con su ficha.
+        self.assertEqual(respuesta.context["form"].fotos_galeria(), [
+            {"ficha": "p", "url": self.producto.imagen.url},
+            {"ficha": f"f{self.adicional.pk}", "url": self.adicional.imagen.url},
+        ])
+        for texto in ("Foto principal", "Cambiar foto principal", "★ Hacer principal", "Reemplazar", "Quitar la foto ",
+                      "Agregar fotos", "arrástralas aquí", "Mover a la izquierda", "Mover a la derecha"):
+            self.assertIn(texto, galeria_js())
 
     def test_categoria_y_marca_en_una_fila(self):
         html = self.client.get(reverse("catalogo:crear")).content.decode()
@@ -100,27 +113,25 @@ class GaleriaEdicionTests(BaseCatalogo):
         self.guardar(fotos_nuevas=[foto("a.png"), foto("b.png")])
         self.assertEqual(self.producto.fotos.count(), 3)
 
-    def test_la_principal_va_grande_y_las_adicionales_aparte(self):
-        html = self.client.get(self.url).content.decode()
-        principal = html.index('class="tarjeta-foto tarjeta-foto--principal"')
-        secundarias = html.index('class="galeria-edicion__secundarias"')
-        self.assertLess(principal, secundarias)
-        self.assertLess(secundarias, html.index('class="tarjeta-foto tarjeta-foto--secundaria"'))
+    def test_la_galeria_va_arriba_del_formulario(self):
+        for url in (self.url, reverse("catalogo:crear")):
+            html = self.client.get(url).content.decode()
+            self.assertLess(html.index("data-galeria"), html.index('name="nombre"'))
+            self.assertLess(html.index("data-principal"), html.index("data-secundarias"))
 
     def test_arrastrar_y_quitar_con_x(self):
-        respuesta = self.client.get(self.url)
-        self.assertContains(respuesta, 'draggable="true"')  # las adicionales se arrastran a la principal
-        self.assertContains(respuesta, 'data-soltar-texto="Suelta para que sea la foto principal"')
-        self.assertContains(respuesta, 'class="zona-agregar mb-0" data-zona-agregar')
-        self.assertContains(respuesta, 'class="tarjeta-foto__x"', count=2)
-        self.assertNotContains(respuesta, "modal-quitar-foto")  # la X no pide confirmación: se deshace
+        codigo = galeria_js()
+        self.assertIn("img.draggable = true", codigo)  # todas las fotos se arrastran, también las nuevas
+        for texto in ("Suelta para que sea la foto principal", "Suelta para cambiarlas de lugar", "zona-agregar", "tarjeta-foto__x"):
+            self.assertIn(texto, codigo)
+        self.assertNotContains(self.client.get(self.url), "modal-quitar-foto")  # la X no pide confirmación: se deshace
 
     def test_sin_espacio_no_hay_zona_para_agregar(self):
         for orden in range(2, 6):
             FotoProducto.objects.create(producto=self.producto, imagen=foto(f"extra{orden}.png"), orden=orden)
-        respuesta = self.client.get(self.url)
-        self.assertNotContains(respuesta, 'class="zona-agregar')
-        self.assertContains(respuesta, "Ya tienes el máximo de fotos adicionales")
+        formulario = self.client.get(self.url).context["form"]
+        self.assertEqual(len(formulario.fotos_galeria()), formulario.fotos_maximo())
+        self.assertIn("var hayLugar = fotos.length < MAXIMO;", galeria_js())
 
     def test_el_visor_recorre_las_fotos_del_producto(self):
         respuesta = self.client.get(reverse("catalogo:detalle", args=[self.producto.pk]))
@@ -152,17 +163,13 @@ class OrdenDeFotosTests(BaseCatalogo):
         return list(self.producto.fotos.values_list("pk", flat=True))
 
     def test_cada_foto_muestra_su_numero(self):
-        respuesta = self.client.get(self.url)
-        self.assertContains(respuesta, 'name="orden_fotos"')
-        self.assertContains(respuesta, '<span class="numero-foto" title="Se ve primero">1</span>', html=True)
-        for numero in (2, 3, 4):
-            self.assertContains(respuesta, f'title="Orden en que se ve">{numero}</span>')
-        self.assertContains(respuesta, "Suelta para cambiarlas de lugar")
+        self.assertContains(self.client.get(self.url), 'name="orden_fotos"')
+        codigo = galeria_js()
+        self.assertIn('<span class="numero-foto" title="Se ve primero">1</span>', codigo)
+        self.assertIn('"numero-foto numero-foto--secundaria", String(i + 1)', codigo)
 
     def test_la_principal_tambien_se_arrastra(self):
-        respuesta = self.client.get(self.url)
-        self.assertContains(respuesta, 'alt="Foto principal de Galaxy A15" data-vista draggable="true"')
-        self.assertContains(respuesta, "galeria-edicion--arrastrando-principal")
+        self.assertIn('img.alt = principal ? "Foto principal"', galeria_js())
         # La principal soltada sobre una adicional las intercambia (lo mismo que «Hacer principal»).
         respuesta = self.guardar(principal_foto=str(self.f2.pk))
         self.assertRedirects(respuesta, reverse("catalogo:mis_productos") + f"#producto-{self.producto.pk}", fetch_redirect_response=False)

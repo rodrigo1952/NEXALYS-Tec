@@ -315,6 +315,7 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
   box-shadow: 0 2px 6px rgba(var(--nx-oscuro-rgb), .3);
 }
 .etiqueta-principal span { color: var(--nx-acento); }
+.etiqueta-principal .numero-foto { color: var(--nx-oscuro); }  /* el «1» se lee sobre el círculo cian */
 /* Adicionales: más pequeñas y discretas. */
 .tarjeta-foto--secundaria { padding: .4rem; }
 .tarjeta-foto--secundaria .tarjeta-foto__botones .btn { font-size: .72rem; padding: .15rem .4rem; }
@@ -1226,6 +1227,43 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
   position: absolute; top: .55rem; left: 2.4rem; z-index: 3; padding: .1rem .45rem; border-radius: 999px;
   background: var(--nx-acento); color: var(--nx-oscuro); font-size: .7rem; font-weight: 800;
 }
+.etiqueta-nueva--principal { top: 3.35rem; left: 1.15rem; }
+/* Galería: principal vacía (aún sin fotos), flechas para mover en el celular */
+.tarjeta-foto--vacia { cursor: pointer; }
+.tarjeta-foto--vacia .tarjeta-foto__imagen { border: 2px dashed var(--nx-borde); background: #fff; }
+.tarjeta-foto--vacia:hover .tarjeta-foto__imagen { border-color: var(--nx-acento); }
+.tarjeta-foto__mover { display: inline-flex; gap: .3rem; margin-left: auto; }
+.tarjeta-foto__mover .btn { min-width: 2rem; font-weight: 700; }
+.tarjeta-foto [draggable="true"] { cursor: grab; }
+
+/* Casillas importantes (Publicado, Destacado): tarjeta con interruptor que cambia de color y de texto */
+.interruptor {
+  display: flex; align-items: center; gap: .85rem; margin: 0; padding: .85rem 1rem; cursor: pointer;
+  border: 2px solid var(--nx-borde); border-radius: .9rem; background: var(--nx-blanco);
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+.interruptor:hover { border-color: rgba(var(--nx-acento-rgb), .6); }
+.interruptor:has(input:focus-visible) { box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .35); }
+.interruptor__icono {
+  flex: none; display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%;
+  background: var(--nx-fondo-suave); color: var(--nx-texto-suave); font-size: 1.2rem;
+}
+.interruptor__textos { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.interruptor__titulo { font-weight: 700; color: var(--nx-oscuro); }
+.interruptor__estado { font-size: .875rem; color: var(--nx-texto-suave); }
+.interruptor .interruptor__si { display: none; }
+.interruptor:has(input:checked) .interruptor__si { display: inline; }
+.interruptor:has(input:checked) .interruptor__no { display: none; }
+.interruptor .form-switch { padding: 0; }
+.interruptor .form-switch .form-check-input { float: none; margin: 0; width: 3.1em; height: 1.65em; cursor: pointer; }
+.interruptor--verde:has(input:checked) { border-color: #198754; background: #ECF8F1; }
+.interruptor--verde:has(input:checked) .interruptor__icono { background: #198754; color: #fff; }
+.interruptor--verde:has(input:checked) .interruptor__estado { color: #146C43; font-weight: 600; }
+.interruptor--verde .form-check-input:checked { background-color: #198754; border-color: #198754; }
+.interruptor--ambar:has(input:checked) { border-color: #E5A800; background: #FFF8E1; }
+.interruptor--ambar:has(input:checked) .interruptor__icono { background: #F5B800; color: #4A3600; }
+.interruptor--ambar:has(input:checked) .interruptor__estado { color: #8A6100; font-weight: 600; }
+.interruptor--ambar .form-check-input:checked { background-color: #E5A800; border-color: #E5A800; }
 
 /* Mis productos: al volver de «Editar», el producto editado se resalta un momento */
 .fila-producto { scroll-margin-top: 140px; }

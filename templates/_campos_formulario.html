@@ -10,7 +10,20 @@
     {# Dos campos pueden ir en la misma fila: el primero tiene fila="inicio" y el segundo fila="fin". #}
     {% if campo.field.fila == "inicio" %}<div class="row g-3 mb-3">{% endif %}
     <div class="{% if campo.field.fila %}col-sm-6{% else %}mb-3{% endif %}">
-      {% if campo.widget_type == "checkbox" %}
+      {% if campo.field.interruptor %}
+        {# Casilla importante (Publicado, Destacado): tarjeta con interruptor que cambia de color y de texto. #}
+        {% with i=campo.field.interruptor %}
+        <label class="interruptor interruptor--{{ i.color }}" for="{{ campo.id_for_label }}">
+          <span class="interruptor__icono" aria-hidden="true"><i class="bi bi-{{ i.icono }} interruptor__si"></i><i class="bi bi-{{ i.icono_no|default:i.icono }} interruptor__no"></i></span>
+          <span class="interruptor__textos">
+            <span class="interruptor__titulo">{{ campo.label }}</span>
+            <span class="interruptor__estado interruptor__si">{{ i.si }}</span>
+            <span class="interruptor__estado interruptor__no">{{ i.no }}</span>
+          </span>
+          <span class="form-check form-switch m-0">{{ campo }}</span>
+        </label>
+        {% endwith %}
+      {% elif campo.widget_type == "checkbox" %}
         <div class="form-check">
           {{ campo }}
           <label class="form-check-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>

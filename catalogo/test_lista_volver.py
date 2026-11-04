@@ -95,6 +95,8 @@ class FotosNuevasComoTarjetasTests(BaseCatalogo):
         self.client.force_login(self.tienda.usuario)
         producto = self.crear_producto()
         respuesta = self.client.get(reverse("catalogo:editar", args=[producto.pk]))
-        self.assertContains(respuesta, "tarjeta-foto--nueva")
-        self.assertContains(respuesta, 'etiqueta.textContent = "Nueva"')
         self.assertNotContains(respuesta, 'id="nuevas-fotos-lista"')
+        from .test_galeria import galeria_js
+
+        self.assertIn("tarjeta-foto--nueva", galeria_js())
+        self.assertIn('"Nueva"', galeria_js())
