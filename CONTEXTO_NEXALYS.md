@@ -16,23 +16,25 @@
 ## 2. Tecnología
 
 - Python 3.14 (Windows; el venv se crea con `py -3.14 -m venv venv` y VS Code usa ese intérprete), **Django 6.1.1**, SQLite (`transaction_mode` IMMEDIATE), Pillow, openpyxl.
-- Bootstrap 5.3.3 y Chart.js desde CDN. Letra Space Grotesk (Google Fonts); el logo animado de Inicio usa Lilita One.
+- Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 (jsDelivr), Chart.js 4.4.1 y **Leaflet 1.9.4** (cdnjs) con los mapas de
+  **OpenStreetMap** (sin clave ni costo). Letra Space Grotesk (Google Fonts); el logo animado de Inicio usa Lilita One.
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
-  Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html`.
+  Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html` (va en **v=26**).
+  Lo mismo con los scripts propios: `galeria_producto.js?v=2`, `mapas.js?v=1`, `horario.js?v=2`.
 - `db.sqlite3`, `media/` y `.vscode/` **no** van a GitHub (`.gitignore`). Para llevar datos de prueba a otra PC:
   `python manage.py exportar_demo` / `python manage.py cargar_demo` (ver README).
 - Para la presentación: `python manage.py cargar_productos_presentacion` crea 3 tiendas ficticias
   (Selva Byte, Valle Digital Tech, Kantu Tech; WhatsApp del equipo 930909090, 920909090, 910909090)
-  con 47 productos reales sin foto (datos en `catalogo/presentacion.py`; enlaces para las fotos en
-  "Claude outputs/Fotos_productos_presentacion.md").
+  con 47 productos reales (datos en `catalogo/presentacion.py`). Las fotos de esos productos el usuario
+  ya las subió a mano en su PC (están en su `media/` y en su `db.sqlite3`, no en GitHub).
 
 ## 3. Roles y módulos
 
-- **Visitante**: ve el catálogo sin registrarse.
+- **Visitante**: ve el catálogo sin registrarse y la página **Tiendas cercanas** (mapa + lista por distancia).
 - **Cliente**: favoritos con avisos dentro de la página (sin correo). No hay reseñas.
 - **Tienda**: se registra como "pendiente" y se activa al confirmar su correo. Gestiona productos
   (varias fotos, ofertas con fecha fin opcional, hasta 3 destacados), perfil con horario por día,
-  logo, dirección y Google Maps. Inventario completo:
+  logo, dirección y **ubicación del local en el mapa** (opcional, con pin). Inventario completo:
   - ventas con nota de venta para imprimir;
   - ingresos de mercadería con costo promedio;
   - ajustes, conteo y kardex;
@@ -46,12 +48,17 @@
 
 - **Privacidad por tienda**: costos, ganancia, proveedores y clientes de cada tienda solo los ve esa
   tienda. El administrador no los ve.
-- **Datos sensibles**: cambiar nombre, apellido o correo de la cuenta, y nombre, dirección o WhatsApp
-  de la tienda, pide la contraseña otra vez (`cuentas/reautenticacion.py`, válido 10 minutos).
-  Los productos no la piden.
+- **Datos sensibles**: cambiar nombre, apellido o correo de la cuenta, y nombre, dirección, WhatsApp o
+  **ubicación en el mapa** de la tienda, pide la contraseña otra vez (`cuentas/reautenticacion.py`, válido
+  10 minutos). Los productos no la piden.
+- **Stock**: solo se escribe al CREAR el producto (inventario inicial). Al editar, el campo «Stock actual» se ve
+  bloqueado con enlaces a «Ajustar stock» y «Registrar ingreso»: así todo cambio queda en el kardex con su motivo.
+- **Ubicación del cliente**: «Tiendas cercanas» la usa solo en su navegador (distancias); nunca llega al servidor
+  ni se guarda (Ley 29733).
 - **Login**: el selector "Soy cliente / Soy tienda" se valida. Una tienda debe entrar como tienda y
   un cliente como cliente; el administrador entra con cualquiera. El aviso solo sale si la contraseña
-  es correcta.
+  es correcta. Si eligió mal, la página **marca sola la opción correcta** (brilla con una flechita), deja
+  escrito el usuario y pone el cursor en la contraseña.
 - **Exportación de demo**: nunca exporta contraseñas, clientes, ventas, inventario ni favoritos, y
   reemplaza los correos reales.
 - "Otra" (marca) y "Otros" (categoría) van siempre al final de las listas.
@@ -79,6 +86,13 @@
 - Claude corre las pruebas de Django y revisa las pantallas (Playwright) en su propio entorno antes de
   entregar; aun así, el usuario las vuelve a correr en su PC (`python manage.py test`) y manda capturas.
 - Claude no puede borrar archivos en su PC; si algo sobra, le indica cuál borrar.
+- El entorno de Claude no llega a los CDN ni a OpenStreetMap: para revisar pantallas con Playwright usa
+  simuladores (stub) de Chart.js y de Leaflet; los mapas reales los revisa el usuario en su PC.
+- **Ojo con arrastrar fotos**: en Chrome/Brave/Edge, arrastrar una `<img>` de la página también trae la imagen
+  como «Files». Para probar un arrastre de verdad hay que simularlo con un `DataTransfer` que incluya un `File`
+  (con el arrastre sintético de Playwright el error no aparece).
+- Al terminar una tarea: el usuario corre `python manage.py test` (y `migrate` si hay migraciones nuevas),
+  prueba en el navegador con **Ctrl + F5** y hace el commit.
 
 ## 6. Convenciones del código
 
@@ -92,11 +106,20 @@
 - Acciones visibles (no usar enlaces `.small` para acciones): `.btn-volver` (con `<span class="flecha">&larr;</span>`)
   para «Volver a…», `.atajo` + botón para crear lo que falta (p. ej. «+ Crear producto», «+ Nuevo proveedor»)
   y `.enlace-accion` para «Ver más / ver todo» (agrega la flecha →). Están en `marca.css`.
-- Fotos al editar un producto (`catalogo/_galeria_edicion.html`): principal grande a la izquierda y
-  adicionales más pequeñas; se arrastra una adicional a la principal para intercambiarlas, se sueltan
-  archivos sobre una foto para reemplazarla o en la galería para agregarlos; la «X» marca para quitar
-  (con Deshacer). Todo se aplica al «Guardar». Visor de fotos con flechas, teclado y contador en
-  `static/js/visor.js` (las imágenes con el mismo `data-galeria` se recorren juntas).
+- **Galería de fotos del producto** (al AGREGAR y al EDITAR, arriba de todo el formulario):
+  `catalogo/_galeria_edicion.html` + `static/js/galeria_producto.js`. Todas las fotos en una sola lista
+  (máximo 6); **la primera es la principal**. «+ Agregar fotos» permite elegir varias a la vez (se suman en el
+  orden que entrega el navegador: Windows NO informa el orden de los clics). Arrastrar una foto sobre otra las
+  **intercambia** (también fotos nuevas sin guardar); botones «★ Hacer principal», flechas ‹ › (celular),
+  «Reemplazar» y «X». Si se quita la principal, sube la siguiente. Al guardar se envía el orden final en el campo
+  oculto `galeria_plan` («p» = principal actual, «f12» = foto adicional 12, «n0» = 1.ª foto nueva; «ninguna» = sin
+  fotos) y las fotos nuevas en `fotos_nuevas`; el servidor lo aplica en `ProductoForm.aplicar_plan` (las fotos que
+  ya existían solo cambian de lugar, sin volver a subirse; luego `reubicar_producto` renombra los archivos).
+  Sin `galeria_plan` se usan los campos antiguos (imagen, eliminar_fotos, principal_foto, orden_fotos,
+  reemplazar_<id>), que siguen funcionando. Si el formulario tiene errores, el navegador pierde las fotos nuevas
+  (la página lo avisa).
+- Visor de fotos con flechas, teclado y contador en `static/js/visor.js` (las imágenes con el mismo
+  `data-galeria` se recorren juntas).
 - Barra de categorías (debajo del menú, en todas las páginas menos el login): las 5 con más movimiento
   (vistas + favoritos × 5 de los últimos 30 días; «Otros» nunca entra) y «☰ Todas las categorías».
   Se calcula en `catalogo/context_processors.py`.
@@ -108,12 +131,7 @@
   quitar filtros, orden y vista 4/3/lista. La búsqueda viene del menú y la categoría de la barra.
 - Cada categoría tiene `icono` (Bootstrap Icons, lo elige el admin con un selector de dibujos); se ve
   solo en «Todas las categorías». Visor de fotos con fondo claro difuminado y miniaturas.
-- Galería al editar: «Hacer principal» o arrastrar una adicional a la principal las intercambia en la
-  pantalla al instante (arrastrarla de vuelta lo deshace); un archivo de la PC reemplaza.
-  La principal también se puede arrastrar sobre una adicional: se intercambian igual.
-  Arrastrar una adicional sobre otra adicional las **cambia de lugar** (con «Deshacer orden»); cada foto
-  muestra un número con el orden en que la ve el cliente (1 = principal). El orden viaja en el campo
-  oculto `orden_fotos` y se guarda en `FotoProducto.orden` (`ProductoForm.ordenar_fotos`).
+- El orden de las fotos adicionales se guarda en `FotoProducto.orden` (la principal es `Producto.imagen`).
 - Detalle del producto: las fotos cambian solas cada **5 segundos** (se pausan con el mouse encima y no
   se mueven si el sistema pide «reducir movimiento»); la miniatura de la foto que se ve queda resaltada.
 - **Centro de cuenta** (`templates/cuentas/_centro.html`, bloque `centro`): cabecera simple (logo,
@@ -164,22 +182,55 @@
   Filtro rápido «Ocultos» (no publicados u ocultos por el administrador).
 - Paginación con números en todas las listas (`catalogo/_paginacion.html`, etiqueta `numeros_de_pagina`):
   todas hasta 7 páginas; con más, la primera, la última y las cercanas («1 … 8 9 10 11 12 … 30»).
-- Las fotos nuevas que se agregan al editar aparecen como tarjetas al final de las adicionales («Nueva», con X).
+- **«Publicado» y «Destacado en el inicio»** se ven como tarjetas con interruptor (verde con ojo / ámbar con
+  estrella cuando están activas; textos «Sí: …» / «No: …»). Cualquier casilla de un formulario puede usarlo con
+  el atributo `interruptor = {"si", "no", "icono", "icono_no", "color"}` (`_campos_formulario.html`).
+- Menú «Más» de cada producto en Mis productos: `data-bs-popper-config='{"strategy":"fixed"}'` para que la tabla
+  (que tiene desplazamiento propio) no lo recorte aunque haya un solo producto.
 - «Agotados», «Stock bajo», el aviso amarillo del menú y las alertas del Resumen cuentan SOLO productos
   visibles; lo que no ve el cliente (oculto por la tienda o por el administrador) va solo en «Ocultos».
 - **Destacados del Inicio por turnos** (`catalogo/destacados.py`): 8 lugares; primero 1 producto de cada tienda
   (su destacado más popular), luego el 2.º de cada una, etc. El orden de las tiendas rota cada día.
   «Ver todos los destacados (N)» lleva al catálogo con el filtro `destacados=on` («⭐ Destacados»).
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **548 pruebas**.
+- **Tiendas cercanas** (`/tiendas/cercanas/`, `tiendas.views.cercanas`, `templates/tiendas/cercanas.html`): para todos
+  (visitantes y clientes; en el menú de visitantes y clientes y como botón en Inicio; la tienda y el admin no lo
+  tienen en su menú). Mapa (OpenStreetMap) con un pin por tienda (logo o inicial) y lista: distancia, local
+  abierto/cerrado, productos publicados, «Cómo llegar» (Google Maps con ruta), «Ver en el mapa», WhatsApp y
+  «Ver tienda». «Usar mi ubicación» ordena por distancia (en línea recta, fórmula del haversine). Las tiendas sin
+  ubicación van al final. Centro por defecto: Quillabamba (`tiendas.models.CENTRO_QUILLABAMBA`).
+- **Ubicación del local**: campos `Tienda.latitud` / `Tienda.longitud` (migración `tiendas/0007_ubicacion`). La tienda
+  pone el pin en «Editar datos de mi tienda» (tocar el mapa, arrastrar el pin o «Usar mi ubicación actual»).
+  `Tienda.tiene_ubicacion`, `enlace_mapa()` y `enlace_como_llegar()`. El perfil público y el detalle del producto
+  muestran «Cómo llegar» (y el perfil, un mapa pequeño) si la tienda marcó su local.
+- Mapas: `templates/_leaflet.html` carga Leaflet y `static/js/mapas.js` (modos `data-mapa-tiendas`,
+  `data-mapa-editar`, `data-mapa-tienda`). Las páginas con mapa usan el decorador `tiendas.views.con_mapa`, que
+  cambia `Referrer-Policy` a `strict-origin-when-cross-origin`: OpenStreetMap exige saber el sitio y Django por
+  defecto (`same-origin`) no lo envía (sin esto el mapa sale en blanco). En plantillas, las coordenadas se
+  imprimen con `stringformat:'s'` o como texto, porque el formato local de Django pondría coma decimal.
+  El navegador solo comparte la ubicación en https o en 127.0.0.1.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **571 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 
 - Publicar la página: hosting para Django (cotizado PythonAnywhere, plan Developer) y dominio .pe.
+  Al publicar: **https obligatorio** (sin él no funciona «Usar mi ubicación»), `DEBUG = False`, `ALLOWED_HOSTS`,
+  `SECRET_KEY` fuera del código, correo SMTP real. Si los mapas tuvieran mucho tráfico, cambiar el proveedor de
+  cuadros de OpenStreetMap (una línea en `mapas.js`).
+- Confirmar el nombre del instituto: el informe dice «IESTP Urusayhua» (Tecnológico) y el pie de la página y el
+  README dicen «IESPP» (Pedagógico). Uno de los dos está mal.
+- El correo de soporte `soporte@nexalys.pe` es de demostración (`cuentas/views.py`, `CORREO_SOPORTE`).
+- Los manuales del Entregable 8 se hicieron antes de: la galería única de fotos, el stock bloqueado al editar,
+  el login que marca la opción correcta y Tiendas cercanas. Si se actualizan, revisar esas partes y sus capturas.
 - Decidir cómo cobrar a las tiendas (por ejemplo, 1 % por venta) y cómo evitar que lo evadan.
 - "Seguir tiendas" (etapa 2).
 - Posible migración de SQLite a MySQL más adelante.
 
 ## 8. Documentos ya hechos (en la carpeta "Claude outputs", fuera de git)
+
+- **Entregable 8** (`Claude outputs/Entregable 8/`, entregado el 02/11/2026): Manual técnico, Manual de usuario
+  (por rol, con capturas reales del entorno de demostración) y Glosario técnico bilingüe (59 términos ES–EN).
+  Se generaron con un script (docx-js) en el entorno de Claude; desde ahora se editan directamente en Word.
+  El índice es un campo de Word: tras cambiar algo, clic derecho > Actualizar campos > Actualizar toda la tabla.
 
 - Plan de pruebas (F-IV-09) y plan de backup (F-IV-10).
 - Valorización de costos del desarrollo (`Costos_Desarrollo_NEXALYS_Tec.docx`).
