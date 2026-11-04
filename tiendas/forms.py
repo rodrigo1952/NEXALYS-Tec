@@ -101,7 +101,11 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
     dirección o el WhatsApp se pide la contraseña (no para la descripción ni el logo).
     """
 
-    CAMPOS_SENSIBLES = {"nombre": "nombre de la tienda", "direccion": "dirección", "whatsapp": "WhatsApp"}
+    # La ubicación en el mapa también es sensible: con ella los clientes llegan al local.
+    CAMPOS_SENSIBLES = {
+        "nombre": "nombre de la tienda", "direccion": "dirección", "whatsapp": "WhatsApp",
+        "latitud": "ubicación en el mapa", "longitud": "ubicación en el mapa",
+    }
 
     # Se acepta el número con +51 o espacios; se guardan solo los 9 dígitos.
     whatsapp = forms.CharField(
@@ -112,8 +116,19 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
 
     class Meta:
         model = Tienda
-        fields = ["nombre", "direccion", "whatsapp", "descripcion", "logo"]
-        widgets = {"descripcion": forms.Textarea(attrs={"rows": 3})}
+        fields = ["nombre", "direccion", "whatsapp", "descripcion", "logo", "latitud", "longitud"]
+        # La latitud y la longitud las llena el mapa (static/js/mapas.js) al poner el pin.
+        widgets = {
+            "descripcion": forms.Textarea(attrs={"rows": 3}),
+            "latitud": forms.HiddenInput(),
+            "longitud": forms.HiddenInput(),
+        }
+
+    def clean(self):
+        datos = super().clean()
+        if (datos.get("latitud") is None) != (datos.get("longitud") is None):
+            self.add_error(None, "La ubicación en el mapa quedó incompleta. Vuelve a poner el pin en tu local.")
+        return datos
 
     def clean_nombre(self):
         nombre = " ".join(self.cleaned_data["nombre"].split())

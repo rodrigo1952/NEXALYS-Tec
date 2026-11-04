@@ -12,6 +12,7 @@
     </form>
     <div class="d-flex flex-wrap gap-2">
       <a href="{% url 'catalogo:catalogo' %}" class="btn btn-outline-light">Ver catálogo</a>
+      <a href="{% url 'tiendas:cercanas' %}" class="btn btn-outline-light"><i class="bi bi-geo-alt" aria-hidden="true"></i> Tiendas cercanas</a>
       {% if user.is_authenticated %}
         {% if es_tienda %}
           <a href="{% url 'tiendas:panel' %}" class="btn btn-outline-light">Ir a mi tienda</a>

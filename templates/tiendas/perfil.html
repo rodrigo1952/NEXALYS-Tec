@@ -19,8 +19,18 @@
     <p class="perfil-tienda__direccion"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> {{ tienda.direccion }}</p>
     <div class="d-flex flex-wrap gap-2">
       <a href="{{ tienda.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir por WhatsApp</a>
-      <a href="{{ tienda.enlace_mapa }}" target="_blank" rel="noopener" class="btn btn-outline-secondary"><i class="bi bi-map" aria-hidden="true"></i> Ver en Google Maps</a>
+      {% if tienda.tiene_ubicacion %}
+        <a href="{{ tienda.enlace_como_llegar }}" target="_blank" rel="noopener" class="btn btn-primary"><i class="bi bi-sign-turn-right" aria-hidden="true"></i> Cómo llegar</a>
+      {% else %}
+        <a href="{{ tienda.enlace_mapa }}" target="_blank" rel="noopener" class="btn btn-outline-secondary"><i class="bi bi-map" aria-hidden="true"></i> Ver en Google Maps</a>
+      {% endif %}
     </div>
+    {% if tienda.tiene_ubicacion %}
+      {# Mapa pequeño con el local (OpenStreetMap). #}
+      <div class="mapa mapa--perfil mt-3" data-mapa-tienda data-lat="{{ tienda.latitud|stringformat:'s' }}" data-lng="{{ tienda.longitud|stringformat:'s' }}"
+           data-nombre="{{ tienda.nombre }}" data-inicial="{{ tienda.nombre|first|upper }}" data-logo="{% if tienda.logo %}{{ tienda.logo.url }}{% endif %}"
+           role="region" aria-label="Ubicación de {{ tienda.nombre }} en el mapa"></div>
+    {% endif %}
   </section>
 
   {# ---------- Horario del local ---------- #}
@@ -44,3 +54,5 @@
   {% endfor %}
 </div>
 {% endblock %}
+
+{% block scripts %}{% if tienda.tiene_ubicacion %}{% include "_leaflet.html" %}{% endif %}{% endblock %}

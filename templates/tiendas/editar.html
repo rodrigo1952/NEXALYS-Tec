@@ -19,6 +19,25 @@
     </div>
 
     <div class="col-12">
+      <section class="tarjeta-cuenta" aria-labelledby="titulo-ubicacion">
+        <div class="tarjeta-cuenta__titulo">
+          <div>
+            <h2 class="h6 mb-1" id="titulo-ubicacion"><i class="bi bi-geo-alt" aria-hidden="true"></i> Ubicación de tu local en el mapa <span class="text-muted fw-normal">(opcional)</span></h2>
+            <p class="small text-muted mb-0">Toca el mapa en el lugar de tu tienda o <strong>arrastra el pin</strong> hasta la puerta. Así apareces en <strong>«Tiendas cercanas»</strong> y los clientes tienen el botón <strong>«Cómo llegar»</strong>.</p>
+          </div>
+        </div>
+        <div class="mapa mapa--editar" data-mapa-editar data-latitud="{{ form.latitud.id_for_label }}" data-longitud="{{ form.longitud.id_for_label }}"
+             data-centro-lat="{{ centro_mapa.0 }}" data-centro-lng="{{ centro_mapa.1 }}" role="region" aria-label="Mapa para marcar tu local"></div>
+        <p class="small mt-2 mb-2" data-coordenadas aria-live="polite"></p>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <button type="button" class="btn btn-sm btn-outline-primary" data-usar-ubicacion><i class="bi bi-crosshair" aria-hidden="true"></i> Usar mi ubicación actual (si estás en tu tienda)</button>
+          <button type="button" class="btn btn-sm btn-outline-danger d-none" data-quitar-ubicacion><i class="bi bi-x-lg" aria-hidden="true"></i> Quitar del mapa</button>
+        </div>
+        <p class="small mt-2 mb-0" data-aviso-ubicacion aria-live="polite"></p>
+      </section>
+    </div>
+
+    <div class="col-12">
       <section class="tarjeta-cuenta" aria-labelledby="titulo-horario">
         <div class="tarjeta-cuenta__titulo">
           <div>
@@ -62,4 +81,5 @@
 
 {% block scripts %}
 <script src="{% static 'js/horario.js' %}?v=2"></script>
+{% include "_leaflet.html" %}
 {% endblock %}

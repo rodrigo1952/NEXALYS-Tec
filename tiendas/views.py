@@ -1,9 +1,10 @@
 import logging
+from functools import wraps
 
 from django.contrib import messages
 from django.contrib.auth import login
 from django.db import IntegrityError, transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -16,10 +17,24 @@ from cuentas.reautenticacion import confirmada_recientemente, marcar_confirmada
 
 from .decorators import tienda_requerida
 from .forms import HORAS_SUGERIDAS, EditarTiendaForm, LogoForm, RegistroTiendaForm, horario_formset
-from .models import Tienda
+from .models import CENTRO_QUILLABAMBA, Tienda
 from .verificacion import enviar_correo_verificacion, leer_token
 
 logger = logging.getLogger(__name__)
+
+
+def con_mapa(vista):
+    """
+    Páginas con mapa de OpenStreetMap: sus servidores de mapas piden saber desde qué sitio se
+    piden los cuadritos del mapa (cabecera Referer). Django, por seguridad, no la envía a otros
+    sitios («same-origin»); en estas páginas se envía solo el dominio (nunca la ruta ni datos).
+    """
+    @wraps(vista)
+    def envoltura(request, *args, **kwargs):
+        respuesta = vista(request, *args, **kwargs)
+        respuesta["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return respuesta
+    return envoltura
 
 
 def _enviar_verificacion(request, tienda):
@@ -109,6 +124,7 @@ def panel(request):
     return render(request, "tiendas/panel.html", contexto)
 
 
+@con_mapa
 @tienda_requerida(activa=False)
 def editar(request):
     """La tienda edita sus datos, su logo y su horario de atención."""
@@ -139,6 +155,7 @@ def editar(request):
                 return redirect("tiendas:panel")
     return render(request, "tiendas/editar.html", {
         "form": form, "horario": horario, "tienda": tienda, "horas_sugeridas": HORAS_SUGERIDAS,
+        "centro_mapa": [str(c) for c in CENTRO_QUILLABAMBA],  # texto con punto (sin formato local)
     })
 
 
@@ -166,6 +183,7 @@ def cambiar_logo(request):
     return redirect(destino)
 
 
+@con_mapa
 def perfil(request, pk):
     """CU-06 Consultar ubicación de tienda: perfil público con dirección y productos."""
     tienda = get_object_or_404(
@@ -178,3 +196,43 @@ def perfil(request, pk):
         .order_by(Lower("nombre"), "pk")  # A → Z
     )
     return render(request, "tiendas/perfil.html", {"tienda": tienda, "productos": productos})
+
+
+@con_mapa
+def cercanas(request):
+    """
+    Tiendas cercanas (para todos, también visitantes): mapa con las tiendas activas y una lista
+    que, si la persona comparte su ubicación, se ordena de la más cercana a la más lejana.
+    La ubicación del cliente se usa SOLO en su navegador: nunca llega al servidor ni se guarda.
+    """
+    visibles = Q(productos__activo=True, productos__oculto_por_admin=False)
+    tiendas = (
+        Tienda.objects.filter(estado=Tienda.Estado.ACTIVA)
+        .prefetch_related("horarios")
+        .annotate(num_productos=Count("productos", filter=visibles))
+        .order_by(Lower("nombre"))
+    )
+    lista = []
+    for tienda in tiendas:
+        estado = tienda.estado_atencion()
+        lista.append({
+            "id": tienda.pk,
+            "nombre": tienda.nombre,
+            "inicial": tienda.nombre[:1].upper(),
+            "logo": tienda.logo.url if tienda.logo else "",
+            "direccion": tienda.direccion,
+            "lat": float(tienda.latitud) if tienda.tiene_ubicacion else None,
+            "lng": float(tienda.longitud) if tienda.tiene_ubicacion else None,
+            "perfil": reverse("tiendas:perfil", args=[tienda.pk]),
+            "whatsapp": tienda.enlace_whatsapp("Hola, te encontré en NEXALYS Tec."),
+            "como_llegar": tienda.enlace_como_llegar(),
+            "abierto": estado["abierto"] if estado else None,
+            "estado": estado["texto"] if estado else "",
+            "productos": tienda.num_productos,
+        })
+    lista.sort(key=lambda t: t["lat"] is None)  # primero las que marcaron su local (A → Z), luego las demás
+    return render(request, "tiendas/cercanas.html", {
+        "tiendas": lista,
+        "con_ubicacion": sum(1 for t in lista if t["lat"] is not None),
+        "centro_mapa": [str(c) for c in CENTRO_QUILLABAMBA],  # texto con punto (sin formato local)
+    })

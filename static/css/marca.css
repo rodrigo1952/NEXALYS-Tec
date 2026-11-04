@@ -1279,3 +1279,33 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 .paginacion .page-link { min-width: 2.6rem; height: 2.6rem; display: inline-flex; align-items: center; justify-content: center; gap: .25rem; border-radius: .6rem !important; font-weight: 600; }
 .paginacion .page-item.active .page-link { box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .3); }
 .paginacion .page-item.disabled .page-link { background: transparent; }
+
+/* ---------- Mapas (OpenStreetMap con Leaflet) ---------- */
+.mapa { position: relative; z-index: 0; width: 100%; border-radius: var(--nx-radio); border: 1px solid var(--nx-borde); background: #E8EEF3; overflow: hidden; }
+.mapa--grande { height: 520px; }
+.mapa--editar { height: 340px; cursor: crosshair; }
+.mapa--perfil { height: 220px; }
+@media (max-width: 991.98px) { .mapa--grande { height: 360px; } }
+.mapa__aviso { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .5rem; padding: 1rem; text-align: center; color: var(--nx-texto-suave); }
+.pin-tienda { background: none; border: 0; }
+.pin-tienda__circulo {
+  position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; overflow: hidden;
+  border-radius: 50%; border: 3px solid var(--nx-acento); background: var(--nx-oscuro); color: #fff; font-weight: 800; font-size: 1.1rem;
+  box-shadow: 0 3px 8px rgba(var(--nx-oscuro-rgb), .35);
+}
+.pin-tienda__circulo img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
+.pin-tienda::after { content: ""; position: absolute; left: 50%; top: 42px; transform: translateX(-50%); border: 7px solid transparent; border-top: 10px solid var(--nx-acento); }
+.popup-tienda { min-width: 190px; }
+.popup-tienda__botones { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
+.popup-tienda__botones .btn-primary { color: #fff; }
+.lista-cercanas { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+@media (min-width: 992px) { .lista-cercanas { max-height: 520px; overflow-y: auto; padding-right: .25rem; } }
+.lista-cercanas__separador { margin-top: .5rem; font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--nx-texto-suave); }
+.tarjeta-cercana { padding: .85rem 1rem; border: 1px solid var(--nx-borde); border-radius: .9rem; background: var(--nx-blanco); }
+.tarjeta-cercana__logo { flex: none; width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--nx-borde); background: #fff; }
+.tarjeta-cercana__logo--inicial { display: flex; align-items: center; justify-content: center; background: var(--nx-oscuro); color: #fff; font-weight: 800; font-size: 1.3rem; border-color: var(--nx-acento); }
+.tarjeta-cercana__nombre { font-weight: 700; color: var(--nx-oscuro); text-decoration: none; }
+.tarjeta-cercana__nombre:hover { text-decoration: underline; }
+.tarjeta-cercana__botones { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .7rem; }
+.distancia { padding: .1rem .55rem; border-radius: 999px; background: rgba(var(--nx-acento-rgb), .15); color: var(--nx-acento-texto); font-size: .8rem; font-weight: 700; }
+.text-acento { color: var(--nx-acento-texto); }

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block titulo %}Tiendas cercanas | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+  <div>
+    <h1 class="h3 mb-1"><i class="bi bi-geo-alt-fill text-acento" aria-hidden="true"></i> Tiendas cercanas</h1>
+    <p class="text-muted mb-0">Encuentra las tiendas de tecnología de Quillabamba en el mapa y cómo llegar a su local.</p>
+  </div>
+  <div class="text-lg-end">
+    <button type="button" class="btn btn-primary" data-mi-ubicacion><i class="bi bi-crosshair" aria-hidden="true"></i> Usar mi ubicación</button>
+    <p class="small text-muted mb-0 mt-1"><i class="bi bi-shield-check" aria-hidden="true"></i> Tu ubicación solo se usa en tu pantalla: no se guarda.</p>
+  </div>
+</div>
+<p class="small text-muted" data-estado-ubicacion aria-live="polite">Toca «Usar mi ubicación» para ordenar las tiendas de la más cercana a la más lejana.</p>
+
+<div class="row g-3 cercanas">
+  <div class="col-lg-7">
+    <div class="mapa mapa--grande" data-mapa-tiendas data-centro-lat="{{ centro_mapa.0 }}" data-centro-lng="{{ centro_mapa.1 }}" role="region" aria-label="Mapa de las tiendas"></div>
+  </div>
+  <div class="col-lg-5">
+    <ul class="lista-cercanas" data-lista-tiendas>
+      {% for tienda in tiendas %}
+        {% if tienda.lat is None %}
+          {% ifchanged %}<li class="lista-cercanas__separador" data-sin-ubicacion>Aún no marcaron su local en el mapa</li>{% endifchanged %}
+        {% endif %}
+        <li class="tarjeta-cercana" data-tienda="{{ tienda.id }}">
+          <div class="d-flex gap-3">
+            {% if tienda.logo %}<img src="{{ tienda.logo }}" alt="" class="tarjeta-cercana__logo">{% else %}<span class="tarjeta-cercana__logo tarjeta-cercana__logo--inicial" aria-hidden="true">{{ tienda.inicial }}</span>{% endif %}
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex flex-wrap align-items-center gap-2">
+                <a href="{{ tienda.perfil }}" class="tarjeta-cercana__nombre">{{ tienda.nombre }}</a>
+                <span class="distancia d-none" data-distancia></span>
+              </div>
+              <div class="small text-muted"><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ tienda.direccion }}</div>
+              {% if tienda.estado %}<div class="small {% if tienda.abierto %}text-success{% else %}text-danger{% endif %}"><i class="bi bi-clock" aria-hidden="true"></i> {{ tienda.estado }}</div>{% endif %}
+              <div class="small text-muted">{{ tienda.productos }} producto{{ tienda.productos|pluralize }} publicado{{ tienda.productos|pluralize }}</div>
+            </div>
+          </div>
+          <div class="tarjeta-cercana__botones">
+            {% if tienda.lat is not None %}
+              <a href="{{ tienda.como_llegar }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary"><i class="bi bi-sign-turn-right" aria-hidden="true"></i> Cómo llegar</a>
+              <a href="#" class="btn btn-sm btn-outline-primary" data-ver-en-mapa="{{ tienda.id }}"><i class="bi bi-map" aria-hidden="true"></i> Ver en el mapa</a>
+            {% else %}
+              <a href="{{ tienda.como_llegar }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-search" aria-hidden="true"></i> Buscar dirección</a>
+            {% endif %}
+            <a href="{{ tienda.whatsapp }}" target="_blank" rel="noopener" class="btn btn-sm btn-success"><i class="bi bi-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+            <a href="{{ tienda.perfil }}" class="btn btn-sm btn-outline-secondary">Ver tienda</a>
+          </div>
+        </li>
+      {% empty %}
+        <li class="text-muted">Aún no hay tiendas activas.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+<p class="small text-muted mt-3 mb-0">«Cómo llegar» abre Google Maps con la ruta. Las distancias son en línea recta; el horario es el del local (tienda física).</p>
+{{ tiendas|json_script:"datos-tiendas" }}
+{% endblock %}
+
+{% block scripts %}{% include "_leaflet.html" %}{% endblock %}

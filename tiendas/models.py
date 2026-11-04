@@ -2,7 +2,7 @@ from datetime import timedelta
 from urllib.parse import quote
 
 from django.conf import settings
-from django.core.validators import FileExtensionValidator, RegexValidator
+from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
 from django.utils import timezone
 
@@ -19,6 +19,9 @@ validar_whatsapp = RegexValidator(
 
 # Regla de negocio: una tienda suspendida que no se reactiva en este plazo se elimina sola.
 DIAS_PARA_ELIMINAR_SUSPENDIDA = 90
+
+# Centro de los mapas cuando no hay otra referencia: Quillabamba (La Convención, Cusco).
+CENTRO_QUILLABAMBA = (-12.86806, -72.69306)
 
 
 class Tienda(models.Model):
@@ -45,6 +48,16 @@ class Tienda(models.Model):
         help_text="9 dígitos, sin +51 ni espacios. Ejemplo: 987654321",
     )
     descripcion = models.TextField("descripción", blank=True)
+    # Ubicación del LOCAL en el mapa (opcional). La tienda la marca con un pin en «Editar datos»;
+    # sirve para «Tiendas cercanas» y para el botón «Cómo llegar».
+    latitud = models.DecimalField(
+        "latitud", max_digits=9, decimal_places=6, null=True, blank=True,
+        validators=[MinValueValidator(-90), MaxValueValidator(90)],
+    )
+    longitud = models.DecimalField(
+        "longitud", max_digits=9, decimal_places=6, null=True, blank=True,
+        validators=[MinValueValidator(-180), MaxValueValidator(180)],
+    )
     logo = models.ImageField(
         "logo",
         upload_to=ruta_logo_tienda,
@@ -134,9 +147,21 @@ class Tienda(models.Model):
             enlace += f"?text={quote(mensaje)}"
         return enlace
 
+    @property
+    def tiene_ubicacion(self):
+        return self.latitud is not None and self.longitud is not None
+
     def enlace_mapa(self):
-        """Enlace de búsqueda de la dirección en Google Maps."""
+        """Enlace a Google Maps: el punto exacto si la tienda lo marcó; si no, se busca la dirección."""
+        if self.tiene_ubicacion:
+            return f"https://www.google.com/maps/search/?api=1&query={self.latitud},{self.longitud}"
         return "https://www.google.com/maps/search/?api=1&query=" + quote(self.direccion)
+
+    def enlace_como_llegar(self):
+        """Ruta en Google Maps desde donde está la persona hasta el local (solo si marcó su ubicación)."""
+        if not self.tiene_ubicacion:
+            return self.enlace_mapa()
+        return f"https://www.google.com/maps/dir/?api=1&destination={self.latitud},{self.longitud}"
 
     def save(self, *args, **kwargs):
         if kwargs.get("update_fields") is None:

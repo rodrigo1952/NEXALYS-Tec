@@ -44,7 +44,7 @@ class ConfirmarClaveMixin:
         self.clave_confirmada = False  # True si en este envío escribió bien su contraseña
         self.originales = {campo: self.valor_original(campo) for campo in self.CAMPOS_SENSIBLES}
         if not ya_confirmada:
-            nombres = ", ".join(self.CAMPOS_SENSIBLES.values())
+            nombres = ", ".join(dict.fromkeys(self.CAMPOS_SENSIBLES.values()))  # sin repetir (latitud y longitud)
             self.fields["clave_actual"] = forms.CharField(
                 label="Contraseña actual",
                 required=False,

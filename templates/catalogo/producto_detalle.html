@@ -65,6 +65,9 @@
         <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="btn btn-outline-primary btn-sm">
           🏪 Ver tienda: horario, ubicación y más productos
         </a>
+        {% if producto.tienda.tiene_ubicacion %}
+          <a href="{{ producto.tienda.enlace_como_llegar }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm"><i class="bi bi-sign-turn-right" aria-hidden="true"></i> Cómo llegar</a>
+        {% endif %}
       </div>
     </div>
     <a href="{{ producto.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-lg">
