@@ -19,8 +19,8 @@
 - Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 (jsDelivr), Chart.js 4.4.1 y **Leaflet 1.9.4** (cdnjs) con los mapas de
   **OpenStreetMap** (sin clave ni costo). Letra Space Grotesk (Google Fonts); el logo animado de Inicio usa Lilita One.
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
-  Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html` (va en **v=28**).
-  Lo mismo con los scripts propios: `galeria_producto.js?v=3`, `mapas.js?v=1`, `horario.js?v=2`.
+  Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html` (va en **v=29**).
+  Lo mismo con los scripts propios: `galeria_producto.js?v=3`, `mapas.js?v=1`, `horario.js?v=2`, `whatsapp.js?v=2`.
   Tarjetas, campos de formulario y **filas de todas las tablas en blanco** en todo el sitio (el fondo de la página
   sigue gris claro); al enfocar un campo, borde y brillo cian; al pasar el mouse por una fila, celeste muy suave.
 - `db.sqlite3`, `media/` y `.vscode/` **no** van a GitHub (`.gitignore`). Para llevar datos de prueba a otra PC:
@@ -192,6 +192,13 @@
   el atributo `interruptor = {"si", "no", "icono", "icono_no", "color"}` (`_campos_formulario.html`).
   Van lado a lado (como Stock actual y Stock mínimo) con ayudas cortas: «Desmárcalo para ocultarlo sin
   eliminarlo.» y «Máximo 3 por tienda.»
+- Botones de WhatsApp: el servidor arma `https://wa.me/51…?text=…` (`Tienda.enlace_whatsapp`). En el celular
+  se usa así (abre la app directo en el chat). En la computadora, `static/js/whatsapp.js` (cargado en
+  `base.html`) muestra al hacer clic un menú «¿Dónde abrir el chat?»: «WhatsApp Web» (`web.whatsapp.com/send`,
+  pestaña nueva) o «App de WhatsApp» (`whatsapp://send`, la app de Windows si está instalada). La elección se
+  puede recordar (localStorage `nexalys_whatsapp_modo`); luego sale un aviso con «Cambiar».
+  No se puede reutilizar una pestaña de WhatsApp Web (probado: WhatsApp/Brave cortan el vínculo y se abre una
+  nueva en cada clic), por eso se dejó la política COOP por defecto de Django (`same-origin`).
 - Tabla de Mis productos (`tabla-productos`): miniatura de la foto principal (48 px, `loading="lazy"`; ícono gris
   si no tiene), encabezado en mayúsculas pequeñas, estados con íconos (ojo Publicado, ojo tachado Oculto,
   estrella Destacado, Agotado, Stock bajo) y «Editar» con lápiz.
@@ -218,7 +225,7 @@
   defecto (`same-origin`) no lo envía (sin esto el mapa sale en blanco). En plantillas, las coordenadas se
   imprimen con `stringformat:'s'` o como texto, porque el formato local de Django pondría coma decimal.
   El navegador solo comparte la ubicación en https o en 127.0.0.1.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **576 pruebas, OK**.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **580 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 
@@ -226,10 +233,6 @@
   Al publicar: **https obligatorio** (sin él no funciona «Usar mi ubicación»), `DEBUG = False`, `ALLOWED_HOSTS`,
   `SECRET_KEY` fuera del código, correo SMTP real. Si los mapas tuvieran mucho tráfico, cambiar el proveedor de
   cuadros de OpenStreetMap (una línea en `mapas.js`).
-- **Cambios del 08/11/2026 aún sin commit** (Rodrigo hará un solo commit al terminar los cambios estéticos del día):
-  nuevo login, formularios y tablas en blanco, Publicado/Destacado juntos, IESTP, galería con casillas fijas y
-  tabla de Mis productos con fotos. Mensaje sugerido: «Mejoras visuales: nuevo login, formularios y tablas en
-  blanco, galería con casillas fijas, tabla de productos con fotos e IESTP».
 - El correo de soporte `soporte@nexalys.pe` es de demostración (`cuentas/views.py`, `CORREO_SOPORTE`).
 - Los manuales del Entregable 8 se hicieron antes de: la galería única de fotos, el stock bloqueado al editar,
   el login que marca la opción correcta, el nuevo diseño del login, la galería con 5 casillas fijas, la tabla

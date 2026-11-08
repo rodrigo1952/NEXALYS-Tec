@@ -1299,6 +1299,39 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 .interruptor--ambar:has(input:checked) .interruptor__estado { color: #8A6100; font-weight: 600; }
 .interruptor--ambar .form-check-input:checked { background-color: #E5A800; border-color: #E5A800; }
 
+/* WhatsApp en la computadora: menú «WhatsApp Web / App de WhatsApp» y aviso (static/js/whatsapp.js) */
+.menu-whatsapp {
+  position: fixed; z-index: 1080; width: min(290px, calc(100vw - 16px)); padding: .6rem;
+  background: var(--nx-blanco); border: 1px solid var(--nx-borde); border-radius: .9rem;
+  box-shadow: 0 .75rem 2rem rgba(11, 27, 58, .18);
+}
+.menu-whatsapp__titulo { margin: .1rem .35rem .45rem; font-size: .8rem; font-weight: 700; color: var(--nx-texto-suave); }
+.menu-whatsapp__opcion {
+  display: flex; align-items: center; gap: .7rem; width: 100%; padding: .55rem .6rem; text-align: left;
+  background: transparent; border: 0; border-radius: .65rem; color: var(--nx-texto);
+}
+.menu-whatsapp__opcion:hover, .menu-whatsapp__opcion:focus-visible { background: rgba(var(--nx-acento-rgb), .1); outline: none; }
+.menu-whatsapp__opcion:focus-visible { box-shadow: 0 0 0 2px var(--nx-acento); }
+.menu-whatsapp__opcion .bi {
+  flex: 0 0 2.1rem; height: 2.1rem; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: #E7F8EE; color: #198754; font-size: 1.05rem;
+}
+.menu-whatsapp__opcion strong { display: block; font-size: .92rem; }
+.menu-whatsapp__opcion small { display: block; font-size: .76rem; color: var(--nx-texto-suave); }
+.menu-whatsapp__recordar {
+  display: flex; align-items: center; gap: .45rem; margin: .4rem .35rem .1rem; padding-top: .5rem;
+  border-top: 1px solid var(--nx-borde-suave); font-size: .76rem; color: var(--nx-texto-suave); cursor: pointer;
+}
+.menu-whatsapp__recordar .form-check-input { margin: 0; }
+.aviso-whatsapp {
+  position: fixed; z-index: 1080; left: 50%; bottom: 1.25rem; transform: translateX(-50%);
+  display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .75rem; width: max-content; max-width: calc(100vw - 32px);
+  padding: .65rem .9rem; background: var(--nx-blanco); border: 1px solid var(--nx-borde); border-radius: .8rem;
+  box-shadow: 0 .5rem 1.5rem rgba(11, 27, 58, .16); font-size: .88rem;
+}
+.aviso-whatsapp > .bi-whatsapp { color: #198754; font-size: 1.1rem; }
+.aviso-whatsapp .btn-link { font-weight: 600; }
+
 /* Mis productos: encabezado limpio, miniatura de la foto y estados con íconos */
 .tabla-productos > thead > tr > th {
   --bs-table-bg: #EDF2F8; color: var(--nx-texto-suave); font-size: .74rem; font-weight: 700;
