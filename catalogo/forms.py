@@ -174,6 +174,10 @@ class ProductoForm(EstiloBootstrapMixin, forms.ModelForm):
         }
         for nombre in ("activo", "destacado"):
             self.fields[nombre].widget.attrs["role"] = "switch"
+        # Uno al lado del otro (en el celular, uno debajo del otro), con una ayuda corta.
+        self.fields["activo"].fila, self.fields["destacado"].fila = "inicio", "fin"
+        self.fields["activo"].help_text = "Desmárcalo para ocultarlo sin eliminarlo."
+        self.fields["destacado"].help_text = "Máximo 3 por tienda."
         if self.instance.pk:
             self.fields["version"].initial = self.instance.actualizado.isoformat()
             self.fields["eliminar_fotos"].queryset = self.instance.fotos.all()

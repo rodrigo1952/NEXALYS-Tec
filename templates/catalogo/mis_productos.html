@@ -51,7 +51,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
 {% if ver == 'sin_costo' %}<p class="small text-muted">Agrega el precio de compra con «Editar» para que estos productos cuenten en tu ganancia y en el valor del inventario.</p>{% endif %}
 
 <div class="table-responsive bg-white rounded shadow-sm">
-  <table class="table table-hover align-middle mb-0">
+  <table class="table table-hover align-middle mb-0 tabla-productos">
     <thead class="table-light">
       <tr>
         <th>Producto</th>
@@ -61,7 +61,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
         <th class="text-end">Stock</th>
         <th class="d-none d-xl-table-cell text-end" title="Precio de compra (privado)">P. compra</th>
         <th class="d-none d-md-table-cell">Estado</th>
-        <th class="d-none d-md-table-cell text-end" title="Cuántos clientes lo guardaron en favoritos">❤️ Guardado</th>
+        <th class="d-none d-md-table-cell text-end text-nowrap" title="Cuántos clientes lo guardaron en favoritos"><i class="bi bi-heart-fill text-danger" aria-hidden="true"></i> Guardado</th>
         <th class="text-end">Acciones</th>
       </tr>
     </thead>
@@ -70,8 +70,13 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
       {% for producto in pagina %}
         {# id: al volver de «Editar», la página baja hasta este producto y lo resalta. #}
         <tr id="producto-{{ producto.pk }}" class="fila-producto">
-          <td>{{ producto.nombre }}{% if producto.codigo %}<div class="small text-muted">Código: {{ producto.codigo }}</div>{% endif %}
-            {% if producto.costo is None %}<div><a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle text-decoration-none sin-precio-compra" title="Solo tú ves este aviso">Falta precio de compra</a></div>{% endif %}</td>
+          <td><div class="celda-producto">
+            {# Miniatura de la foto principal (decorativa: el nombre va al lado). #}
+            {% if producto.imagen %}<img src="{{ producto.imagen.url }}" alt="" class="miniatura-tabla" width="48" height="48" loading="lazy" decoding="async">
+            {% else %}<span class="miniatura-tabla miniatura-tabla--vacia" title="Sin foto"><i class="bi bi-image" aria-hidden="true"></i></span>{% endif %}
+            <div>{{ producto.nombre }}{% if producto.codigo %}<div class="small text-muted">Código: {{ producto.codigo }}</div>{% endif %}
+            {% if producto.costo is None %}<div><a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle text-decoration-none sin-precio-compra" title="Solo tú ves este aviso">Falta precio de compra</a></div>{% endif %}</div>
+          </div></td>
           <td class="d-none d-lg-table-cell">{{ producto.categoria }}</td>
           <td class="d-none d-lg-table-cell">{{ producto.marca }}</td>
           <td class="text-end text-nowrap">
@@ -84,21 +89,23 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
             {% endif %}
           </td>
           <td class="text-end text-nowrap">
-            {% if producto.agotado %}<span class="badge text-bg-secondary">Agotado</span>
+            {% if producto.agotado %}<span class="badge text-bg-secondary"><i class="bi bi-x-circle" aria-hidden="true"></i> Agotado</span>
             {% else %}<span class="fw-semibold">{{ producto.stock }}</span>
-              {% if producto.stock_minimo and producto.stock <= producto.stock_minimo %}<br><span class="badge text-bg-warning" title="Mínimo: {{ producto.stock_minimo }}">Stock bajo</span>{% endif %}
+              {% if producto.stock_minimo and producto.stock <= producto.stock_minimo %}<br><span class="badge text-bg-warning" title="Mínimo: {{ producto.stock_minimo }}"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> Stock bajo</span>{% endif %}
             {% endif %}
           </td>
           <td class="d-none d-xl-table-cell text-end text-nowrap">{% if producto.costo is not None %}{{ producto.costo|soles }}{% else %}<span class="text-warning-emphasis small">Falta</span>{% endif %}</td>
-          <td class="d-none d-md-table-cell">{% if producto.activo %}<span class="badge text-bg-success">Publicado</span>{% else %}<span class="badge text-bg-light border">Oculto</span>{% endif %}
-            {% if producto.destacado %}<span class="badge text-bg-warning">⭐ Destacado</span>{% endif %}
+          <td class="d-none d-md-table-cell"><div class="estados-producto">
+            {% if producto.activo %}<span class="badge text-bg-success"><i class="bi bi-eye" aria-hidden="true"></i> Publicado</span>{% else %}<span class="badge text-bg-light border"><i class="bi bi-eye-slash" aria-hidden="true"></i> Oculto</span>{% endif %}
+            {% if producto.destacado %}<span class="badge text-bg-warning"><i class="bi bi-star-fill" aria-hidden="true"></i> Destacado</span>{% endif %}
+            </div>
             {% if producto.oculto_por_admin %}
-              <span class="badge text-bg-danger" title="{{ producto.motivo_ocultamiento }}">Oculto por el administrador</span>
+              <span class="badge text-bg-danger" title="{{ producto.motivo_ocultamiento }}"><i class="bi bi-shield-exclamation" aria-hidden="true"></i> Oculto por el administrador</span>
               {% if producto.motivo_ocultamiento %}<div class="small text-danger">{{ producto.motivo_ocultamiento }}</div>{% endif %}
             {% endif %}</td>
           <td class="d-none d-md-table-cell text-end">{{ producto.num_favoritos }}</td>
           <td class="text-end text-nowrap">
-            <a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary">Editar</a>
+            <a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
             {# strategy fixed: el menú se dibuja sobre la página y la tabla (que tiene desplazamiento propio) no lo recorta. #}
             <div class="btn-group">
               <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-label="Más opciones de {{ producto.nombre }}">Más</button>

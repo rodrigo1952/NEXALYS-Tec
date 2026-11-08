@@ -41,7 +41,7 @@ class MejorasInterfazTests(BaseCatalogo):
         self.assertContains(self.client.get(reverse("inicio")), "form.dataset.enviando")
 
     def test_pie_de_pagina(self):
-        self.assertContains(self.client.get(reverse("inicio")), "IESPP Urusayhua")
+        self.assertContains(self.client.get(reverse("inicio")), "IESTP Urusayhua")
 
     def test_pagina_404_propia(self):
         respuesta = self.client.get("/esta-pagina-no-existe/")

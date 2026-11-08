@@ -116,8 +116,8 @@ class StockMinimoYOfertaEnElFormularioTests(BaseCatalogo):
         self.assertIn("Stock actual", html)
         self.assertIn("Stock mínimo", html)
         self.assertIn("Te avisamos cuando el stock llegue a este número", html)
-        # categoría|marca, compra|venta, oferta|fecha, stock|mínimo
-        self.assertEqual(html.count('<div class="row g-3 mb-3">'), 4)
+        # categoría|marca, compra|venta, oferta|fecha, stock|mínimo, publicado|destacado
+        self.assertEqual(html.count('<div class="row g-3 mb-3">'), 5)
         self.assertLess(html.index('name="precio_oferta"'), html.index('name="oferta_hasta"'))
         self.assertLess(html.index('name="stock"'), html.index('name="stock_minimo"'))
 

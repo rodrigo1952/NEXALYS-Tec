@@ -2,7 +2,7 @@
 
 Plataforma web donde las tiendas tecnológicas publican sus productos y los clientes los encuentran, comparan y contactan a la tienda por WhatsApp.
 
-Proyecto del IV ciclo de Arquitectura de Plataformas y Servicios de TI — IESPP Urusayhua.
+Proyecto del IV ciclo de Arquitectura de Plataformas y Servicios de TI — IESTP Urusayhua.
 
 ## Tecnologías
 

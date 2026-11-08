@@ -4,8 +4,10 @@
  * Todas las fotos están en una sola lista; la PRIMERA es la principal.
  *   - «+ Agregar fotos» (o soltar imágenes en la galería): se suman al final, hasta el máximo.
  *   - Arrastrar una foto sobre otra las intercambia, sean fotos guardadas o nuevas.
- *   - «Hacer principal», las flechas ‹ ›, «Reemplazar» y la «X» hacen lo mismo con botones
+ *   - «Hacer principal» (★), «Reemplazar» (⟳), las flechas ‹ › y la «X» hacen lo mismo con botones
  *     (en el celular no se puede arrastrar).
+ * La principal va arriba con tamaño fijo y debajo siempre hay 5 casillas iguales (las vacías con «+»),
+ * así la galería mide lo mismo con 1 o con 6 fotos.
  * Nada se guarda hasta presionar «Guardar»: al enviar, el orden final va en el campo oculto
  * «galeria_plan» (p = principal actual, f12 = foto adicional 12, n0 = primera foto nueva) y
  * las fotos nuevas, en ese mismo orden, en «fotos_nuevas». El servidor revisa todo otra vez.
@@ -107,6 +109,15 @@
     return b;
   }
 
+  // Botón pequeño con solo un ícono; al pasar el mouse muestra qué hace (title).
+  function botonIcono(icono, titulo, alPresionar, numero, deshabilitado) {
+    var b = boton("", "btn-outline-secondary boton-icono", alPresionar, titulo + " (foto " + numero + ")");
+    b.innerHTML = '<i class="bi ' + icono + '" aria-hidden="true"></i>';
+    b.title = titulo;
+    b.disabled = !!deshabilitado;
+    return b;
+  }
+
   function tarjeta(foto, i) {
     var principal = i === 0;
     var t = elemento("div", "tarjeta-foto " + (principal ? "tarjeta-foto--principal" : "tarjeta-foto--secundaria") + (foto.nueva ? " tarjeta-foto--nueva" : ""));
@@ -139,24 +150,26 @@
     img.addEventListener("dragend", terminarArrastre);
     marco.appendChild(img);
     t.appendChild(marco);
-    if (principal) t.appendChild(elemento("p", "small text-muted mb-0", "Es la que se ve en el catálogo y en el inicio."));
 
-    var botones = elemento("div", "tarjeta-foto__botones");
-    if (!principal) {
-      botones.appendChild(boton("★ Hacer principal", "btn-outline-dark", function () { intercambiar(0, i); }));
-    }
-    botones.appendChild(boton(principal ? "Cambiar foto principal" : "Reemplazar", "btn-outline-primary", function () {
+    function reemplazar() {
       aReemplazar = i;
       reemplazo.value = "";
       reemplazo.click();
-    }));
-    if (!principal) {
-      var mover = elemento("span", "tarjeta-foto__mover");
-      if (i > 1) mover.appendChild(boton("‹", "btn-outline-secondary", function () { intercambiar(i, i - 1); }, "Mover a la izquierda"));
-      if (i < fotos.length - 1) mover.appendChild(boton("›", "btn-outline-secondary", function () { intercambiar(i, i + 1); }, "Mover a la derecha"));
-      if (mover.childNodes.length) botones.appendChild(mover);
     }
-    t.appendChild(botones);
+    if (principal) {
+      var pie = elemento("div", "tarjeta-foto__pie");
+      pie.appendChild(elemento("p", "small text-muted mb-0", "Es la que se ve en el catálogo y en el inicio."));
+      pie.appendChild(boton("Cambiar foto principal", "btn-outline-primary", reemplazar));
+      t.appendChild(pie);
+    } else {
+      // Siempre los 4 botones en el mismo lugar; las flechas se apagan en los extremos.
+      var botones = elemento("div", "tarjeta-foto__botones");
+      botones.appendChild(botonIcono("bi-star-fill", "Hacer principal", function () { intercambiar(0, i); }, i + 1));
+      botones.appendChild(botonIcono("bi-arrow-repeat", "Reemplazar", reemplazar, i + 1));
+      botones.appendChild(botonIcono("bi-chevron-left", "Mover a la izquierda", function () { intercambiar(i, i - 1); }, i + 1, i <= 1));
+      botones.appendChild(botonIcono("bi-chevron-right", "Mover a la derecha", function () { intercambiar(i, i + 1); }, i + 1, i >= fotos.length - 1));
+      t.appendChild(botones);
+    }
     prepararSoltar(t, i);
     return t;
   }
@@ -177,12 +190,20 @@
     return t;
   }
 
-  function zonaAgregar() {
-    var zona = elemento("label", "zona-agregar mb-0");
-    zona.htmlFor = entrada.id;
-    zona.innerHTML = '<span class="zona-agregar__mas" aria-hidden="true">+</span><span class="fw-semibold">Agregar fotos</span>' +
-      '<span class="small">Quedan ' + (MAXIMO - fotos.length) + '. O arrástralas aquí</span>';
-    return zona;
+  // Casilla vacía (mismo tamaño que una foto adicional): al hacer clic se eligen más fotos.
+  function casillaVacia(primera) {
+    var quedan = MAXIMO - fotos.length;
+    var casilla = elemento("label", "tarjeta-foto tarjeta-foto--secundaria casilla-vacia mb-0");
+    casilla.htmlFor = entrada.id;
+    casilla.title = "Agregar fotos (quedan " + quedan + "). O arrástralas aquí";
+    var zona = elemento("span", "tarjeta-foto__imagen zona-agregar");
+    zona.innerHTML = '<span class="zona-agregar__mas" aria-hidden="true">+</span>' +
+      (primera ? '<span class="zona-agregar__texto">Agregar fotos</span>' : '<span class="visually-hidden">Agregar fotos</span>');
+    casilla.appendChild(zona);
+    var espacio = elemento("span", "tarjeta-foto__botones");  // mismo alto que los botones de las fotos
+    espacio.setAttribute("aria-hidden", "true");
+    casilla.appendChild(espacio);
+    return casilla;
   }
 
   function dibujar() {
@@ -191,8 +212,9 @@
     cajaPrincipal.appendChild(fotos.length ? tarjeta(fotos[0], 0) : principalVacia());
     for (var i = 1; i < fotos.length; i++) cajaSecundarias.appendChild(tarjeta(fotos[i], i));
     var hayLugar = fotos.length < MAXIMO;
-    if (hayLugar && fotos.length) cajaSecundarias.appendChild(zonaAgregar());
-    botonAgregar.classList.toggle("d-none", !hayLugar);
+    // Las casillas que faltan hasta completar las 5 adicionales.
+    for (var k = Math.max(fotos.length, 1); k < MAXIMO; k++) cajaSecundarias.appendChild(casillaVacia(k === Math.max(fotos.length, 1)));
+    botonAgregar.classList.toggle("invisible", !hayLugar);  // invisible (no d-none): así la galería no cambia de alto
     contador.textContent = "Tienes " + fotos.length + " de " + MAXIMO + " fotos.";
     avisoCambios.classList.toggle("d-none", !cambiado());
     sincronizar();

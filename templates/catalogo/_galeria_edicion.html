@@ -3,7 +3,8 @@ Galería de fotos del producto (al AGREGAR y al EDITAR). La dibuja static/js/gal
   - Hasta {{ form.fotos_maximo }} fotos. La PRIMERA es la principal (la que se ve en el catálogo y en el inicio).
   - «+ Agregar fotos» permite elegir varias a la vez: se suman al final, en el orden que entrega el navegador.
   - Arrastrar una foto sobre otra las intercambia (también con la principal), aunque sean fotos nuevas
-    sin guardar. «Hacer principal», las flechas, «Reemplazar» y la «X» hacen lo mismo con botones.
+    sin guardar. «Hacer principal» (★), «Reemplazar» (⟳), las flechas y la «X» hacen lo mismo con botones.
+  - La principal va arriba con alto fijo y debajo siempre hay 5 casillas iguales (las vacías con «+»).
   - Nada se aplica hasta presionar «Guardar»: se envía el orden final en el campo oculto «galeria_plan»
     y las fotos nuevas en «fotos_nuevas».
 {% endcomment %}

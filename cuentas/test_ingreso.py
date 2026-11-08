@@ -24,10 +24,17 @@ class IngresoPorTipoTests(TestCase):
     def test_la_pagina_tiene_el_nuevo_diseno(self):
         respuesta = self.client.get(self.url)
         for texto in ("Soy cliente", "Soy tienda", "Nombre de usuario", "Contraseña", 'id="ver-clave"',
-                      "¿Olvidaste tu contraseña?", "Entrar a mi tienda", "Regístrala aquí",
+                      "¿Olvidaste tu contraseña?", "Entrar a mi tienda", "Regístrala gratis", "Entrar como cliente", "Regístrate gratis",
                       "Productos tecnológicos de las tiendas de", "ingreso__pila"):
             self.assertContains(respuesta, texto)
         self.assertContains(respuesta, 'id="tipo-cliente" checked')
+
+    def test_diseno_con_iconos_y_fondo_propio(self):
+        respuesta = self.client.get(self.url)
+        for texto in ('<i class="bi bi-person" aria-hidden="true"></i> Soy cliente', '<i class="bi bi-shop" aria-hidden="true"></i> Soy tienda',
+                      "Guarda favoritos y contacta a las tiendas por WhatsApp.", '<i class="bi bi-eye" aria-hidden="true"></i> <span>Mostrar</span>',
+                      "pagina-ingreso", "Productos tecnológicos de las tiendas de tu ciudad"):
+            self.assertContains(respuesta, texto)
 
     def test_el_menu_del_login_es_simple(self):
         respuesta = self.client.get(self.url)

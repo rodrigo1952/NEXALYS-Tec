@@ -8,7 +8,7 @@
 
 - **NEXALYS Tec**: marketplace web donde las tiendas de tecnología de **Quillabamba** publican sus
   productos y los clientes los encuentran y contactan a la tienda por **WhatsApp** (no hay pago en línea).
-- Proyecto de curso del IV ciclo (IESPP Urusayhua). Empresa del caso: Logical Center S.R.L.
+- Proyecto de curso del IV ciclo (IESTP Urusayhua). Empresa del caso: Logical Center S.R.L.
 - Repositorio (público): https://github.com/rodrigo1952/NEXALYS-Tec.git — rama `main`.
 - Estado: funciona en local (aún no publicada). Plan: promocionarla de tienda en tienda y luego
   publicarla (hosting para Django + dominio .pe).
@@ -19,8 +19,10 @@
 - Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 (jsDelivr), Chart.js 4.4.1 y **Leaflet 1.9.4** (cdnjs) con los mapas de
   **OpenStreetMap** (sin clave ni costo). Letra Space Grotesk (Google Fonts); el logo animado de Inicio usa Lilita One.
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
-  Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html` (va en **v=26**).
-  Lo mismo con los scripts propios: `galeria_producto.js?v=2`, `mapas.js?v=1`, `horario.js?v=2`.
+  Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html` (va en **v=28**).
+  Lo mismo con los scripts propios: `galeria_producto.js?v=3`, `mapas.js?v=1`, `horario.js?v=2`.
+  Tarjetas, campos de formulario y **filas de todas las tablas en blanco** en todo el sitio (el fondo de la página
+  sigue gris claro); al enfocar un campo, borde y brillo cian; al pasar el mouse por una fila, celeste muy suave.
 - `db.sqlite3`, `media/` y `.vscode/` **no** van a GitHub (`.gitignore`). Para llevar datos de prueba a otra PC:
   `python manage.py exportar_demo` / `python manage.py cargar_demo` (ver README).
 - Para la presentación: `python manage.py cargar_productos_presentacion` crea 3 tiendas ficticias
@@ -58,7 +60,8 @@
 - **Login**: el selector "Soy cliente / Soy tienda" se valida. Una tienda debe entrar como tienda y
   un cliente como cliente; el administrador entra con cualquiera. El aviso solo sale si la contraseña
   es correcta. Si eligió mal, la página **marca sola la opción correcta** (brilla con una flechita), deja
-  escrito el usuario y pone el cursor en la contraseña.
+  escrito el usuario y pone el cursor en la contraseña. Diseño: tarjeta blanca con dos capas detrás (cian y
+  azul marino, clase `pagina-ingreso` en el body), logo N de circuito, selector con íconos y botón «Mostrar» con ojo.
 - **Exportación de demo**: nunca exporta contraseñas, clientes, ventas, inventario ni favoritos, y
   reemplaza los correos reales.
 - "Otra" (marca) y "Otros" (categoría) van siempre al final de las listas.
@@ -110,8 +113,10 @@
   `catalogo/_galeria_edicion.html` + `static/js/galeria_producto.js`. Todas las fotos en una sola lista
   (máximo 6); **la primera es la principal**. «+ Agregar fotos» permite elegir varias a la vez (se suman en el
   orden que entrega el navegador: Windows NO informa el orden de los clics). Arrastrar una foto sobre otra las
-  **intercambia** (también fotos nuevas sin guardar); botones «★ Hacer principal», flechas ‹ › (celular),
-  «Reemplazar» y «X». Si se quita la principal, sube la siguiente. Al guardar se envía el orden final en el campo
+  **intercambia** (también fotos nuevas sin guardar); botones con ícono (★ Hacer principal, ⟳ Reemplazar,
+  ‹ › mover; dicen qué hacen al pasar el mouse) y «X». Si se quita la principal, sube la siguiente.
+  Diseño fijo: la principal arriba (alto 300 px; 240 px en celular) y debajo **siempre 5 casillas iguales**
+  (las vacías con «+»; 3 columnas en celular, con los botones en 2 filas): la galería mide lo mismo con 1 o 6 fotos. Al guardar se envía el orden final en el campo
   oculto `galeria_plan` («p» = principal actual, «f12» = foto adicional 12, «n0» = 1.ª foto nueva; «ninguna» = sin
   fotos) y las fotos nuevas en `fotos_nuevas`; el servidor lo aplica en `ProductoForm.aplicar_plan` (las fotos que
   ya existían solo cambian de lugar, sin volver a subirse; luego `reubicar_producto` renombra los archivos).
@@ -185,6 +190,11 @@
 - **«Publicado» y «Destacado en el inicio»** se ven como tarjetas con interruptor (verde con ojo / ámbar con
   estrella cuando están activas; textos «Sí: …» / «No: …»). Cualquier casilla de un formulario puede usarlo con
   el atributo `interruptor = {"si", "no", "icono", "icono_no", "color"}` (`_campos_formulario.html`).
+  Van lado a lado (como Stock actual y Stock mínimo) con ayudas cortas: «Desmárcalo para ocultarlo sin
+  eliminarlo.» y «Máximo 3 por tienda.»
+- Tabla de Mis productos (`tabla-productos`): miniatura de la foto principal (48 px, `loading="lazy"`; ícono gris
+  si no tiene), encabezado en mayúsculas pequeñas, estados con íconos (ojo Publicado, ojo tachado Oculto,
+  estrella Destacado, Agotado, Stock bajo) y «Editar» con lápiz.
 - Menú «Más» de cada producto en Mis productos: `data-bs-popper-config='{"strategy":"fixed"}'` para que la tabla
   (que tiene desplazamiento propio) no lo recorte aunque haya un solo producto.
 - «Agotados», «Stock bajo», el aviso amarillo del menú y las alertas del Resumen cuentan SOLO productos
@@ -208,7 +218,7 @@
   defecto (`same-origin`) no lo envía (sin esto el mapa sale en blanco). En plantillas, las coordenadas se
   imprimen con `stringformat:'s'` o como texto, porque el formato local de Django pondría coma decimal.
   El navegador solo comparte la ubicación en https o en 127.0.0.1.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **571 pruebas, OK**.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **576 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 
@@ -216,11 +226,14 @@
   Al publicar: **https obligatorio** (sin él no funciona «Usar mi ubicación»), `DEBUG = False`, `ALLOWED_HOSTS`,
   `SECRET_KEY` fuera del código, correo SMTP real. Si los mapas tuvieran mucho tráfico, cambiar el proveedor de
   cuadros de OpenStreetMap (una línea en `mapas.js`).
-- Confirmar el nombre del instituto: el informe dice «IESTP Urusayhua» (Tecnológico) y el pie de la página y el
-  README dicen «IESPP» (Pedagógico). Uno de los dos está mal.
+- **Cambios del 08/11/2026 aún sin commit** (Rodrigo hará un solo commit al terminar los cambios estéticos del día):
+  nuevo login, formularios y tablas en blanco, Publicado/Destacado juntos, IESTP, galería con casillas fijas y
+  tabla de Mis productos con fotos. Mensaje sugerido: «Mejoras visuales: nuevo login, formularios y tablas en
+  blanco, galería con casillas fijas, tabla de productos con fotos e IESTP».
 - El correo de soporte `soporte@nexalys.pe` es de demostración (`cuentas/views.py`, `CORREO_SOPORTE`).
 - Los manuales del Entregable 8 se hicieron antes de: la galería única de fotos, el stock bloqueado al editar,
-  el login que marca la opción correcta y Tiendas cercanas. Si se actualizan, revisar esas partes y sus capturas.
+  el login que marca la opción correcta, el nuevo diseño del login, la galería con 5 casillas fijas, la tabla
+  de Mis productos con fotos y Tiendas cercanas. Si se actualizan, revisar esas partes y sus capturas.
 - Decidir cómo cobrar a las tiendas (por ejemplo, 1 % por venta) y cómo evitar que lo evadan.
 - "Seguir tiendas" (etapa 2).
 - Posible migración de SQLite a MySQL más adelante.

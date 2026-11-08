@@ -139,6 +139,13 @@ class InterruptoresTests(BaseCatalogo):
         self.assertContains(respuesta, 'class="interruptor interruptor--verde" for="id_activo"')
         self.assertContains(respuesta, 'class="interruptor interruptor--ambar" for="id_destacado"')
         self.assertContains(respuesta, 'role="switch"', count=2)
+        # Van uno al lado del otro (misma fila), con una ayuda corta.
+        html = respuesta.content.decode()
+        fila = html[html.index('<div class="row g-3 mb-3">', html.index('id="id_stock_minimo"')):]
+        self.assertLess(fila.index('for="id_activo"'), fila.index('for="id_destacado"'))
+        self.assertLess(fila.index('for="id_destacado"'), fila.index('</div>\n    </div>') if '</div>\n    </div>' in fila else len(fila))
+        self.assertContains(respuesta, "Desmárcalo para ocultarlo sin eliminarlo.")
+        self.assertContains(respuesta, "Máximo 3 por tienda.")
         for texto in ("Sí: se ve en el catálogo", "No: está oculto, los clientes no lo ven",
                       "Sí: aparece entre los destacados del inicio", "No: no aparece entre los destacados"):
             self.assertContains(respuesta, texto)

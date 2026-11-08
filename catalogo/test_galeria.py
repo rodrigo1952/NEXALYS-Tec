@@ -61,9 +61,21 @@ class GaleriaEdicionTests(BaseCatalogo):
             {"ficha": "p", "url": self.producto.imagen.url},
             {"ficha": f"f{self.adicional.pk}", "url": self.adicional.imagen.url},
         ])
-        for texto in ("Foto principal", "Cambiar foto principal", "★ Hacer principal", "Reemplazar", "Quitar la foto ",
+        for texto in ("Foto principal", "Cambiar foto principal", '"Hacer principal"', '"Reemplazar"', "Quitar la foto ",
                       "Agregar fotos", "arrástralas aquí", "Mover a la izquierda", "Mover a la derecha"):
             self.assertIn(texto, galeria_js())
+
+    def test_la_galeria_mide_lo_mismo_con_pocas_o_muchas_fotos(self):
+        # Principal arriba con alto fijo; debajo, siempre 5 casillas (las vacías con «+»).
+        codigo = galeria_js()
+        self.assertIn("for (var k = Math.max(fotos.length, 1); k < MAXIMO; k++) cajaSecundarias.appendChild(casillaVacia(", codigo)
+        self.assertIn('botonIcono("bi-star-fill", "Hacer principal"', codigo)
+        from django.contrib.staticfiles import finders
+
+        with open(finders.find("css/marca.css"), encoding="utf-8") as archivo:
+            css = archivo.read()
+        self.assertIn(".tarjeta-foto--principal .tarjeta-foto__imagen { height: 300px; }", css)
+        self.assertIn(".galeria-edicion__secundarias { grid-template-columns: repeat(5, minmax(0, 1fr)); }", css)
 
     def test_categoria_y_marca_en_una_fila(self):
         html = self.client.get(reverse("catalogo:crear")).content.decode()
