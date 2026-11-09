@@ -25,9 +25,13 @@
         {% include "catalogo/_galeria_edicion.html" %}
         {% include "_campos_formulario.html" %}
 
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary">Guardar</button>
-          <a href="{% if url_cancelar %}{{ url_cancelar }}{% else %}{% url 'catalogo:mis_productos' %}{% endif %}" class="btn btn-outline-secondary">Cancelar</a>
+        {# Barra fija: se queda abajo de la pantalla mientras bajas por el formulario. #}
+        <div class="barra-guardar">
+          <p class="barra-guardar__texto mb-0">Nada se guarda hasta presionar «Guardar producto».</p>
+          <div class="barra-guardar__botones">
+            <a href="{% if url_cancelar %}{{ url_cancelar }}{% else %}{% url 'catalogo:mis_productos' %}{% endif %}" class="btn btn-outline-primary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar producto</button>
+          </div>
         </div>
       </form>
     </div></div>
@@ -39,5 +43,5 @@
 {# Categoría y marca con buscador: escribe el nombre o la inicial. #}
 <script src="{% static 'js/lista_buscable.js' %}?v=1"></script>
 {# Galería de fotos: elegir varias, ordenar arrastrando y elegir la principal antes de guardar. #}
-<script src="{% static 'js/galeria_producto.js' %}?v=3"></script>
+<script src="{% static 'js/galeria_producto.js' %}?v=5"></script>
 {% endblock %}

@@ -26,19 +26,19 @@ Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
       <li><hr class="dropdown-divider"></li>
       {% if tienda_actual %}
         {% if tienda_actual.estado == "activa" %}
-          <li><a class="dropdown-item" href="{% url 'tiendas:perfil' tienda_actual.pk %}"><span aria-hidden="true">🏪</span> Mi tienda</a></li>
+          <li><a class="dropdown-item" href="{% url 'tiendas:perfil' tienda_actual.pk %}"><i class="bi bi-shop" aria-hidden="true"></i> Mi tienda</a></li>
         {% else %}
-          <li><a class="dropdown-item" href="{% url 'tiendas:panel' %}"><span aria-hidden="true">🏪</span> Mi tienda</a></li>
+          <li><a class="dropdown-item" href="{% url 'tiendas:panel' %}"><i class="bi bi-shop" aria-hidden="true"></i> Mi tienda</a></li>
         {% endif %}
       {% endif %}
       {% if es_admin %}
-        <li><a class="dropdown-item" href="{% url 'panel_admin' %}"><span aria-hidden="true">📊</span> Consola de administración</a></li>
+        <li><a class="dropdown-item" href="{% url 'panel_admin' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Consola de administración</a></li>
       {% endif %}
-      <li><a class="dropdown-item" href="{% url 'mi_cuenta' %}"><span aria-hidden="true">⚙️</span> Mi cuenta</a></li>
-      <li><a class="dropdown-item" href="{% url 'ayuda' %}"><span aria-hidden="true">❓</span> Ayuda y soporte</a></li>
-      <li><a class="dropdown-item" href="{% url 'privacidad' %}"><span aria-hidden="true">🔒</span> Privacidad y términos</a></li>
+      <li><a class="dropdown-item" href="{% url 'mi_cuenta' %}"><i class="bi bi-gear" aria-hidden="true"></i> Mi cuenta</a></li>
+      <li><a class="dropdown-item" href="{% url 'ayuda' %}"><i class="bi bi-question-circle" aria-hidden="true"></i> Ayuda y soporte</a></li>
+      <li><a class="dropdown-item" href="{% url 'privacidad' %}"><i class="bi bi-shield-lock" aria-hidden="true"></i> Privacidad y términos</a></li>
       <li><hr class="dropdown-divider"></li>
-      <li><button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#modal-cerrar-sesion"><span aria-hidden="true">🚪</span> Cerrar sesión</button></li>
+      <li><button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#modal-cerrar-sesion"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión</button></li>
     </ul>
   </li>
 {% else %}

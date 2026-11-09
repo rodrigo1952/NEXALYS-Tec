@@ -89,6 +89,34 @@
 
   // ---- Vista: 4 por fila, 3 por fila o lista (se recuerda en este navegador) ----
   var grilla = document.getElementById("grilla-catalogo");
+
+  // ---- Tarjetas grises de carga ----
+  // Mientras llega la nueva lista (al filtrar, ordenar o cambiar de página), los productos se cambian por
+  // tarjetas grises con la misma forma: se nota que está cargando y la página no «salta».
+  var grillaOriginal = null;
+  function mostrarCarga() {
+    if (!grilla || grilla.dataset.cargando) return;
+    grilla.dataset.cargando = "1";
+    grilla.setAttribute("aria-busy", "true");
+    grillaOriginal = grilla.innerHTML;
+    var cantidad = Math.max(3, Math.min(grilla.children.length, 9));
+    var tarjeta = '<div class="tarjeta-esqueleto" aria-hidden="true"><div class="esqueleto esqueleto--foto"></div>' +
+      '<div class="tarjeta-esqueleto__cuerpo"><div class="esqueleto esqueleto--corta"></div><div class="esqueleto"></div>' +
+      '<div class="esqueleto esqueleto--media"></div><div class="esqueleto esqueleto--precio"></div></div></div>';
+    grilla.innerHTML = new Array(cantidad + 1).join(tarjeta) + '<span class="visually-hidden" role="status">Cargando productos…</span>';
+  }
+  form.addEventListener("submit", mostrarCarga);
+  document.addEventListener("click", function (evento) {
+    if (evento.button !== 0 || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return;
+    if (evento.target.closest(".filtros__chips a, .pagination a, #filtros-catalogo a[href]")) mostrarCarga();
+  });
+  // Al volver con «Atrás», el navegador puede mostrar la página guardada: se devuelven los productos.
+  window.addEventListener("pageshow", function () {
+    if (!grilla || !grilla.dataset.cargando) return;
+    grilla.innerHTML = grillaOriginal;
+    delete grilla.dataset.cargando;
+    grilla.removeAttribute("aria-busy");
+  });
   var botones = document.querySelectorAll("[data-vista-boton]");
   function elegirVista(vista) {
     if (grilla) grilla.dataset.vista = vista;

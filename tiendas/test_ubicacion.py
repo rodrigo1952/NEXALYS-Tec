@@ -41,6 +41,8 @@ class TiendasCercanasTests(BaseUbicacion):
         self.assertEqual(zeta["productos"], 1)  # solo los publicados
         self.assertEqual(zeta["como_llegar"], "https://www.google.com/maps/dir/?api=1&destination=-12.866500,-72.692800")
         self.assertIsNone(alfa["lat"])
+        # Sin punto marcado, «Cómo llegar» igual traza la ruta hacia la dirección escrita.
+        self.assertEqual(alfa["como_llegar"], "https://www.google.com/maps/dir/?api=1&destination=Jr.%20Espinar%2C%20Quillabamba")
         self.assertContains(respuesta, 'id="datos-tiendas"')
         self.assertContains(respuesta, "Aún no marcaron su local en el mapa", count=1)
         self.assertContains(respuesta, "leaflet/1.9.4/leaflet.js")
@@ -52,12 +54,12 @@ class TiendasCercanasTests(BaseUbicacion):
             self.assertEqual(self.client.get(url)["Referrer-Policy"], "strict-origin-when-cross-origin")
         self.assertEqual(self.client.get(reverse("catalogo:catalogo"))["Referrer-Policy"], "same-origin")
 
-    def test_enlace_en_el_menu_para_visitantes_y_clientes_no_para_tiendas(self):
+    def test_enlace_en_el_menu_para_todos(self):
         self.assertContains(self.client.get(reverse("inicio")), reverse("tiendas:cercanas"))
         self.client.force_login(self.con_mapa.usuario)
         html = self.client.get(reverse("catalogo:catalogo")).content.decode()
         menu = html[html.index("menu-secciones"):html.index("</ul>", html.index("menu-secciones"))]
-        self.assertNotIn("Tiendas cercanas", menu)
+        self.assertIn("Tiendas cercanas", menu)
 
     def test_perfil_con_ubicacion_tiene_mapa_y_como_llegar(self):
         respuesta = self.client.get(reverse("tiendas:perfil", args=[self.con_mapa.pk]))

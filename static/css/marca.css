@@ -22,7 +22,7 @@
   --nx-borde: #CBD5E3;
   --nx-borde-suave: #E0E6EF;
   --nx-texto: #0B1B3A;
-  --nx-texto-suave: #56677F;   /* textos secundarios (text-muted) */
+  --nx-texto-suave: #46566D;   /* textos secundarios y de ayuda (text-muted): gris oscuro, se lee bien con poco brillo */
   --nx-menu-texto: #C8D5EA;    /* enlaces del menú sobre azul marino */
   --nx-pie-texto: #A8B7CF;
 
@@ -94,8 +94,10 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
   display: inline-flex; align-items: center; justify-content: center;
 }
 
-/* Segunda fila con las secciones */
+/* Segunda fila con las secciones: lo común (Inicio, Catálogo, Tiendas cercanas) y, tras una línea,
+   lo propio de cada uno (Mis productos, Mis favoritos o Administración). */
 .menu-secciones .nav-link { padding-top: .45rem; padding-bottom: .45rem; }
+.menu-secciones__separador { height: 1px; margin: .35rem 0; background: rgba(255, 255, 255, .15); }
 @media (min-width: 992px) {
   .buscador-menu { flex: 1 1 auto; width: auto; max-width: 640px; margin: 0 1.5rem; }
   .navbar-expand-lg .navbar-collapse.menu-fila {
@@ -103,8 +105,9 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
     border-top: 1px solid rgba(255, 255, 255, .10);
     margin-top: .6rem;
   }
-  .menu-secciones { gap: .5rem; }
+  .menu-secciones { gap: .5rem; align-items: center; }
   .menu-secciones .nav-link { padding-left: .5rem; padding-right: .5rem; font-size: .95rem; }
+  .menu-secciones__separador { width: 1px; height: 1.35rem; margin: 0 .5rem; background: rgba(255, 255, 255, .25); }
 }
 
 /* Círculo del usuario en el menú (logo de la tienda o inicial) */
@@ -120,7 +123,25 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
 .filtro-categorias .btn { border-radius: 999px; }
 
 /* 5. Botones ---------------------------------------------------------- */
-.btn { font-weight: 600; }
+/* Un solo sistema: todos los botones normales miden 46 px de alto y tienen la misma esquina (12 px).
+   Los pequeños (btn-sm: tablas, tarjetas) son compactos pero con la misma forma. Tipos:
+   Principal (btn-primary, azul marino) · Secundario (btn-outline-primary / -secondary, borde azul marino) ·
+   Destacado (btn-acento, cian) · Peligro (btn-outline-danger; btn-danger solo para confirmar) · WhatsApp (btn-success). */
+.btn {
+  --bs-btn-font-weight: 600; --bs-btn-border-radius: 12px; --bs-btn-padding-x: 1.1rem;
+  min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+}
+.btn-sm { --bs-btn-border-radius: 10px; --bs-btn-padding-x: .7rem; min-height: 32px; gap: .3rem; }
+.btn-lg { --bs-btn-border-radius: 14px; min-height: 52px; }
+.btn-link { min-height: 0; display: inline; }
+.btn-success {
+  --bs-btn-bg: #1E8E3E; --bs-btn-border-color: #1E8E3E;
+  --bs-btn-hover-bg: #18753A; --bs-btn-hover-border-color: #18753A;
+  --bs-btn-active-bg: #145F2F; --bs-btn-active-border-color: #145F2F;
+  --bs-btn-disabled-bg: #1E8E3E; --bs-btn-disabled-border-color: #1E8E3E;
+}
+.btn-outline-danger { --bs-btn-color: #B42318; --bs-btn-border-color: #D9534F; --bs-btn-hover-bg: #B42318; --bs-btn-hover-border-color: #B42318; }
+.btn-danger { --bs-btn-bg: #B42318; --bs-btn-border-color: #B42318; --bs-btn-hover-bg: #941D14; --bs-btn-hover-border-color: #941D14; }
 .btn-primary {
   --bs-btn-bg: var(--nx-oscuro);
   --bs-btn-border-color: var(--nx-oscuro);
@@ -159,16 +180,42 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
   --bs-btn-disabled-border-color: var(--nx-acento);
   --bs-btn-focus-shadow-rgb: var(--nx-acento-rgb);
 }
-.btn-outline-secondary {
-  --bs-btn-color: #3A4862;
-  --bs-btn-border-color: var(--nx-borde);
-  --bs-btn-hover-color: var(--nx-oscuro);
-  --bs-btn-hover-bg: var(--nx-fondo-suave);
-  --bs-btn-hover-border-color: var(--nx-borde);
-  --bs-btn-active-color: var(--nx-oscuro);
-  --bs-btn-active-bg: var(--nx-fondo-suave);
-  --bs-btn-active-border-color: var(--nx-borde);
+.btn-outline-secondary {  /* Secundario: igual que btn-outline-primary (borde azul marino, fondo blanco) */
+  --bs-btn-color: var(--nx-oscuro);
+  --bs-btn-bg: var(--nx-blanco);
+  --bs-btn-border-color: var(--nx-oscuro);
+  --bs-btn-hover-color: var(--nx-blanco);
+  --bs-btn-hover-bg: var(--nx-oscuro);
+  --bs-btn-hover-border-color: var(--nx-oscuro);
+  --bs-btn-active-color: var(--nx-blanco);
+  --bs-btn-active-bg: var(--nx-oscuro);
+  --bs-btn-active-border-color: var(--nx-oscuro);
+  --bs-btn-disabled-color: var(--nx-oscuro);
+  --bs-btn-disabled-border-color: var(--nx-oscuro);
+  --bs-btn-focus-shadow-rgb: var(--nx-acento-rgb);
 }
+.btn-outline-primary { --bs-btn-bg: var(--nx-blanco); }
+
+/* Precios alineados: cifras de ancho fijo en tablas, notas de venta y precios. */
+.table, .nota-venta, .precio { font-variant-numeric: tabular-nums; }
+
+/* Mensajes iguales en todo el sitio: éxito (✓ verde), aviso (! ámbar), error (✕ rojo), información (i celeste). */
+.alert {
+  --bs-alert-border-color: transparent; --bs-alert-border-radius: 12px;
+  position: relative; padding-left: 2.85rem;
+}
+.alert::before {
+  position: absolute; left: 1.05rem; top: calc(var(--bs-alert-padding-y) + .1em);
+  font-family: "bootstrap-icons"; font-size: 1.05em; line-height: 1.4; font-weight: 400;
+}
+.alert-success { --bs-alert-bg: #E6F4EA; --bs-alert-color: #1E5E34; --bs-alert-link-color: #1E5E34; }
+.alert-success::before { content: "\f633"; }
+.alert-warning { --bs-alert-bg: #FDF3D0; --bs-alert-color: #6B4E00; --bs-alert-link-color: #6B4E00; }
+.alert-warning::before { content: "\f333"; }
+.alert-danger { --bs-alert-bg: #FCE8E6; --bs-alert-color: #8E1F17; --bs-alert-link-color: #8E1F17; }
+.alert-danger::before { content: "\f659"; }
+.alert-info { --bs-alert-bg: #E3F5FA; --bs-alert-color: #0A5A70; --bs-alert-link-color: #0A5A70; }
+.alert-info::before { content: "\f431"; }
 
 /* 6. Tarjetas, formularios y tablas ----------------------------------- */
 /* Tarjetas y cajas de texto en BLANCO sobre el fondo gris claro de la página (como el login).
@@ -219,19 +266,57 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
 @media (max-width: 576px) { .portada-marca { padding: 2rem 1.25rem; } .portada-marca__dibujo { display: none; } }
 
 /* 8. Pie de página ---------------------------------------------------- */
-.pie-marca { background: var(--nx-oscuro); color: var(--nx-pie-texto); }
+.pie-marca { background: var(--nx-oscuro); color: var(--nx-pie-texto); font-size: .9rem; }
 .pie-marca a { color: var(--nx-menu-texto); text-decoration: none; }
-.pie-marca a:hover { color: var(--nx-blanco); }
+.pie-marca a:hover, .pie-marca a:focus-visible { color: var(--nx-blanco); text-decoration: underline; text-underline-offset: .2em; }
+/* Pie completo: marca + 3 grupos de enlaces y una franja final con el instituto. */
+.pie-marca__columnas { display: grid; gap: 1.75rem; grid-template-columns: 1fr 1fr; padding-top: 2.5rem; padding-bottom: 2rem; }
+.pie-marca__marca { grid-column: 1 / -1; max-width: 26rem; }
+.pie-marca__logo { display: block; margin-bottom: .5rem; color: var(--nx-blanco); font-size: 1.25rem; letter-spacing: -.01em; }
+.pie-marca__logo span { color: var(--nx-acento); }
+.pie-marca__titulo { margin-bottom: .7rem; color: var(--nx-blanco); font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.pie-marca__grupo ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
+.pie-marca__final { border-top: 1px solid rgba(255, 255, 255, .1); padding: 1rem 0; font-size: .8rem; }
+.pie-marca__final .container { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .35rem 1.5rem; }
+@media (min-width: 768px) {
+  .pie-marca__columnas { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  .pie-marca__marca { grid-column: auto; }
+}
+
+/* Tarjetas grises de carga: en el catálogo mientras llega la nueva lista y en cada foto mientras carga. */
+@keyframes esqueleto-brillo { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.esqueleto, .foto-producto.foto-cargando {
+  background: linear-gradient(90deg, #E9EEF5 25%, #F4F7FB 50%, #E9EEF5 75%); background-size: 200% 100%;
+  animation: esqueleto-brillo 1.3s linear infinite;
+}
+.esqueleto { height: .85rem; border-radius: .4rem; }
+.tarjeta-esqueleto {
+  display: flex; flex-direction: column; overflow: hidden; background: var(--nx-blanco);
+  border: 1px solid var(--nx-borde-suave); border-radius: 1rem;
+}
+.esqueleto--foto { height: 196px; border-radius: 0; }
+.tarjeta-esqueleto__cuerpo { display: grid; gap: .6rem; padding: 1rem; }
+.esqueleto--corta { width: 45%; height: .7rem; }
+.esqueleto--media { width: 70%; }
+.esqueleto--precio { width: 38%; height: 1.15rem; margin-top: .3rem; }
+.catalogo-grilla[data-vista="lista"] .tarjeta-esqueleto { flex-direction: row; }
+.catalogo-grilla[data-vista="lista"] .esqueleto--foto { flex: 0 0 200px; height: 180px; }
+.catalogo-grilla[data-vista="lista"] .tarjeta-esqueleto__cuerpo { flex: 1 1 auto; align-content: center; }
+@media (prefers-reduced-motion: reduce) { .esqueleto, .foto-producto.foto-cargando { animation: none; } }
 
 /* ---------- Impresión (nota de venta y reportes) ----------
    Al imprimir o "Guardar como PDF" solo sale el contenido: sin menú, pie,
    botones ni avisos. Marca con class="no-imprimir" lo que no debe salir. */
+@page { margin: 12mm; }
 @media print {
   .cabecera-marca, .pie-marca, .no-imprimir, .toast-container, main > .alert { display: none !important; }
   body { background: #fff !important; }
   main.container { padding: 0 !important; max-width: none; }
   .card { border: 0 !important; box-shadow: none !important; }
   .nota-venta .card-body { padding: 0 !important; }
+  .nota-venta__columna { flex: 0 0 100%; max-width: 100%; }
+  .barra-categorias, .modal, .modal-backdrop, .aviso-whatsapp, .menu-whatsapp { display: none !important; }
+  main { margin: 0 !important; }
   a[href]::after { content: none !important; }
 }
 
@@ -286,107 +371,145 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
 .filtro-rapido--aviso:not(.activo) .contador { background: #FFF3CD; color: #8A6100; }
 .filtro-rapido--peligro:not(.activo) .contador { background: #F8D7DA; color: #842029; }
 
-/* ---------- Galería de fotos al editar un producto ---------- */
-/* La principal va arriba con alto fijo; debajo, SIEMPRE 5 casillas iguales (fotos o «+»):
-   la galería mide lo mismo con 1 o con 6 fotos. En el celular, las 5 casillas van en 3 columnas. */
-.galeria-edicion { border-radius: var(--nx-radio); transition: background-color .15s ease, box-shadow .15s ease; }
-.galeria-edicion--soltar { background: rgba(var(--nx-acento-rgb), .06); box-shadow: 0 0 0 2px rgba(var(--nx-acento-rgb), .45); }
-.galeria-edicion__cuerpo { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
-.galeria-edicion__secundarias { display: grid; gap: .6rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-@media (min-width: 576px) {
-  .galeria-edicion__secundarias { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+/* Barra fija de Guardar (formulario de producto): queda pegada abajo mientras se baja por el formulario. */
+.barra-guardar {
+  position: sticky; bottom: 0; z-index: 1020; display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: .5rem 1rem; margin: 1.5rem -1.5rem -1.5rem; padding: .85rem 1.5rem;
+  background: var(--nx-blanco); border-top: 1px solid var(--nx-borde-suave);
+  border-radius: 0 0 var(--bs-card-inner-border-radius, .75rem) var(--bs-card-inner-border-radius, .75rem);
+  box-shadow: 0 -.5rem 1rem rgba(var(--nx-oscuro-rgb), .06);
 }
-.tarjeta-foto--principal .tarjeta-foto__imagen { aspect-ratio: auto; height: 240px; }
-@media (min-width: 576px) {
-  .tarjeta-foto--principal .tarjeta-foto__imagen { height: 300px; }
-}
-.tarjeta-foto__pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
-.tarjeta-foto {
-  position: relative; display: flex; flex-direction: column; gap: .4rem;
-  padding: .5rem; border: 1px solid var(--bs-border-color); border-radius: .75rem; background: #fff;
-  transition: border-color .15s ease, box-shadow .15s ease, opacity .15s ease, outline-color .15s ease;
-}
-.tarjeta-foto__imagen {
-  aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
-  border-radius: .5rem; background: var(--nx-fondo-suave); overflow: hidden;
-}
-.tarjeta-foto__imagen img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
-.tarjeta-foto__botones { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: auto; }
-.tarjeta-foto__botones .btn { font-size: .78rem; padding: .2rem .5rem; }
-.tarjeta-foto__estado:empty { display: none; }
-/* Principal: borde cian grueso, halo, fondo suave y etiqueta con estrella. */
-.tarjeta-foto--principal {
-  padding: .75rem; border: 3px solid var(--nx-acento);
-  background: linear-gradient(180deg, rgba(var(--nx-acento-rgb), .10), #fff 45%);
-  box-shadow: 0 0 0 4px rgba(var(--nx-acento-rgb), .18), 0 .5rem 1.25rem rgba(var(--nx-oscuro-rgb), .12);
-}
-.etiqueta-principal {
-  position: absolute; top: 1.15rem; left: 1.15rem; z-index: 2; padding: .3rem .7rem; border-radius: 999px;
-  background: var(--nx-oscuro); color: #fff; font-size: .8rem; font-weight: 700;
-  box-shadow: 0 2px 6px rgba(var(--nx-oscuro-rgb), .3);
-}
-.etiqueta-principal span { color: var(--nx-acento); }
-.etiqueta-principal .numero-foto { color: var(--nx-oscuro); }  /* el «1» se lee sobre el círculo cian */
-/* Adicionales: más pequeñas y discretas. */
-.tarjeta-foto--secundaria { padding: .3rem; gap: .3rem; }
-.tarjeta-foto--secundaria .tarjeta-foto__botones { flex-wrap: nowrap; justify-content: space-between; gap: .1rem; min-height: 1.4rem; }
-.boton-icono {
-  width: 1.4rem; height: 1.4rem; padding: 0; display: inline-flex; align-items: center; justify-content: center;
-  border-radius: .4rem; font-size: .72rem; line-height: 1;
-}
-.boton-icono .bi-star-fill { color: #E0A800; }
-.boton-icono:hover .bi-star-fill, .boton-icono:focus-visible .bi-star-fill { color: inherit; }
-.boton-icono:disabled { opacity: .3; }
-.tarjeta-foto--secundaria .tarjeta-foto__x { top: .3rem; right: .3rem; width: 24px; height: 24px; font-size: .95rem; }
-.tarjeta-foto--secundaria .numero-foto--secundaria { top: .4rem; left: .4rem; }
-.tarjeta-foto--secundaria .etiqueta-nueva { top: .45rem; left: 2rem; font-size: .62rem; }
-/* Celular: casillas angostas → los 4 botones en 2 filas (más fáciles de tocar) y sin la etiqueta «Nueva»
-   (el borde punteado cian ya indica que es nueva). */
+.barra-guardar__texto { font-size: .82rem; color: var(--nx-texto-suave); }
+.barra-guardar__botones { display: flex; gap: .5rem; margin-left: auto; }
+.barra-guardar__botones .btn { white-space: nowrap; }
 @media (max-width: 575.98px) {
-  .tarjeta-foto--secundaria .tarjeta-foto__botones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .2rem; min-height: 3.4rem; }
-  .tarjeta-foto--secundaria .boton-icono { width: 100%; height: 1.6rem; font-size: .8rem; }
-  .tarjeta-foto--secundaria .etiqueta-nueva { display: none; }
+  .barra-guardar__texto { display: none; }
+  .barra-guardar__botones { flex: 1 1 auto; }
+  .barra-guardar__botones .btn { flex: 1 1 0; --bs-btn-padding-x: .6rem; font-size: .95rem; }
 }
-.tarjeta-foto--secundaria [data-vista] { cursor: grab; }
-.tarjeta-foto--marcada { box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .25); }
-.tarjeta-foto--quitada .tarjeta-foto__imagen { opacity: .35; filter: grayscale(1); }
-.tarjeta-foto--sera-principal { border: 2px dashed #198754; }
-.tarjeta-foto--principal.tarjeta-foto--intercambiada { box-shadow: 0 0 0 4px rgba(25, 135, 84, .3), 0 .5rem 1.25rem rgba(var(--nx-oscuro-rgb), .12); }
-/* Botón «X» para quitar: aparece al pasar el cursor (en celulares se ve siempre). */
+
+/* ---------- Galería de fotos al agregar/editar un producto: compacta y sin botones ----------
+   Cuadrícula de 5 columnas: la principal ocupa 2×2 a la izquierda; a su derecha, en dos filas, las fotos 2 a 6
+   (las vacías dicen «+ Foto N») y «Agregar varias». Sin fotos: un solo recuadro bajo para elegir o soltar.
+   Clic en una foto = reemplazarla; arrastrarla = cambiarla de lugar; «✕» (al pasar el mouse) = quitarla.
+   En el celular: 3 columnas, y para mover se mantiene presionada la foto y se arrastra. */
+.galeria-edicion { border-radius: var(--nx-radio); }
+.galeria-edicion__cab { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; }
+.galeria-edicion__contador { font-size: .85rem; font-weight: 700; color: var(--nx-texto-suave); white-space: nowrap; }
+.galeria-edicion__ayuda { margin: .15rem 0 .75rem; font-size: .85rem; color: var(--nx-texto-suave); }
+.solo-tactil { display: none; }
+@media (hover: none) { .solo-mouse { display: none; } .solo-tactil { display: inline; } }
+.galeria-edicion__cuerpo { display: grid; gap: .5rem; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.galeria-edicion__cuerpo--vacia { display: block; }
+.galeria-edicion__principal { grid-column: 1 / 3; grid-row: 1 / 3; display: flex; min-width: 0; }
+.galeria-edicion__principal > * { flex: 1 1 auto; min-width: 0; }
+.galeria-edicion__secundarias { display: contents; }  /* sus casillas pasan a ser parte de la cuadrícula */
+@media (max-width: 575.98px) {
+  .galeria-edicion__cuerpo { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .casilla-varias, .casilla-llena { display: none !important; }
+}
+
+/* Sin fotos: un recuadro bajo */
+.galeria-zona {
+  display: flex; align-items: center; gap: 1rem; margin: 0; padding: 1.1rem 1.25rem; cursor: pointer;
+  border: 1.5px dashed var(--nx-borde); border-radius: 14px; background: #FAFBFD;
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+.galeria-zona:hover { border-color: var(--nx-acento); }
+.galeria-edicion--soltar .galeria-zona {
+  border-color: var(--nx-acento); background: rgba(var(--nx-acento-rgb), .08); box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .18);
+}
+.galeria-zona__icono {
+  flex: 0 0 48px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(var(--nx-acento-rgb), .14); color: var(--nx-acento-texto); font-size: 1.3rem;
+}
+.galeria-zona strong { display: block; font-size: .95rem; }
+.galeria-zona small { color: var(--nx-texto-suave); font-size: .82rem; }
+.galeria-zona u { color: var(--nx-acento-texto); font-weight: 700; text-underline-offset: 3px; }
+
+/* Casilla con foto */
+.tarjeta-foto {
+  position: relative; aspect-ratio: 1 / 1; overflow: hidden; cursor: pointer; outline: 0;
+  border: 1px solid var(--nx-borde-suave); border-radius: 11px; background: var(--nx-blanco);
+  transition: border-color .15s ease, box-shadow .15s ease, opacity .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.tarjeta-foto--principal { aspect-ratio: auto; border: 2px solid var(--nx-acento); box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .18); }
+.tarjeta-foto:focus-visible { box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .6); }
+.tarjeta-foto__imagen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.tarjeta-foto__imagen img {
+  width: 100%; height: 100%; object-fit: contain; background: var(--nx-blanco);
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+}
+.tarjeta-foto .numero-foto--secundaria { top: .35rem; left: .35rem; min-width: 1.25rem; height: 1.25rem; font-size: .7rem; }
+.etiqueta-principal {
+  position: absolute; top: .45rem; left: .45rem; z-index: 3; display: inline-flex; align-items: center; gap: .25rem;
+  padding: .15rem .55rem .15rem .2rem; border-radius: 999px; background: var(--nx-oscuro); color: #fff;
+  font-size: .75rem; font-weight: 700; box-shadow: 0 2px 6px rgba(var(--nx-oscuro-rgb), .3);
+}
+.etiqueta-principal .numero-foto { margin: 0; min-width: 1.25rem; height: 1.25rem; font-size: .7rem; }
+.etiqueta-principal .bi { color: var(--nx-acento); }
+@media (max-width: 575.98px) {
+  .etiqueta-principal__texto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+/* «✕» para quitar: aparece al pasar el mouse (en el celular se ve siempre) */
 .tarjeta-foto__x {
-  position: absolute; top: .45rem; right: .45rem; z-index: 3; width: 30px; height: 30px; padding: 0;
-  display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
-  border: 2px solid #fff; background: rgba(var(--nx-oscuro-rgb), .85); color: #fff;
-  font-size: 1.15rem; line-height: 1; opacity: 0; transition: opacity .15s ease, background-color .15s ease;
+  position: absolute; top: .35rem; right: .35rem; z-index: 4; width: 24px; height: 24px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 50%;
+  background: rgba(var(--nx-oscuro-rgb), .8); color: #fff; font-size: 1rem; line-height: 1;
+  opacity: 0; transition: opacity .15s ease, background-color .15s ease;
 }
-.tarjeta-foto--principal .tarjeta-foto__x { top: 1.1rem; right: 1.1rem; width: 34px; height: 34px; }
-.tarjeta-foto:hover .tarjeta-foto__x, .tarjeta-foto:focus-within .tarjeta-foto__x,
-.miniatura-nueva .tarjeta-foto__x, .tarjeta-foto__x:focus-visible { opacity: 1; }
-.tarjeta-foto__x:hover, .tarjeta-foto__x:focus-visible { background: #DC3545; }
+.tarjeta-foto:hover .tarjeta-foto__x, .tarjeta-foto:focus-within .tarjeta-foto__x { opacity: 1; }
+.tarjeta-foto__x:hover, .tarjeta-foto__x:focus-visible { background: #DC3545; outline: 0; }
 @media (hover: none) { .tarjeta-foto__x { opacity: 1; } }
-/* Arrastrar y soltar */
-.tarjeta-foto--soltar { outline: 3px dashed var(--nx-acento); outline-offset: 3px; }
+/* Indicación al pasar el mouse: clic para reemplazar, arrastrar para mover */
+.tarjeta-foto__velo {
+  position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .1rem; padding: .4rem; text-align: center; pointer-events: none; opacity: 0; transition: opacity .15s ease;
+  background: rgba(var(--nx-oscuro-rgb), .62); color: #fff; font-size: .74rem; font-weight: 600; line-height: 1.2;
+}
+.tarjeta-foto__velo .bi { font-size: 1.1rem; }
+.tarjeta-foto__velo small { font-size: .66rem; font-weight: 400; opacity: .9; }
+.tarjeta-foto--principal .tarjeta-foto__velo { font-size: .92rem; gap: .25rem; }
+.tarjeta-foto--principal .tarjeta-foto__velo .bi { font-size: 1.5rem; }
+.tarjeta-foto--principal .tarjeta-foto__velo small { font-size: .8rem; }
+@media (hover: hover) {
+  .tarjeta-foto:hover .tarjeta-foto__velo { opacity: 1; }
+}
+.tarjeta-foto:focus-visible .tarjeta-foto__velo { opacity: 1; }
+.galeria-edicion--arrastrando .tarjeta-foto__velo { opacity: 0 !important; }
+/* Arrastrar y soltar (mouse) y mantener presionado (celular) */
+.tarjeta-foto--arrastrada, .tarjeta-foto--levantada { opacity: .35; }
+.tarjeta-foto--soltar { outline: 3px dashed var(--nx-acento); outline-offset: 2px; }
 .tarjeta-foto--soltar::after {
-  content: attr(data-soltar-texto); position: absolute; inset: 0; z-index: 4; display: flex;
-  align-items: center; justify-content: center; padding: 1rem; text-align: center; border-radius: .6rem;
-  background: rgba(var(--nx-oscuro-rgb), .72); color: #fff; font-weight: 700; pointer-events: none;
+  content: attr(data-soltar-texto); position: absolute; inset: 0; z-index: 5; display: flex; align-items: center;
+  justify-content: center; padding: .4rem; text-align: center; pointer-events: none;
+  background: rgba(10, 111, 137, .82); color: #fff; font-size: .74rem; font-weight: 700; line-height: 1.2;
 }
-.galeria-edicion--arrastrando .tarjeta-foto--principal { outline: 3px dashed var(--nx-acento); outline-offset: 3px; }
-.galeria-edicion--arrastrando-principal .tarjeta-foto--secundaria:not(.tarjeta-foto--quitada) { outline: 2px dashed var(--nx-acento); outline-offset: 2px; }
-/* Casilla vacía: mismo tamaño que una foto adicional, con «+» */
-.casilla-vacia { cursor: pointer; border-style: dashed; background: var(--nx-blanco); }
-.zona-agregar {
-  flex-direction: column; gap: .15rem; padding: .25rem; text-align: center;
-  background: var(--nx-blanco); color: var(--nx-texto-suave);
-  transition: background-color .15s ease, color .15s ease;
+.tarjeta-foto--principal.tarjeta-foto--soltar::after { font-size: .95rem; padding: 1rem; }
+@keyframes foto-cambio { from { box-shadow: 0 0 0 6px rgba(25, 135, 84, .45); } }
+.tarjeta-foto--intercambiada { animation: foto-cambio .7s ease-out; }
+.foto-fantasma {
+  position: fixed; z-index: 2000; width: 76px; height: 76px; overflow: hidden; pointer-events: none;
+  border: 2px solid var(--nx-acento); border-radius: 12px; background: var(--nx-blanco);
+  box-shadow: 0 .75rem 1.5rem rgba(var(--nx-oscuro-rgb), .3); transform: translate(-50%, -115%) rotate(-5deg);  /* encima del dedo */
 }
-.casilla-vacia:hover, .galeria-edicion--soltar .casilla-vacia { border-color: var(--nx-acento); }
-.casilla-vacia:hover .zona-agregar, .galeria-edicion--soltar .zona-agregar { background: rgba(var(--nx-acento-rgb), .08); color: var(--nx-oscuro); }
-.zona-agregar__mas { font-size: 1.8rem; font-weight: 300; line-height: 1; color: var(--nx-acento-texto); }
-.zona-agregar__texto { font-size: .75rem; font-weight: 600; line-height: 1.15; }
-.miniatura-nueva { position: relative; width: 72px; height: 72px; }
-.miniatura-nueva img { width: 100%; height: 100%; object-fit: contain; border: 1px solid var(--nx-borde); border-radius: .5rem; background: #fff; }
-.miniatura-nueva .tarjeta-foto__x { top: -8px; right: -8px; width: 24px; height: 24px; font-size: .9rem; }
+.foto-fantasma img { width: 100%; height: 100%; object-fit: contain; }
+@media (prefers-reduced-motion: reduce) { .tarjeta-foto--intercambiada { animation: none; } }
+
+/* Casillas vacías («+ Foto N»), «Agregar varias» y «Máximo 6 fotos» */
+.casilla-vacia {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem;
+  aspect-ratio: 1 / 1; margin: 0; padding: .3rem; text-align: center; cursor: pointer;
+  border: 1.5px dashed var(--nx-borde); border-radius: 11px; background: #FAFBFD;
+  color: var(--nx-acento-texto); font-size: .75rem; font-weight: 600; line-height: 1.15;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.casilla-vacia .bi { font-size: 1.1rem; }
+.casilla-vacia:hover, .galeria-edicion--soltar .casilla-vacia { border-color: var(--nx-acento); background: rgba(var(--nx-acento-rgb), .08); }
+.casilla-varias { border-color: var(--nx-acento); background: rgba(var(--nx-acento-rgb), .06); }
+.casilla-llena { cursor: default; color: var(--nx-texto-suave); }
+.casilla-llena:hover { border-color: var(--nx-borde); background: #FAFBFD; }
 
 /* ---------- Visor de fotos ampliadas: fondo claro y difuminado, flechas, miniaturas ---------- */
 /* El velo es la propia ventana (la sombra oscura de Bootstrap se vuelve transparente). */
@@ -525,11 +648,11 @@ body.pagina-ingreso { background: #E6EDF5; }
 
 /* ---------- Acciones visibles (que no pasen desapercibidas) ---------- */
 /* 1. Botón "Volver": arriba a la izquierda, con borde y área de toque de 40 px. */
-.btn-volver {
-  display: inline-flex; align-items: center; gap: .45rem; min-height: 40px; margin-bottom: .5rem;
-  padding: .35rem .9rem .35rem .7rem; border: 1px solid var(--nx-borde); border-radius: 999px;
-  background: var(--nx-blanco); color: var(--nx-oscuro); font-weight: 600; font-size: .9rem;
-  text-decoration: none; box-shadow: var(--nx-sombra);
+.btn-volver {  /* mismo tamaño y forma que un botón Secundario */
+  display: inline-flex; align-items: center; gap: .45rem; min-height: 46px; margin-bottom: .5rem;
+  padding: .35rem 1rem .35rem .75rem; border: 1px solid var(--nx-oscuro); border-radius: 12px;
+  background: var(--nx-blanco); color: var(--nx-oscuro); font-weight: 600; font-size: .95rem;
+  text-decoration: none;
 }
 .btn-volver .flecha {
   display: inline-flex; width: 1.5rem; height: 1.5rem; border-radius: 50%; align-items: center;
@@ -902,6 +1025,20 @@ section[id^="tema-"], section.tarjeta-cuenta[id] { scroll-margin-top: 1rem; }
 .lista-legal { margin: 0; padding-left: 1.1rem; }
 .lista-legal li + li { margin-top: .5rem; }
 
+/* Botón de favoritos (corazón): blanco con borde y corazón de línea; marcado, azul marino con corazón cian. */
+.boton-corazon {
+  width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px solid var(--nx-borde); background: var(--nx-blanco); color: var(--nx-oscuro);
+  font-size: 1.05rem; line-height: 1; text-decoration: none; box-shadow: 0 2px 6px rgba(var(--nx-oscuro-rgb), .12);
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+}
+.boton-corazon:hover { border-color: var(--nx-acento); color: var(--nx-acento-texto); transform: scale(1.06); }
+.boton-corazon:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .45); }
+.boton-corazon--marcado, .boton-corazon--marcado:hover { background: var(--nx-oscuro); border-color: var(--nx-oscuro); color: var(--nx-acento); }
+.boton-corazon-texto.boton-corazon--marcado .bi { color: var(--nx-acento-texto); }
+.boton-corazon:disabled { opacity: .7; }
+@media (prefers-reduced-motion: reduce) { .boton-corazon, .boton-corazon:hover { transition: none; transform: none; } }
+
 /* Mis favoritos (misma forma que el catálogo) */
 .filtro__icono { display: inline-flex; align-items: center; gap: .55rem; }
 .filtro__icono .bi { width: 1.1rem; text-align: center; color: var(--nx-acento-texto); }
@@ -909,6 +1046,9 @@ section[id^="tema-"], section.tarjeta-cuenta[id] { scroll-margin-top: 1rem; }
 .tarjeta-favorito--no-disponible { opacity: .75; }
 .tarjeta-favorito--no-disponible:hover { transform: none; }
 .modal-marca__icono--peligro { background: #FDECEE; color: #C62839; font-size: 1.6rem; }
+.modal-marca--peligro { border-top-color: #B42318; }
+.modal-marca__icono--izquierda { margin: 0 0 .9rem; width: 52px; height: 52px; font-size: 1.35rem; }
+.text-peligro { color: #B42318; }
 
 /* =====================================================================
    Consola de administración (menú lateral oscuro + contenido)
@@ -1256,19 +1396,6 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 }
 .vista-logo { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--nx-acento); background: var(--nx-blanco); }
 
-/* Fotos nuevas (aún sin guardar) como tarjetas junto a las adicionales */
-.tarjeta-foto--nueva { border-style: dashed; border-color: var(--nx-acento); background: #F4FBFD; }
-.tarjeta-foto--nueva .tarjeta-foto__x { opacity: 1; }
-.etiqueta-nueva {
-  position: absolute; top: .55rem; left: 2.4rem; z-index: 3; padding: .1rem .45rem; border-radius: 999px;
-  background: var(--nx-acento); color: var(--nx-oscuro); font-size: .7rem; font-weight: 800;
-}
-.etiqueta-nueva--principal { top: 3.35rem; left: 1.15rem; }
-/* Galería: principal vacía (aún sin fotos), flechas para mover en el celular */
-.tarjeta-foto--vacia { cursor: pointer; }
-.tarjeta-foto--vacia .tarjeta-foto__imagen { border: 2px dashed var(--nx-borde); background: #fff; }
-.tarjeta-foto--vacia:hover .tarjeta-foto__imagen { border-color: var(--nx-acento); }
-.tarjeta-foto [draggable="true"] { cursor: grab; }
 
 /* Casillas importantes (Publicado, Destacado): tarjeta con interruptor que cambia de color y de texto */
 .interruptor {
@@ -1335,15 +1462,16 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 /* Mis productos: encabezado limpio, miniatura de la foto y estados con íconos */
 .tabla-productos > thead > tr > th {
   --bs-table-bg: #EDF2F8; color: var(--nx-texto-suave); font-size: .74rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .04em; padding-top: .7rem; padding-bottom: .7rem;
+  text-transform: uppercase; letter-spacing: .02em; padding-top: .7rem; padding-bottom: .7rem;
 }
+.tabla-productos .btn-sm { --bs-btn-padding-x: .55rem; }
 .celda-producto { display: flex; align-items: center; gap: .6rem; }
 .miniatura-tabla {
   flex: 0 0 40px; width: 40px; height: 40px; object-fit: contain; border-radius: .55rem;
   border: 1px solid var(--nx-borde-suave); background: var(--nx-blanco);
 }
 @media (min-width: 992px) {
-  .celda-producto { gap: .75rem; min-width: 210px; }
+  .celda-producto { gap: .75rem; min-width: 188px; }
   .miniatura-tabla { flex-basis: 48px; width: 48px; height: 48px; }
 }
 .miniatura-tabla--vacia { display: inline-flex; align-items: center; justify-content: center; color: #A9B4C4; font-size: 1.2rem; background: var(--nx-fondo); }

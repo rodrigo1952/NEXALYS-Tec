@@ -19,8 +19,8 @@
 - Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 (jsDelivr), Chart.js 4.4.1 y **Leaflet 1.9.4** (cdnjs) con los mapas de
   **OpenStreetMap** (sin clave ni costo). Letra Space Grotesk (Google Fonts); el logo animado de Inicio usa Lilita One.
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
-  Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html` (va en **v=29**).
-  Lo mismo con los scripts propios: `galeria_producto.js?v=3`, `mapas.js?v=1`, `horario.js?v=2`, `whatsapp.js?v=2`.
+  Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html` (va en **v=31**).
+  Lo mismo con los scripts propios: `galeria_producto.js?v=5`, `catalogo.js?v=2`, `mapas.js?v=1`, `horario.js?v=2`, `whatsapp.js?v=2`.
   Tarjetas, campos de formulario y **filas de todas las tablas en blanco** en todo el sitio (el fondo de la página
   sigue gris claro); al enfocar un campo, borde y brillo cian; al pasar el mouse por una fila, celeste muy suave.
 - `db.sqlite3`, `media/` y `.vscode/` **no** van a GitHub (`.gitignore`). Para llevar datos de prueba a otra PC:
@@ -111,12 +111,15 @@
   y `.enlace-accion` para «Ver más / ver todo» (agrega la flecha →). Están en `marca.css`.
 - **Galería de fotos del producto** (al AGREGAR y al EDITAR, arriba de todo el formulario):
   `catalogo/_galeria_edicion.html` + `static/js/galeria_producto.js`. Todas las fotos en una sola lista
-  (máximo 6); **la primera es la principal**. «+ Agregar fotos» permite elegir varias a la vez (se suman en el
-  orden que entrega el navegador: Windows NO informa el orden de los clics). Arrastrar una foto sobre otra las
-  **intercambia** (también fotos nuevas sin guardar); botones con ícono (★ Hacer principal, ⟳ Reemplazar,
-  ‹ › mover; dicen qué hacen al pasar el mouse) y «X». Si se quita la principal, sube la siguiente.
-  Diseño fijo: la principal arriba (alto 300 px; 240 px en celular) y debajo **siempre 5 casillas iguales**
-  (las vacías con «+»; 3 columnas en celular, con los botones en 2 filas): la galería mide lo mismo con 1 o 6 fotos. Al guardar se envía el orden final en el campo
+  (máximo 6); **la primera es la principal**. **Compacta y SIN botones** (unos 230 px de alto; antes ~780):
+  sin fotos, un recuadro bajo («Arrastra tus fotos aquí o elígelas»); con fotos, cuadrícula de 5 columnas con la
+  principal 2×2 a la izquierda, las fotos 2-6 a su derecha en dos filas (vacías «+ Foto N») y «Agregar varias»
+  (o «Máximo 6 fotos»). En el celular, 3 columnas. Se eligen varias a la vez (en el orden que entrega el
+  navegador: Windows NO informa el orden de los clics). **Clic en una foto = reemplazarla**; **arrastrarla sobre
+  otra = intercambiarlas** (así se cambia la principal); «✕» al pasar el mouse = quitarla (en el celular se ve
+  siempre). Celular: mantener presionada (450 ms) y arrastrar. Teclado: Enter reemplaza, flechas mueven,
+  Suprimir quita. Si se quita la principal, sube la siguiente.
+  El formulario de producto tiene una **barra fija abajo** («Cancelar» / «Guardar producto»). Al guardar se envía el orden final en el campo
   oculto `galeria_plan` («p» = principal actual, «f12» = foto adicional 12, «n0» = 1.ª foto nueva; «ninguna» = sin
   fotos) y las fotos nuevas en `fotos_nuevas`; el servidor lo aplica en `ProductoForm.aplicar_plan` (las fotos que
   ya existían solo cambian de lugar, sin volver a subirse; luego `reubicar_producto` renombra los archivos).
@@ -146,7 +149,7 @@
   En el desplegable de la cuenta, «Mi tienda» abre la **página pública** de la tienda (si está activa;
   si no, «Datos de mi tienda»).
 - **Cuenta de tienda**: al iniciar sesión entra directo a «Mis productos» (salvo que viniera de un enlace
-  con `?next=`; vista `cuentas.views.IngresoView`). Su menú es «Mis productos», «Inicio», «Catálogo», y en
+  con `?next=`; vista `cuentas.views.IngresoView`). Su menú: «Inicio», «Catálogo», «Tiendas cercanas» | «Mis productos», y en
   toda su zona de trabajo (Mis productos, crear/editar producto e inventario) no aparece la barra de categorías.
 - **Mis favoritos** tiene la forma del catálogo: filtros a la izquierda (categoría con su ícono y tienda,
   varias a la vez, con su cantidad) que se aplican al hacer clic (reusa `static/js/catalogo.js`); toda la
@@ -200,18 +203,31 @@
   No se puede reutilizar una pestaña de WhatsApp Web (probado: WhatsApp/Brave cortan el vínculo y se abre una
   nueva en cada clic), por eso se dejó la política COOP por defecto de Django (`same-origin`).
 - Tabla de Mis productos (`tabla-productos`): miniatura de la foto principal (48 px, `loading="lazy"`; ícono gris
-  si no tiene), encabezado en mayúsculas pequeñas, estados con íconos (ojo Publicado, ojo tachado Oculto,
-  estrella Destacado, Agotado, Stock bajo) y «Editar» con lápiz.
+  si no tiene), encabezado en mayúsculas pequeñas, columna «Favoritos» (antes «Guardado»), estados con íconos
+  (ojo Publicado, ojo tachado Oculto, estrella Destacado, Agotado, Stock bajo) y «Editar» con lápiz.
+- **Menú con el mismo orden para todos**: Inicio · Catálogo · Tiendas cercanas, una línea y lo propio de cada uno
+  («Mis productos», «Mis favoritos» o «Administración»).
+- **Sin emojis**: todo el sitio usa íconos de línea (Bootstrap Icons): estrella, etiqueta (oferta), tienda, etc.
+  El corazón de favoritos (`boton-corazon`) es blanco con borde; marcado, azul marino con corazón cian.
+- **Sistema de botones** (`marca.css`): normales 46 px de alto y esquina de 12 px; `btn-sm` compactos (32 px).
+  Principal `btn-primary`, Secundario `btn-outline-primary`/`-secondary` (borde azul marino), Destacado
+  `btn-acento`, Peligro `btn-outline-danger` (`btn-danger` solo para confirmar), WhatsApp `btn-success`.
+  Cifras de ancho fijo en tablas, notas y precios (`.precio`); texto de ayuda `--nx-texto-suave: #46566D`;
+  los `.alert` llevan su ícono por CSS (✓ éxito, ! aviso, ✕ error, i información).
+- Nota de venta: al imprimir sale solo la nota a hoja completa. «Anular venta» abre una ventana con lo que vuelve
+  al stock, el motivo (obligatorio) y «Esta acción no se puede deshacer»; sin JavaScript sigue la página aparte.
+- Catálogo: al filtrar, ordenar o cambiar de página salen **tarjetas grises de carga** (`catalogo.js`); cada foto
+  de producto muestra un recuadro gris que brilla mientras carga. Pie de página completo (Explorar, Para
+  tiendas, Ayuda y la franja «Proyecto IV ciclo · IESTP Urusayhua · 2026»).
 - Menú «Más» de cada producto en Mis productos: `data-bs-popper-config='{"strategy":"fixed"}'` para que la tabla
   (que tiene desplazamiento propio) no lo recorte aunque haya un solo producto.
 - «Agotados», «Stock bajo», el aviso amarillo del menú y las alertas del Resumen cuentan SOLO productos
   visibles; lo que no ve el cliente (oculto por la tienda o por el administrador) va solo en «Ocultos».
 - **Destacados del Inicio por turnos** (`catalogo/destacados.py`): 8 lugares; primero 1 producto de cada tienda
   (su destacado más popular), luego el 2.º de cada una, etc. El orden de las tiendas rota cada día.
-  «Ver todos los destacados (N)» lleva al catálogo con el filtro `destacados=on` («⭐ Destacados»).
+  «Ver todos los destacados (N)» lleva al catálogo con el filtro `destacados=on` («Destacados»).
 - **Tiendas cercanas** (`/tiendas/cercanas/`, `tiendas.views.cercanas`, `templates/tiendas/cercanas.html`): para todos
-  (visitantes y clientes; en el menú de visitantes y clientes y como botón en Inicio; la tienda y el admin no lo
-  tienen en su menú). Mapa (OpenStreetMap) con un pin por tienda (logo o inicial) y lista: distancia, local
+  (en el menú de todos y como botón en Inicio). Mapa (OpenStreetMap) con un pin por tienda (logo o inicial) y lista: distancia, local
   abierto/cerrado, productos publicados, «Cómo llegar» (Google Maps con ruta), «Ver en el mapa», WhatsApp y
   «Ver tienda». «Usar mi ubicación» ordena por distancia (en línea recta, fórmula del haversine). Las tiendas sin
   ubicación van al final. Centro por defecto: Quillabamba (`tiendas.models.CENTRO_QUILLABAMBA`).
@@ -225,7 +241,7 @@
   defecto (`same-origin`) no lo envía (sin esto el mapa sale en blanco). En plantillas, las coordenadas se
   imprimen con `stringformat:'s'` o como texto, porque el formato local de Django pondría coma decimal.
   El navegador solo comparte la ubicación en https o en 127.0.0.1.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **580 pruebas, OK**.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **593 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 
@@ -235,8 +251,9 @@
   cuadros de OpenStreetMap (una línea en `mapas.js`).
 - El correo de soporte `soporte@nexalys.pe` es de demostración (`cuentas/views.py`, `CORREO_SOPORTE`).
 - Los manuales del Entregable 8 se hicieron antes de: la galería única de fotos, el stock bloqueado al editar,
-  el login que marca la opción correcta, el nuevo diseño del login, la galería con 5 casillas fijas, la tabla
-  de Mis productos con fotos y Tiendas cercanas. Si se actualizan, revisar esas partes y sus capturas.
+  el login que marca la opción correcta, el nuevo diseño del login, la galería compacta sin botones, la tabla
+  de Mis productos con fotos, Tiendas cercanas, el menú con el mismo orden, los íconos sin emojis, el nuevo pie
+  de página y la ventana para anular ventas. Si se actualizan, revisar esas partes y sus capturas.
 - Decidir cómo cobrar a las tiendas (por ejemplo, 1 % por venta) y cómo evitar que lo evadan.
 - "Seguir tiendas" (etapa 2).
 - Posible migración de SQLite a MySQL más adelante.

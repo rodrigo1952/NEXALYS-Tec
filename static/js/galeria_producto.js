@@ -1,14 +1,16 @@
 /*
- * Galería de fotos del producto (Agregar y Editar producto).
+ * Galería de fotos del producto (Agregar y Editar producto): compacta y SIN botones.
  *
  * Todas las fotos están en una sola lista; la PRIMERA es la principal.
- *   - «+ Agregar fotos» (o soltar imágenes en la galería): se suman al final, hasta el máximo.
- *   - Arrastrar una foto sobre otra las intercambia, sean fotos guardadas o nuevas.
- *   - «Hacer principal» (★), «Reemplazar» (⟳), las flechas ‹ › y la «X» hacen lo mismo con botones
- *     (en el celular no se puede arrastrar).
- * La principal va arriba con tamaño fijo y debajo siempre hay 5 casillas iguales (las vacías con «+»),
- * así la galería mide lo mismo con 1 o con 6 fotos.
- * Nada se guarda hasta presionar «Guardar»: al enviar, el orden final va en el campo oculto
+ *   - Sin fotos: un recuadro bajo; se hace clic para elegirlas o se sueltan ahí (varias a la vez).
+ *   - Con fotos: la principal grande (2×2) a la izquierda; a su derecha, las fotos 2 a 6 (las vacías dicen
+ *     «+ Foto N») y la casilla «Agregar varias». Mide lo mismo con 1 o con 6 fotos.
+ *   - Clic en una foto: se elige otra imagen para REEMPLAZARLA (también la principal).
+ *   - Arrastrar una foto sobre otra: se INTERCAMBIAN (así se cambia la principal), sean guardadas o nuevas.
+ *   - «✕» (aparece al pasar el mouse; en el celular se ve siempre): la QUITA.
+ *   - Celular: mantener presionada una foto medio segundo y arrastrarla a otra casilla. Un toque la reemplaza.
+ *   - Teclado: Enter reemplaza, las flechas mueven y Suprimir quita.
+ * Nada se guarda hasta presionar «Guardar producto»: al enviar, el orden final va en el campo oculto
  * «galeria_plan» (p = principal actual, f12 = foto adicional 12, n0 = primera foto nueva) y
  * las fotos nuevas, en ese mismo orden, en «fotos_nuevas». El servidor revisa todo otra vez.
  */
@@ -20,20 +22,25 @@
   var MB = 2;
   var TIPOS = ["image/jpeg", "image/png", "image/webp"];
   var ARRASTRE = "application/x-nexalys-foto";
+  var ESPERA_TACTIL = 450;  // ms con el dedo quieto para «levantar» una foto en el celular
   var plan = document.getElementById("id_galeria_plan");
   var entrada = galeria.querySelector("[data-agregar]");
   var reemplazo = galeria.querySelector("[data-reemplazo]");
+  var cuerpo = galeria.querySelector("[data-cuerpo]");
   var cajaPrincipal = galeria.querySelector("[data-principal]");
   var cajaSecundarias = galeria.querySelector("[data-secundarias]");
   var avisoCambios = galeria.querySelector("[data-cambios]");
   var avisoError = galeria.querySelector("[data-error]");
   var contador = galeria.querySelector("[data-contador]");
-  var botonAgregar = galeria.querySelector("[data-boton-agregar]");
+  var ayuda = galeria.querySelector("[data-ayuda]");
+  var regla = galeria.querySelector("[data-regla]");
 
   var iniciales = JSON.parse(document.getElementById("fotos-actuales").textContent || "[]");
   var fotos = iniciales.slice();   // {ficha, url} guardadas o {archivo, url, nueva: true}
   var arrastrada = null;            // índice de la foto que se está arrastrando
   var aReemplazar = null;           // índice de la foto que se va a reemplazar
+  var resaltar = null;              // índice que se resalta un momento después de un cambio
+  var enfocar = null;               // índice que recibe el foco después de mover con el teclado
 
   function avisar(texto) {
     avisoError.textContent = texto || "";
@@ -72,8 +79,21 @@
     var copia = fotos[a];
     fotos[a] = fotos[b];
     fotos[b] = copia;
+    resaltar = b;
     avisar("");
     dibujar();
+  }
+
+  function quitar(i) {
+    fotos.splice(i, 1);
+    avisar("");
+    dibujar();
+  }
+
+  function reemplazar(i) {
+    aReemplazar = i;
+    reemplazo.value = "";
+    reemplazo.click();
   }
 
   function cambiado() {
@@ -101,38 +121,31 @@
     return el;
   }
 
-  function boton(texto, clase, alPresionar, etiquetaAccesible) {
-    var b = elemento("button", "btn btn-sm " + clase, texto);
-    b.type = "button";
-    if (etiquetaAccesible) b.setAttribute("aria-label", etiquetaAccesible);
-    b.addEventListener("click", alPresionar);
-    return b;
-  }
-
-  // Botón pequeño con solo un ícono; al pasar el mouse muestra qué hace (title).
-  function botonIcono(icono, titulo, alPresionar, numero, deshabilitado) {
-    var b = boton("", "btn-outline-secondary boton-icono", alPresionar, titulo + " (foto " + numero + ")");
-    b.innerHTML = '<i class="bi ' + icono + '" aria-hidden="true"></i>';
-    b.title = titulo;
-    b.disabled = !!deshabilitado;
-    return b;
-  }
-
   function tarjeta(foto, i) {
     var principal = i === 0;
+    var nombre = principal ? "Foto principal" : "Foto " + (i + 1);
     var t = elemento("div", "tarjeta-foto " + (principal ? "tarjeta-foto--principal" : "tarjeta-foto--secundaria") + (foto.nueva ? " tarjeta-foto--nueva" : ""));
     t.dataset.indice = i;
+    t.tabIndex = 0;
+    t.setAttribute("role", "button");
+    t.setAttribute("aria-label", nombre + ". Enter: reemplazarla. Flechas: moverla. Suprimir: quitarla.");
+    t.title = principal ? "Clic para reemplazar la principal. También puedes soltar aquí otra foto."
+      : "Clic para reemplazarla. Arrástrala para cambiarla de lugar.";
+
     if (principal) {
       var etiqueta = elemento("span", "etiqueta-principal");
-      etiqueta.innerHTML = '<span class="numero-foto" title="Se ve primero">1</span><span aria-hidden="true">★</span> Foto principal';
+      etiqueta.innerHTML = '<span class="numero-foto" title="Se ve primero">1</span><i class="bi bi-star-fill" aria-hidden="true"></i><span class="etiqueta-principal__texto">Principal</span>';
       t.appendChild(etiqueta);
     } else {
       t.appendChild(elemento("span", "numero-foto numero-foto--secundaria", String(i + 1)));
     }
-    if (foto.nueva) t.appendChild(elemento("span", "etiqueta-nueva" + (principal ? " etiqueta-nueva--principal" : ""), "Nueva"));
-    var x = boton("×", "tarjeta-foto__x", function () { fotos.splice(i, 1); avisar(""); dibujar(); }, "Quitar la foto " + (i + 1));
-    x.classList.remove("btn", "btn-sm");
+
+    var x = elemento("button", "tarjeta-foto__x", "×");
+    x.type = "button";
     x.title = "Quitar";
+    x.setAttribute("aria-label", "Quitar la foto " + (i + 1));
+    x.tabIndex = -1;  // con el teclado se quita con Suprimir
+    x.addEventListener("click", function (evento) { evento.stopPropagation(); quitar(i); });
     t.appendChild(x);
 
     var marco = elemento("div", "tarjeta-foto__imagen");
@@ -140,87 +153,107 @@
     img.src = foto.url;
     img.alt = principal ? "Foto principal" : "Foto " + (i + 1);
     img.draggable = true;
-    img.title = "Arrástrala sobre otra foto para cambiarlas de lugar";
     img.addEventListener("dragstart", function (evento) {
       arrastrada = i;
       evento.dataTransfer.setData(ARRASTRE, String(i));
       evento.dataTransfer.effectAllowed = "move";
       galeria.classList.add("galeria-edicion--arrastrando");
+      t.classList.add("tarjeta-foto--arrastrada");
     });
     img.addEventListener("dragend", terminarArrastre);
     marco.appendChild(img);
     t.appendChild(marco);
 
-    function reemplazar() {
-      aReemplazar = i;
-      reemplazo.value = "";
-      reemplazo.click();
-    }
-    if (principal) {
-      var pie = elemento("div", "tarjeta-foto__pie");
-      pie.appendChild(elemento("p", "small text-muted mb-0", "Es la que se ve en el catálogo y en el inicio."));
-      pie.appendChild(boton("Cambiar foto principal", "btn-outline-primary", reemplazar));
-      t.appendChild(pie);
-    } else {
-      // Siempre los 4 botones en el mismo lugar; las flechas se apagan en los extremos.
-      var botones = elemento("div", "tarjeta-foto__botones");
-      botones.appendChild(botonIcono("bi-star-fill", "Hacer principal", function () { intercambiar(0, i); }, i + 1));
-      botones.appendChild(botonIcono("bi-arrow-repeat", "Reemplazar", reemplazar, i + 1));
-      botones.appendChild(botonIcono("bi-chevron-left", "Mover a la izquierda", function () { intercambiar(i, i - 1); }, i + 1, i <= 1));
-      botones.appendChild(botonIcono("bi-chevron-right", "Mover a la derecha", function () { intercambiar(i, i + 1); }, i + 1, i >= fotos.length - 1));
-      t.appendChild(botones);
-    }
+    // Indicación al pasar el mouse.
+    var velo = elemento("div", "tarjeta-foto__velo");
+    velo.setAttribute("aria-hidden", "true");
+    velo.innerHTML = principal
+      ? '<i class="bi bi-arrow-repeat"></i><span>Clic para reemplazar la principal</span><small>o suelta aquí otra foto</small>'
+      : '<i class="bi bi-arrow-repeat"></i><span>Reemplazar</span><small>o arrastra para mover</small>';
+    t.appendChild(velo);
+
+    t.addEventListener("click", function () {
+      if (galeria.dataset.ignorarClic) return;
+      reemplazar(i);
+    });
+    t.addEventListener("keydown", function (evento) {
+      var tecla = evento.key;
+      if (tecla === "Enter" || tecla === " ") { evento.preventDefault(); reemplazar(i); }
+      else if (tecla === "ArrowLeft" || tecla === "ArrowUp") { evento.preventDefault(); if (i > 0) { enfocar = i - 1; intercambiar(i, i - 1); } }
+      else if (tecla === "ArrowRight" || tecla === "ArrowDown") { evento.preventDefault(); if (i < fotos.length - 1) { enfocar = i + 1; intercambiar(i, i + 1); } }
+      else if (tecla === "Delete" || tecla === "Backspace") { evento.preventDefault(); enfocar = Math.min(i, fotos.length - 2); quitar(i); }
+    });
+    if (resaltar === i) t.classList.add("tarjeta-foto--intercambiada");
     prepararSoltar(t, i);
+    prepararTactil(t, i);
     return t;
   }
 
-  function principalVacia() {
-    var t = elemento("label", "tarjeta-foto tarjeta-foto--principal tarjeta-foto--vacia");
-    t.htmlFor = entrada.id;
-    var etiqueta = elemento("span", "etiqueta-principal");
-    etiqueta.innerHTML = '<span class="numero-foto">1</span><span aria-hidden="true">★</span> Foto principal';
-    t.appendChild(etiqueta);
-    var marco = elemento("div", "tarjeta-foto__imagen flex-column gap-2 text-center px-3");
-    marco.innerHTML = '<i class="bi bi-images fs-1 text-muted" aria-hidden="true"></i>' +
-      '<span class="fw-semibold">Elige hasta ' + MAXIMO + ' fotos</span>' +
-      '<span class="small text-muted">La primera será la principal. También puedes arrastrarlas aquí.</span>';
-    t.appendChild(marco);
-    t.appendChild(elemento("span", "btn btn-sm btn-primary align-self-start", "Subir fotos"));
-    prepararSoltar(t, 0);
-    return t;
+  // Sin fotos: un recuadro bajo para elegirlas o soltarlas.
+  function zonaVacia() {
+    var zona = elemento("label", "galeria-zona");
+    zona.htmlFor = entrada.id;
+    zona.innerHTML = '<span class="galeria-zona__icono" aria-hidden="true"><i class="bi bi-images"></i></span>' +
+      '<span><strong data-zona-titulo>Arrastra tus fotos aquí o <u>elígelas</u></strong>' +
+      '<small>JPG, PNG o WEBP · máximo ' + MB + ' MB cada una · hasta ' + MAXIMO + ' fotos</small></span>';
+    return zona;
   }
 
-  // Casilla vacía (mismo tamaño que una foto adicional): al hacer clic se eligen más fotos.
-  function casillaVacia(primera) {
-    var quedan = MAXIMO - fotos.length;
-    var casilla = elemento("label", "tarjeta-foto tarjeta-foto--secundaria casilla-vacia mb-0");
+  // Casilla vacía («+ Foto N»): al hacer clic se eligen fotos (varias a la vez).
+  function casillaVacia(posicion) {
+    var casilla = elemento("label", "casilla-vacia");
     casilla.htmlFor = entrada.id;
-    casilla.title = "Agregar fotos (quedan " + quedan + "). O arrástralas aquí";
-    var zona = elemento("span", "tarjeta-foto__imagen zona-agregar");
-    zona.innerHTML = '<span class="zona-agregar__mas" aria-hidden="true">+</span>' +
-      (primera ? '<span class="zona-agregar__texto">Agregar fotos</span>' : '<span class="visually-hidden">Agregar fotos</span>');
-    casilla.appendChild(zona);
-    var espacio = elemento("span", "tarjeta-foto__botones");  // mismo alto que los botones de las fotos
-    espacio.setAttribute("aria-hidden", "true");
-    casilla.appendChild(espacio);
+    casilla.title = "Agregar fotos (quedan " + (MAXIMO - fotos.length) + "). O arrástralas aquí";
+    casilla.innerHTML = '<i class="bi bi-plus-lg" aria-hidden="true"></i><span class="zona-agregar__texto">Foto ' + (posicion + 1) +
+      '</span><span class="visually-hidden">: agregar fotos</span>';
     return casilla;
+  }
+
+  // Última casilla: «Agregar varias» o, si ya hay 6, «Máximo 6 fotos».
+  function casillaFinal(hayLugar) {
+    if (!hayLugar) {
+      var llena = elemento("div", "casilla-vacia casilla-llena");
+      llena.innerHTML = '<i class="bi bi-check2-circle" aria-hidden="true"></i><span>Máximo<br>' + MAXIMO + ' fotos</span>';
+      return llena;
+    }
+    var varias = elemento("label", "casilla-vacia casilla-varias");
+    varias.htmlFor = entrada.id;
+    varias.title = "Elegir varias fotos a la vez. O arrástralas aquí";
+    varias.innerHTML = '<i class="bi bi-upload" aria-hidden="true"></i><span>Agregar varias</span>';
+    return varias;
   }
 
   function dibujar() {
     cajaPrincipal.innerHTML = "";
     cajaSecundarias.innerHTML = "";
-    cajaPrincipal.appendChild(fotos.length ? tarjeta(fotos[0], 0) : principalVacia());
-    for (var i = 1; i < fotos.length; i++) cajaSecundarias.appendChild(tarjeta(fotos[i], i));
+    var hayFotos = fotos.length > 0;
     var hayLugar = fotos.length < MAXIMO;
-    // Las casillas que faltan hasta completar las 5 adicionales.
-    for (var k = Math.max(fotos.length, 1); k < MAXIMO; k++) cajaSecundarias.appendChild(casillaVacia(k === Math.max(fotos.length, 1)));
-    botonAgregar.classList.toggle("invisible", !hayLugar);  // invisible (no d-none): así la galería no cambia de alto
-    contador.textContent = "Tienes " + fotos.length + " de " + MAXIMO + " fotos.";
+    cuerpo.classList.toggle("galeria-edicion__cuerpo--vacia", !hayFotos);
+    if (hayFotos) {
+      cajaPrincipal.appendChild(tarjeta(fotos[0], 0));
+      for (var i = 1; i < fotos.length; i++) cajaSecundarias.appendChild(tarjeta(fotos[i], i));
+      // Las casillas que faltan hasta completar las 6 (la principal + 5) y la casilla final.
+      for (var k = fotos.length; k < MAXIMO; k++) cajaSecundarias.appendChild(casillaVacia(k));
+      cajaSecundarias.appendChild(casillaFinal(hayLugar));
+      ayuda.innerHTML = 'La grande es la principal. <span class="solo-mouse">Haz clic en una foto para reemplazarla o arrástrala para cambiarla de lugar.</span>' +
+        '<span class="solo-tactil">Toca una foto para reemplazarla; mantenla presionada para moverla.</span>';
+    } else {
+      cajaPrincipal.appendChild(zonaVacia());
+      ayuda.textContent = "Puedes subir hasta " + MAXIMO + ". La primera será la principal.";
+    }
+    regla.classList.toggle("d-none", !hayFotos);
+    contador.textContent = fotos.length + " de " + MAXIMO;
     avisoCambios.classList.toggle("d-none", !cambiado());
     sincronizar();
+    if (enfocar !== null) {
+      var destino = galeria.querySelector('.tarjeta-foto[data-indice="' + enfocar + '"]');
+      if (destino) destino.focus();
+      enfocar = null;
+    }
+    resaltar = null;
   }
 
-  // ---- Arrastrar y soltar ----
+  // ---- Arrastrar y soltar con el mouse ----
   // OJO: al arrastrar una foto de la página, Chrome/Brave/Edge también la ponen como «archivo»
   // (Files). Por eso PRIMERO se pregunta si es una foto de la galería; solo si no lo es, se trata
   // como imágenes que vienen de tu carpeta. Si no, la foto arrastrada se copiaba encima de la otra.
@@ -233,19 +266,25 @@
   function terminarArrastre() {
     arrastrada = null;
     galeria.classList.remove("galeria-edicion--arrastrando", "galeria-edicion--soltar");
-    galeria.querySelectorAll(".tarjeta-foto--soltar").forEach(function (c) { c.classList.remove("tarjeta-foto--soltar"); });
+    galeria.querySelectorAll(".tarjeta-foto--soltar, .tarjeta-foto--arrastrada").forEach(function (c) {
+      c.classList.remove("tarjeta-foto--soltar", "tarjeta-foto--arrastrada");
+    });
+    var titulo = galeria.querySelector("[data-zona-titulo]");
+    if (titulo) titulo.innerHTML = "Arrastra tus fotos aquí o <u>elígelas</u>";
+  }
+
+  function textoSoltar(i, archivos) {
+    if (archivos) return "Suelta para reemplazarla";
+    return i === 0 ? "Suelta para que sea la foto principal" : "Suelta para cambiarlas de lugar";
   }
 
   function prepararSoltar(t, i) {
-    var vacia = !fotos.length;
     t.addEventListener("dragover", function (evento) {
-      var foto = traeFoto(evento) && arrastrada !== i && !vacia;
+      var foto = traeFoto(evento) && arrastrada !== i;
       if (!foto && !traeArchivos(evento)) return;
       evento.preventDefault();
       evento.stopPropagation();
-      t.dataset.soltarTexto = vacia ? "Suelta para agregarlas"
-        : traeArchivos(evento) ? "Suelta para reemplazarla"
-        : i === 0 ? "Suelta para que sea la foto principal" : "Suelta para cambiarlas de lugar";
+      t.dataset.soltarTexto = textoSoltar(i, traeArchivos(evento));
       t.classList.add("tarjeta-foto--soltar");
     });
     t.addEventListener("dragleave", function (evento) {
@@ -258,41 +297,115 @@
         // Foto de la galería soltada sobre otra: se intercambian.
         var desde = arrastrada !== null ? arrastrada : parseInt(evento.dataTransfer.getData(ARRASTRE), 10);
         terminarArrastre();
-        if (!isNaN(desde) && !vacia) intercambiar(desde, i);
+        if (!isNaN(desde)) intercambiar(desde, i);
         return;
       }
       terminarArrastre();
       if (traeArchivos(evento)) {
-        if (vacia) { agregar(evento.dataTransfer.files); return; }
         // Una imagen soltada sobre una foto la reemplaza; si eran varias, las demás se agregan.
         var revisadas = validas(evento.dataTransfer.files);
         if (!revisadas.buenas.length) { avisar("No se pudo usar: " + revisadas.problemas.join("; ") + "."); return; }
         fotos[i] = nueva(revisadas.buenas[0]);
+        resaltar = i;
         if (revisadas.buenas.length > 1) agregar(revisadas.buenas.slice(1)); else { avisar(""); dibujar(); }
       }
     });
   }
 
-  // Imágenes soltadas en cualquier otro lugar de la galería: se agregan al final.
+  // Imágenes soltadas en cualquier otro lugar de la galería (recuadro, casillas «+»): se agregan al final.
   galeria.addEventListener("dragover", function (evento) {
     if (!traeArchivos(evento)) return;
     evento.preventDefault();
     galeria.classList.add("galeria-edicion--soltar");
+    var titulo = galeria.querySelector("[data-zona-titulo]");
+    var cuantas = evento.dataTransfer.items ? evento.dataTransfer.items.length : 0;
+    if (titulo) titulo.textContent = cuantas > 1 ? "Suelta para agregar " + cuantas + " fotos" : "Suelta para agregar las fotos";
   });
   galeria.addEventListener("dragleave", function (evento) {
-    if (!galeria.contains(evento.relatedTarget)) galeria.classList.remove("galeria-edicion--soltar");
+    if (!galeria.contains(evento.relatedTarget)) terminarArrastre();
   });
   galeria.addEventListener("drop", function (evento) {
     if (traeFoto(evento)) { evento.preventDefault(); terminarArrastre(); return; }  // soltó una foto fuera de otra: no pasa nada
     if (!traeArchivos(evento)) return;
     evento.preventDefault();
-    galeria.classList.remove("galeria-edicion--soltar");
+    terminarArrastre();
     agregar(evento.dataTransfer.files);
   });
   // Si el arrastre termina en cualquier otro lugar de la página, se olvida.
   document.addEventListener("dragend", terminarArrastre);
 
-  // ---- Botones y archivos ----
+  // ---- Celular: mantener presionada una foto y arrastrarla ----
+  function prepararTactil(t, i) {
+    var temporizador = null, levantada = false, inicio = null, fantasma = null, sobre = null;
+
+    function limpiar() {
+      clearTimeout(temporizador);
+      temporizador = null;
+      levantada = false;
+      inicio = null;
+      if (fantasma) { fantasma.remove(); fantasma = null; }
+      if (sobre) { sobre.classList.remove("tarjeta-foto--soltar"); sobre = null; }
+      t.classList.remove("tarjeta-foto--levantada");
+    }
+    function moverFantasma(x, y) {
+      fantasma.style.left = x + "px";
+      fantasma.style.top = y + "px";
+      var debajo = document.elementFromPoint(x, y);
+      var destino = debajo && debajo.closest ? debajo.closest(".tarjeta-foto") : null;
+      if (destino && (!galeria.contains(destino) || destino === t)) destino = null;
+      if (destino === sobre) return;
+      if (sobre) sobre.classList.remove("tarjeta-foto--soltar");
+      sobre = destino;
+      if (sobre) {
+        sobre.dataset.soltarTexto = textoSoltar(parseInt(sobre.dataset.indice, 10), false);
+        sobre.classList.add("tarjeta-foto--soltar");
+      }
+    }
+
+    t.addEventListener("touchstart", function (evento) {
+      if (evento.touches.length !== 1 || evento.target.closest(".tarjeta-foto__x")) return;
+      var dedo = evento.touches[0];
+      inicio = { x: dedo.clientX, y: dedo.clientY };
+      temporizador = setTimeout(function () {
+        levantada = true;
+        t.classList.add("tarjeta-foto--levantada");
+        fantasma = elemento("div", "foto-fantasma");
+        var copia = elemento("img");
+        copia.src = fotos[i].url;
+        copia.alt = "";
+        fantasma.appendChild(copia);
+        document.body.appendChild(fantasma);
+        moverFantasma(inicio.x, inicio.y);
+        if (navigator.vibrate) navigator.vibrate(20);
+      }, ESPERA_TACTIL);
+    }, { passive: true });
+
+    t.addEventListener("touchmove", function (evento) {
+      var dedo = evento.touches[0];
+      if (!levantada) {
+        // Si el dedo se mueve antes de tiempo, la persona está desplazando la página: no se levanta.
+        if (inicio && Math.abs(dedo.clientX - inicio.x) + Math.abs(dedo.clientY - inicio.y) > 10) limpiar();
+        return;
+      }
+      evento.preventDefault();  // mientras se lleva la foto, la página no se desplaza
+      moverFantasma(dedo.clientX, dedo.clientY);
+    }, { passive: false });
+
+    t.addEventListener("touchend", function (evento) {
+      if (!levantada) { limpiar(); return; }
+      evento.preventDefault();  // no cuenta como toque (no abre «reemplazar»)
+      var hacia = sobre ? parseInt(sobre.dataset.indice, 10) : null;
+      limpiar();
+      galeria.dataset.ignorarClic = "1";
+      setTimeout(function () { delete galeria.dataset.ignorarClic; }, 400);
+      if (hacia !== null && !isNaN(hacia)) intercambiar(i, hacia);
+    });
+    t.addEventListener("touchcancel", limpiar);
+    // Que el celular no abra su menú de «guardar imagen» al mantener presionado.
+    t.addEventListener("contextmenu", function (evento) { evento.preventDefault(); });
+  }
+
+  // ---- Archivos elegidos ----
   entrada.addEventListener("change", function () {
     // El navegador deja aquí SOLO lo que se acaba de elegir: se suma a la lista y se vuelve a armar.
     var elegidas = Array.prototype.slice.call(entrada.files);
@@ -303,6 +416,7 @@
     var revisadas = validas(reemplazo.files);
     if (!revisadas.buenas.length) { avisar("No se pudo usar: " + revisadas.problemas.join("; ") + "."); return; }
     fotos[aReemplazar] = nueva(revisadas.buenas[0]);
+    resaltar = aReemplazar;
     aReemplazar = null;
     avisar("");
     dibujar();

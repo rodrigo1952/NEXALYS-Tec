@@ -7,8 +7,9 @@
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <a href="{% url 'inventario:ventas' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a ventas</a>
     <div class="d-flex gap-2">
-      <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
-      {% if not venta.anulada %}<a href="{% url 'inventario:venta_anular' venta.pk %}" class="btn btn-outline-danger">Anular venta</a>{% endif %}
+      <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i> Imprimir</button>
+      {# Abre la ventana de confirmación; sin JavaScript, el enlace lleva a la página para anular. #}
+      {% if not venta.anulada %}<a href="{% url 'inventario:venta_anular' venta.pk %}" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modal-anular-venta">Anular venta</a>{% endif %}
     </div>
   </div>
   {% if venta.anulada %}
@@ -20,7 +21,7 @@
 </div>
 
 <div class="row justify-content-center">
-  <div class="col-lg-8">
+  <div class="col-lg-8 nota-venta__columna">
     <div class="card shadow-sm nota-venta"><div class="card-body p-4">
       <div class="d-flex flex-wrap justify-content-between gap-3 border-bottom pb-3 mb-3">
         <div>
@@ -59,4 +60,30 @@
     </div></div>
   </div>
 </div>
+{% if form_anular %}
+{# Ventana «¿Anular la venta?»: lista lo que vuelve al stock y pide el motivo (queda guardado). #}
+<div class="modal fade" id="modal-anular-venta" tabindex="-1" aria-labelledby="titulo-anular-venta" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="post" action="{% url 'inventario:venta_anular' venta.pk %}" class="modal-content modal-marca modal-marca--peligro">
+      {% csrf_token %}
+      <div class="modal-body p-4">
+        <div class="modal-marca__icono modal-marca__icono--peligro modal-marca__icono--izquierda" aria-hidden="true"><i class="bi bi-exclamation-triangle"></i></div>
+        <h2 class="h5 fw-bold mb-2" id="titulo-anular-venta">¿Anular la venta N.° {{ venta.numero|stringformat:"05d" }}?</h2>
+        <p class="mb-1">Se devolverán al stock estos productos:</p>
+        <ul class="mb-3">
+          {% for l in venta.lineas.all %}<li>{{ l.cantidad }} × {{ l.producto_nombre }}</li>{% endfor %}
+        </ul>
+        <label class="form-label" for="{{ form_anular.motivo.id_for_label }}">{{ form_anular.motivo.label }}</label>
+        {{ form_anular.motivo }}
+        <div class="form-text">Mínimo 5 letras. Queda guardado en la venta.</div>
+        <p class="fw-semibold text-peligro mt-3 mb-0">Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer border-0 pt-0 px-4 pb-4">
+        <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">No, volver</button>
+        <button type="submit" class="btn btn-danger">Sí, anular venta</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

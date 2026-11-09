@@ -53,7 +53,7 @@ class GaleriaEdicionTests(BaseCatalogo):
 
     def test_la_galeria_muestra_todas_las_fotos_con_sus_botones(self):
         respuesta = self.client.get(self.url)
-        for texto in ("Fotos del producto", "+ Agregar fotos", 'data-maximo="6"', 'name="galeria_plan"',
+        for texto in ("Fotos del producto", "Agregar fotos", 'data-maximo="6"', 'name="galeria_plan"',
                       'id="fotos-actuales"', "js/galeria_producto.js"):
             self.assertContains(respuesta, texto)
         # Las fotos actuales, en orden (la principal primero), van a la galería con su ficha.
@@ -61,21 +61,37 @@ class GaleriaEdicionTests(BaseCatalogo):
             {"ficha": "p", "url": self.producto.imagen.url},
             {"ficha": f"f{self.adicional.pk}", "url": self.adicional.imagen.url},
         ])
-        for texto in ("Foto principal", "Cambiar foto principal", '"Hacer principal"', '"Reemplazar"', "Quitar la foto ",
-                      "Agregar fotos", "arrástralas aquí", "Mover a la izquierda", "Mover a la derecha"):
+        for texto in ("Foto principal", "Clic para reemplazar la principal", "Quitar la foto ", "Agregar varias",
+                      "arrástralas aquí", "Suelta para que sea la foto principal"):
             self.assertIn(texto, galeria_js())
 
-    def test_la_galeria_mide_lo_mismo_con_pocas_o_muchas_fotos(self):
-        # Principal arriba con alto fijo; debajo, siempre 5 casillas (las vacías con «+»).
+    def test_sin_botones_clic_reemplaza_arrastrar_mueve(self):
+        # Sin botones: clic en la foto = reemplazarla; arrastrar = moverla; «✕» = quitarla.
         codigo = galeria_js()
-        self.assertIn("for (var k = Math.max(fotos.length, 1); k < MAXIMO; k++) cajaSecundarias.appendChild(casillaVacia(", codigo)
-        self.assertIn('botonIcono("bi-star-fill", "Hacer principal"', codigo)
+        for viejo in ("botonIcono", "Hacer principal", "Cambiar foto principal", "Mover a la izquierda"):
+            self.assertNotIn(viejo, codigo)
+        self.assertIn('t.addEventListener("click", function () {', codigo)
+        self.assertIn("reemplazar(i);", codigo)
+        # Celular: mantener presionado y arrastrar; teclado: Enter, flechas y Suprimir.
+        for parte in ("var ESPERA_TACTIL = 450;", 't.addEventListener("touchstart"', "evento.preventDefault();  // mientras se lleva la foto",
+                      'tecla === "ArrowLeft"', 'tecla === "Delete"'):
+            self.assertIn(parte, codigo)
+        # Sin fotos: un recuadro bajo en vez de seis casillas vacías.
+        self.assertIn('elemento("label", "galeria-zona")', codigo)
+        self.assertIn("Arrastra tus fotos aquí o <u>elígelas</u>", codigo)
+
+    def test_la_galeria_mide_lo_mismo_con_pocas_o_muchas_fotos(self):
+        # Cuadrícula compacta de 5 columnas: principal 2×2 a la izquierda, casillas «+ Foto N» y «Agregar varias».
+        codigo = galeria_js()
+        self.assertIn("for (var k = fotos.length; k < MAXIMO; k++) cajaSecundarias.appendChild(casillaVacia(k));", codigo)
+        self.assertIn("cajaSecundarias.appendChild(casillaFinal(hayLugar));", codigo)
         from django.contrib.staticfiles import finders
 
         with open(finders.find("css/marca.css"), encoding="utf-8") as archivo:
             css = archivo.read()
-        self.assertIn(".tarjeta-foto--principal .tarjeta-foto__imagen { height: 300px; }", css)
-        self.assertIn(".galeria-edicion__secundarias { grid-template-columns: repeat(5, minmax(0, 1fr)); }", css)
+        self.assertIn(".galeria-edicion__cuerpo { display: grid; gap: .5rem; grid-template-columns: repeat(5, minmax(0, 1fr)); }", css)
+        self.assertIn(".galeria-edicion__principal { grid-column: 1 / 3; grid-row: 1 / 3;", css)
+        self.assertIn("<span class=\"zona-agregar__texto\">Foto ' + (posicion + 1)", codigo)
 
     def test_categoria_y_marca_en_una_fila(self):
         html = self.client.get(reverse("catalogo:crear")).content.decode()

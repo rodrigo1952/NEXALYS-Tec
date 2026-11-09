@@ -158,9 +158,10 @@ class Tienda(models.Model):
         return "https://www.google.com/maps/search/?api=1&query=" + quote(self.direccion)
 
     def enlace_como_llegar(self):
-        """Ruta en Google Maps desde donde está la persona hasta el local (solo si marcó su ubicación)."""
+        """Ruta en Google Maps desde donde está la persona hasta el local: al punto marcado o, si la tienda
+        aún no lo marcó, a su dirección escrita."""
         if not self.tiene_ubicacion:
-            return self.enlace_mapa()
+            return "https://www.google.com/maps/dir/?api=1&destination=" + quote(self.direccion)
         return f"https://www.google.com/maps/dir/?api=1&destination={self.latitud},{self.longitud}"
 
     def save(self, *args, **kwargs):

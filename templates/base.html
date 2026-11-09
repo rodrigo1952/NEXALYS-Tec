@@ -12,7 +12,7 @@
   {# Íconos (categorías del menú y otros detalles). #}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   {# Colores, letra y logo de la marca. Si cambias marca.css, sube el número de ?v= para que los navegadores lo recarguen. #}
-  <link href="{% static 'css/marca.css' %}?v=29" rel="stylesheet">
+  <link href="{% static 'css/marca.css' %}?v=31" rel="stylesheet">
   <style>
     .formulario input:not([type=checkbox]):not([type=hidden]) {
       display: block; width: 100%; padding: .5rem .75rem;
@@ -66,33 +66,34 @@
     {# Segunda fila: las secciones según el tipo de usuario. En el celular se abren con ☰. #}
     <div class="collapse navbar-collapse menu-fila order-3 order-lg-0" id="menu">
       <ul class="navbar-nav menu-secciones me-auto">
-        {# La tienda ve primero su zona de trabajo (Mis productos) y el administrador su consola. #}
-        {% if es_admin %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'panel_admin' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Administración</a>
-          </li>
-        {% endif %}
-        {% if es_tienda %}
-          <li class="nav-item">
-            <a class="nav-link{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}">Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %} <span class="badge rounded-pill text-bg-warning" title="Productos agotados o con stock bajo">{{ num_alertas }}<span class="visually-hidden"> alertas de stock</span></span>{% endif %}</a>
-          </li>
-        {% endif %}
+        {# Mismo orden para todos: primero lo común y, después de una línea, lo propio de cada uno. #}
         <li class="nav-item">
           <a class="nav-link{% if not ns and vista == 'inicio' %} active" aria-current="page{% endif %}" href="{% url 'inicio' %}">Inicio</a>
         </li>
         <li class="nav-item">
           <a class="nav-link{% if ns == 'catalogo' and vista == 'catalogo' or ns == 'catalogo' and vista == 'detalle' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}">Catálogo</a>
         </li>
-        {% if not es_tienda and not es_admin %}
+        <li class="nav-item">
+          <a class="nav-link{% if ns == 'tiendas' and vista == 'cercanas' %} active" aria-current="page{% endif %}" href="{% url 'tiendas:cercanas' %}"><i class="bi bi-geo-alt" aria-hidden="true"></i> Tiendas cercanas</a>
+        </li>
+        {% if es_tienda or es_cliente or es_admin %}
+          <li class="menu-secciones__separador" aria-hidden="true"></li>
+        {% endif %}
+        {% if es_tienda %}
           <li class="nav-item">
-            <a class="nav-link{% if ns == 'tiendas' and vista == 'cercanas' %} active" aria-current="page{% endif %}" href="{% url 'tiendas:cercanas' %}"><i class="bi bi-geo-alt" aria-hidden="true"></i> Tiendas cercanas</a>
+            <a class="nav-link nav-link--propio{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i> Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %} <span class="badge rounded-pill text-bg-warning" title="Productos agotados o con stock bajo">{{ num_alertas }}<span class="visually-hidden"> alertas de stock</span></span>{% endif %}</a>
           </li>
         {% endif %}
         {% if es_cliente %}
           <li class="nav-item">
-            <a class="nav-link{% if ns == 'favoritos' %} active" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}">❤️ Mis favoritos
+            <a class="nav-link nav-link--propio{% if ns == 'favoritos' %} active" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}"><i class="bi bi-heart" aria-hidden="true"></i> Mis favoritos
               {% if avisos_favoritos %}<span class="badge rounded-pill text-bg-danger" title="Favoritos con novedades">{{ avisos_favoritos }}</span>{% endif %}
             </a>
+          </li>
+        {% endif %}
+        {% if es_admin %}
+          <li class="nav-item">
+            <a class="nav-link nav-link--propio" href="{% url 'panel_admin' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Administración</a>
           </li>
         {% endif %}
       </ul>
@@ -146,14 +147,38 @@
 </main>
 
 {% block pie %}
-<footer class="pie-marca py-4 mt-auto">
-  <div class="container d-flex flex-column flex-md-row justify-content-between gap-2 small">
-    <div>
-      <strong class="text-white">NEXALYS <span style="color: var(--nx-acento)">Tec.</span></strong> · Productos tecnológicos de las tiendas de tu ciudad
+<footer class="pie-marca mt-auto">
+  <div class="container pie-marca__columnas">
+    <div class="pie-marca__marca">
+      <strong class="pie-marca__logo">NEXALYS <span>Tec.</span></strong>
+      <p class="mb-0">Productos tecnológicos de las tiendas de tu ciudad. Encuentra lo que buscas y escríbele a la tienda por WhatsApp.</p>
     </div>
-    <div class="d-flex flex-wrap gap-3">
-      <a href="{% url 'catalogo:catalogo' %}">Catálogo</a>
-      <a href="{% url 'tiendas:registro' %}">Registrar mi tienda</a>
+    <nav class="pie-marca__grupo" aria-label="Explorar">
+      <h2 class="pie-marca__titulo">Explorar</h2>
+      <ul>
+        <li><a href="{% url 'inicio' %}">Inicio</a></li>
+        <li><a href="{% url 'catalogo:catalogo' %}">Catálogo</a></li>
+        <li><a href="{% url 'tiendas:cercanas' %}">Tiendas cercanas</a></li>
+      </ul>
+    </nav>
+    <nav class="pie-marca__grupo" aria-label="Para tiendas">
+      <h2 class="pie-marca__titulo">Para tiendas</h2>
+      <ul>
+        <li><a href="{% url 'tiendas:registro' %}">Registrar mi tienda</a></li>
+        {% if not user.is_authenticated and request.resolver_match.url_name != 'login' %}<li><a href="{% url 'login' %}">Iniciar sesión</a></li>{% endif %}
+      </ul>
+    </nav>
+    <nav class="pie-marca__grupo" aria-label="Ayuda">
+      <h2 class="pie-marca__titulo">Ayuda</h2>
+      <ul>
+        <li><a href="{% url 'ayuda' %}">Ayuda y soporte</a></li>
+        <li><a href="{% url 'privacidad' %}">Privacidad y términos</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="pie-marca__final">
+    <div class="container">
+      <span>© 2026 NEXALYS Tec · Quillabamba</span>
       <span>Proyecto IV ciclo · IESTP Urusayhua · 2026</span>
     </div>
   </div>
@@ -249,6 +274,15 @@
     });
   });
 
+  // Fotos de productos: mientras cargan se ve un recuadro gris que brilla (en vez de un hueco blanco).
+  document.querySelectorAll("img.foto-producto").forEach(function (img) {
+    if (img.complete && img.naturalWidth) return;
+    img.classList.add("foto-cargando");
+    var listo = function () { img.classList.remove("foto-cargando"); };
+    img.addEventListener("load", listo);
+    img.addEventListener("error", listo);
+  });
+
   // Corazón de favoritos: se guarda o quita SIN recargar la página, para que el
   // cliente siga en el mismo lugar. Si algo falla, se envía el formulario normal.
   document.addEventListener("submit", function (evento) {
@@ -275,7 +309,8 @@
         var texto = datos.guardado ? "Quitar de favoritos" : "Guardar en favoritos";
         b.title = texto;
         b.setAttribute("aria-pressed", datos.guardado ? "true" : "false");
-        b.querySelector("[data-icono]").textContent = datos.guardado ? "❤️" : "🤍";
+        b.querySelector("[data-icono]").className = datos.guardado ? "bi bi-heart-fill" : "bi bi-heart";
+        b.classList.toggle("boton-corazon--marcado", datos.guardado);
         b.querySelector("[data-texto]").textContent = texto;
       });
       var aviso = document.getElementById("aviso-favorito");
@@ -293,7 +328,7 @@
   });
 
   // Menú que se oculta al bajar y vuelve a aparecer al subir.
-  // No se oculta si el menú ☰ está abierto o si estás escribiendo en el buscador.
+  // No se oculta si el menú del celular está abierto o si estás escribiendo en el buscador.
   (function () {
     var cabecera = document.getElementById("cabecera");
     if (!cabecera) return;

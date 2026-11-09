@@ -57,11 +57,12 @@ class EntradaYMarcoTests(TestCase):
         self.client.force_login(self.admin)
         self.assertContains(self.client.get(reverse("administracion:usuarios")), 'title="Tiendas por verificar">1</span>')
 
-    def test_en_la_pagina_publica_administracion_va_primero(self):
+    def test_en_la_pagina_publica_administracion_va_al_final(self):
+        # Mismo orden para todos: lo común primero y lo propio del administrador al final.
         self.client.force_login(self.admin)
         html = self.client.get(reverse("inicio")).content.decode()
         menu = html[html.index('class="navbar-nav menu-secciones'):]
-        self.assertLess(menu.index(f'href="{reverse("panel_admin")}"'), menu.index(f'href="{reverse("inicio")}"'))
+        self.assertLess(menu.index(f'href="{reverse("tiendas:cercanas")}"'), menu.index(f'href="{reverse("panel_admin")}"'))
 
 
 class ResumenTests(TestCase):

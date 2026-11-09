@@ -29,7 +29,7 @@
 
 {% if destacados %}
   <div class="d-flex justify-content-between align-items-baseline mb-3">
-    <h2 class="h5 mb-0">⭐ Productos destacados</h2>
+    <h2 class="h5 mb-0"><i class="bi bi-star" aria-hidden="true"></i> Productos destacados</h2>
     {% if total_destacados > destacados|length %}<a href="{% url 'catalogo:catalogo' %}?destacados=on" class="enlace-accion">Ver todos los destacados ({{ total_destacados }})</a>{% endif %}
   </div>
   <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mb-5">
@@ -41,7 +41,7 @@
 
 {% if ofertas %}
   <div class="d-flex justify-content-between align-items-baseline mb-3">
-    <h2 class="h5 mb-0">🔥 Ofertas</h2>
+    <h2 class="h5 mb-0"><i class="bi bi-tag" aria-hidden="true"></i> Ofertas</h2>
     <a href="{% url 'catalogo:catalogo' %}?solo_ofertas=on" class="enlace-accion">Ver todas las ofertas</a>
   </div>
   <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mb-5">

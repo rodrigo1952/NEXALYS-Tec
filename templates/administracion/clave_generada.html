@@ -19,7 +19,7 @@
         <li><i class="bi bi-person-check" aria-hidden="true"></i><span>Debe entrar con su usuario <strong>{{ usuario.username }}</strong>{% if rol == "Tienda" %} eligiendo «Soy tienda»{% else %} eligiendo «Soy cliente»{% endif %} y esta clave.</span></li>
         <li><i class="bi bi-shield-lock" aria-hidden="true"></i><span>Al entrar, la página le pedirá crear su propia contraseña.</span></li>
       </ul>
-      <div class="alert alert-warning small mb-3"><i class="bi bi-eye-slash" aria-hidden="true"></i> Esta clave <strong>no se volverá a mostrar</strong>. Si se pierde, genera otra.</div>
+      <div class="alert alert-warning small mb-3">Esta clave <strong>no se volverá a mostrar</strong>. Si se pierde, genera otra.</div>
       <a href="{% url 'administracion:usuarios' %}" class="btn btn-primary">Listo, volver a usuarios</a>
     </section>
   </div>

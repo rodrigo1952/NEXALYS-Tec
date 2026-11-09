@@ -99,4 +99,3 @@ class FotosNuevasComoTarjetasTests(BaseCatalogo):
         from .test_galeria import galeria_js
 
         self.assertIn("tarjeta-foto--nueva", galeria_js())
-        self.assertIn('"Nueva"', galeria_js())

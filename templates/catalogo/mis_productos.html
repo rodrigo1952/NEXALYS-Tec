@@ -61,7 +61,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
         <th class="text-end">Stock</th>
         <th class="d-none d-xl-table-cell text-end" title="Precio de compra (privado)">P. compra</th>
         <th class="d-none d-md-table-cell">Estado</th>
-        <th class="d-none d-md-table-cell text-end text-nowrap" title="Cuántos clientes lo guardaron en favoritos"><i class="bi bi-heart-fill text-danger" aria-hidden="true"></i> Guardado</th>
+        <th class="d-none d-md-table-cell text-end text-nowrap" title="Cuántos clientes lo guardaron en favoritos"><i class="bi bi-heart" aria-hidden="true"></i> Favoritos</th>
         <th class="text-end">Acciones</th>
       </tr>
     </thead>
@@ -82,7 +82,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
           <td class="text-end text-nowrap">
             {% if producto.en_oferta %}
               <span class="text-danger fw-semibold">{{ producto.precio_oferta|soles }}</span><br>
-              <small class="text-muted text-decoration-line-through">{{ producto.precio|soles }}</small>
+              <small class="text-muted text-decoration-line-through">{{ producto.precio|soles }}</small><br>
               <span class="badge text-bg-danger">Oferta</span>
             {% else %}
               {{ producto.precio|soles }}

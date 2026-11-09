@@ -138,9 +138,9 @@ def catalogo(request):
     if datos.get("en_stock"):
         chips.append({"texto": "En stock", "url": _sin(request, "en_stock")})
     if datos.get("solo_ofertas"):
-        chips.append({"texto": "🔥 Ofertas", "url": _sin(request, "solo_ofertas")})
+        chips.append({"texto": "En oferta", "icono": "tag", "url": _sin(request, "solo_ofertas")})
     if datos.get("destacados"):
-        chips.append({"texto": "⭐ Destacados", "url": _sin(request, "destacados")})
+        chips.append({"texto": "Destacados", "icono": "star", "url": _sin(request, "destacados")})
 
     if datos.get("categoria"):
         titulo = datos["categoria"].nombre

@@ -23,7 +23,7 @@ class MenuDeLaCuentaTests(TestCase):
             self.assertContains(respuesta, f'href="{reverse(nombre)}"')
         # «Mi tienda» lleva a la página pública de la tienda (los datos están en Mi cuenta).
         publica = reverse("tiendas:perfil", args=[self.tienda.pk])
-        self.assertContains(respuesta, f'<a class="dropdown-item" href="{publica}"><span aria-hidden="true">🏪</span> Mi tienda</a>', html=True)
+        self.assertContains(respuesta, f'<a class="dropdown-item" href="{publica}"><i class="bi bi-shop" aria-hidden="true"></i> Mi tienda</a>', html=True)
         self.assertContains(respuesta, "ti•••••@ejemplo.com")  # correo parcialmente oculto
         self.assertNotContains(respuesta, f'href="{reverse("tiendas:panel")}">Mi tienda</a>')  # ya no está en la fila de secciones
 
@@ -45,7 +45,7 @@ class MenuDeLaCuentaTests(TestCase):
         self.tienda.estado = "pendiente"
         self.tienda.save()
         respuesta = self.client.get(reverse("inicio"))
-        self.assertContains(respuesta, f'<a class="dropdown-item" href="{reverse("tiendas:panel")}"><span aria-hidden="true">🏪</span> Mi tienda</a>', html=True)
+        self.assertContains(respuesta, f'<a class="dropdown-item" href="{reverse("tiendas:panel")}"><i class="bi bi-shop" aria-hidden="true"></i> Mi tienda</a>', html=True)
 
     def test_visitante_ve_iniciar_sesion(self):
         self.client.logout()

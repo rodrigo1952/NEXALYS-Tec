@@ -41,7 +41,7 @@
           {% if chips %}
             <ul class="filtros__chips" aria-label="Filtros elegidos">
               {% for chip in chips %}
-                <li><a href="{{ chip.url }}" class="chip-filtro" aria-label="Quitar {{ chip.texto }}">{{ chip.texto }} <i class="bi bi-x-lg" aria-hidden="true"></i></a></li>
+                <li><a href="{{ chip.url }}" class="chip-filtro" aria-label="Quitar {{ chip.texto }}">{% if chip.icono %}<i class="bi bi-{{ chip.icono }}" aria-hidden="true"></i> {% endif %}{{ chip.texto }} <i class="bi bi-x-lg" aria-hidden="true"></i></a></li>
               {% endfor %}
             </ul>
             <a href="{% url 'catalogo:catalogo' %}" class="enlace-accion small d-lg-none mb-2 d-inline-block">Quitar todos</a>
@@ -55,11 +55,11 @@
             </div>
             <div class="form-check">
               <input class="form-check-input" type="checkbox" name="solo_ofertas" value="on" id="filtro-ofertas"{% if form.cleaned_data.solo_ofertas %} checked{% endif %}>
-              <label class="form-check-label filtro__opcion" for="filtro-ofertas">🔥 En oferta <span class="filtro__cantidad">{{ disponibilidad.ofertas }}</span></label>
+              <label class="form-check-label filtro__opcion" for="filtro-ofertas"><span><i class="bi bi-tag" aria-hidden="true"></i> En oferta</span> <span class="filtro__cantidad">{{ disponibilidad.ofertas }}</span></label>
             </div>
             <div class="form-check">
               <input class="form-check-input" type="checkbox" name="destacados" value="on" id="filtro-destacados"{% if form.cleaned_data.destacados %} checked{% endif %}>
-              <label class="form-check-label filtro__opcion" for="filtro-destacados">⭐ Destacados <span class="filtro__cantidad">{{ disponibilidad.destacados }}</span></label>
+              <label class="form-check-label filtro__opcion" for="filtro-destacados"><span><i class="bi bi-star" aria-hidden="true"></i> Destacados</span> <span class="filtro__cantidad">{{ disponibilidad.destacados }}</span></label>
             </div>
           </details>
 
@@ -169,5 +169,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/catalogo.js' %}?v=1"></script>
+<script src="{% static 'js/catalogo.js' %}?v=2"></script>
 {% endblock %}

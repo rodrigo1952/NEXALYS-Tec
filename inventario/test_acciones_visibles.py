@@ -66,7 +66,7 @@ class AccionesVisiblesTests(BaseCatalogo):
 
     def test_quitar_busqueda_es_un_boton(self):
         respuesta = self.client.get(reverse("inventario:ventas"), {"q": "Galaxy"})
-        self.assertContains(respuesta, 'class="btn btn-outline-secondary">✕ Quitar búsqueda</a>')
+        self.assertContains(respuesta, 'class="btn btn-outline-secondary"><i class="bi bi-x-lg" aria-hidden="true"></i> Quitar búsqueda</a>')
 
     def test_el_estilo_existe_en_marca_css(self):
         from django.contrib.staticfiles import finders

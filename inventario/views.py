@@ -194,8 +194,12 @@ def _venta_propia(request, pk):
 
 @tienda_requerida()
 def venta_detalle(request, pk):
-    """La venta como "nota de venta" lista para imprimir."""
-    return render(request, "inventario/venta_detalle.html", {"venta": _venta_propia(request, pk), "tienda": request.tienda})
+    """La venta como "nota de venta" lista para imprimir. Trae el formulario de la ventana «¿Anular la venta?»."""
+    venta = _venta_propia(request, pk)
+    contexto = {"venta": venta, "tienda": request.tienda}
+    if not venta.anulada:
+        contexto["form_anular"] = AnularVentaForm()
+    return render(request, "inventario/venta_detalle.html", contexto)
 
 
 @tienda_requerida()

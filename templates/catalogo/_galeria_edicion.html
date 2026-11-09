@@ -1,23 +1,22 @@
 {% comment %}
-Galería de fotos del producto (al AGREGAR y al EDITAR). La dibuja static/js/galeria_producto.js.
+Galería de fotos del producto (al AGREGAR y al EDITAR), compacta y sin botones. La dibuja static/js/galeria_producto.js.
   - Hasta {{ form.fotos_maximo }} fotos. La PRIMERA es la principal (la que se ve en el catálogo y en el inicio).
-  - «+ Agregar fotos» permite elegir varias a la vez: se suman al final, en el orden que entrega el navegador.
-  - Arrastrar una foto sobre otra las intercambia (también con la principal), aunque sean fotos nuevas
-    sin guardar. «Hacer principal» (★), «Reemplazar» (⟳), las flechas y la «X» hacen lo mismo con botones.
-  - La principal va arriba con alto fijo y debajo siempre hay 5 casillas iguales (las vacías con «+»).
-  - Nada se aplica hasta presionar «Guardar»: se envía el orden final en el campo oculto «galeria_plan»
-    y las fotos nuevas en «fotos_nuevas».
+  - Sin fotos: un recuadro bajo para elegirlas o soltarlas (varias a la vez; la primera será la principal).
+  - Con fotos: la principal grande (2×2) a la izquierda y, a su derecha, las fotos 2 a 6 en dos filas
+    (las vacías dicen «+ Foto N») y la casilla «Agregar varias».
+  - Clic en una foto = reemplazarla. Arrastrarla sobre otra = intercambiarlas (también con la principal).
+    La «✕» (aparece al pasar el mouse) la quita. En el celular se mantiene presionada para moverla.
+    Con el teclado: Enter reemplaza, las flechas mueven y Suprimir quita.
+  - Nada se aplica hasta presionar «Guardar producto»: se envía el orden final en el campo oculto
+    «galeria_plan» y las fotos nuevas en «fotos_nuevas».
 {% endcomment %}
 <section class="galeria-edicion mb-4" aria-labelledby="titulo-galeria" data-galeria data-maximo="{{ form.fotos_maximo }}">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+  <div class="galeria-edicion__cab">
     <h3 class="h6 mb-0" id="titulo-galeria">Fotos del producto</h3>
-    <label for="{{ form.fotos_nuevas.id_for_label }}" class="btn btn-sm btn-outline-primary mb-0" data-boton-agregar>+ Agregar fotos</label>
+    <span class="galeria-edicion__contador" data-contador aria-live="polite"></span>
   </div>
-  <p class="small text-muted mb-3">
-    <span data-contador></span>
-    La <strong>primera</strong> es la principal. Puedes elegir varias a la vez.
-    <span class="d-none d-md-inline">Arrastra una foto sobre otra para cambiarlas de lugar.</span>
-  </p>
+  <p class="galeria-edicion__ayuda" data-ayuda>Puedes subir hasta {{ form.fotos_maximo }}. La primera será la principal.</p>
+  <label for="{{ form.fotos_nuevas.id_for_label }}" class="visually-hidden">Agregar fotos</label>
   <input type="file" name="{{ form.fotos_nuevas.html_name }}" id="{{ form.fotos_nuevas.id_for_label }}" accept="image/jpeg,image/png,image/webp" multiple class="visually-hidden" data-agregar>
   <input type="file" accept="image/jpeg,image/png,image/webp" class="visually-hidden" tabindex="-1" aria-hidden="true" data-reemplazo>
 
@@ -25,17 +24,17 @@ Galería de fotos del producto (al AGREGAR y al EDITAR). La dibuja static/js/gal
   {% for error in form.fotos_nuevas.errors %}<div class="text-danger small">Fotos: {{ error }}</div>{% endfor %}
   {% if form.errors and form.fotos_nuevas.value %}<div class="text-danger small">Vuelve a elegir las fotos nuevas: el navegador no las guarda cuando el formulario tiene errores.</div>{% endif %}
 
-  <div class="galeria-edicion__cuerpo">
-    <div data-principal></div>
+  <div class="galeria-edicion__cuerpo" data-cuerpo>
+    <div class="galeria-edicion__principal" data-principal></div>
     <div class="galeria-edicion__secundarias" data-secundarias></div>
   </div>
 
   <div class="aviso-orden d-none mt-3" data-cambios aria-live="polite">
-    <span><i class="bi bi-images" aria-hidden="true"></i> Cambiaste las fotos: se guardarán al presionar «Guardar».</span>
+    <span><i class="bi bi-images" aria-hidden="true"></i> Cambiaste las fotos: se guardarán al presionar «Guardar producto».</span>
     <button type="button" class="btn btn-sm btn-link p-0" data-deshacer>Deshacer cambios</button>
   </div>
   <div class="small text-danger mt-2 d-none" data-error role="alert"></div>
-  <p class="small text-muted mt-2 mb-0">JPG, PNG o WEBP de máximo 2 MB cada una.</p>
+  <p class="small text-muted mt-2 mb-0" data-regla>JPG, PNG o WEBP de máximo 2 MB cada una.</p>
   <noscript><p class="small text-danger mt-2 mb-0">Para elegir y ordenar las fotos, activa JavaScript en tu navegador.</p></noscript>
   {{ form.fotos_galeria|json_script:"fotos-actuales" }}
 </section>

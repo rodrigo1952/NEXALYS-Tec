@@ -11,19 +11,19 @@ la página, así el cliente no pierde el lugar donde estaba.
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
     {% if producto.pk in ids_favoritos %}
-      <button type="submit" class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm{% endif %}" title="Quitar de favoritos" aria-pressed="true">
-        <span data-icono aria-hidden="true">❤️</span>{% if con_texto %} <span data-texto>Quitar de favoritos</span>{% else %}<span class="visually-hidden" data-texto>Quitar de favoritos</span>{% endif %}
+      <button type="submit" class="{% if con_texto %}btn btn-outline-primary btn-lg boton-corazon-texto{% else %}boton-corazon{% endif %} boton-corazon--marcado" title="Quitar de favoritos" aria-pressed="true">
+        <i class="bi bi-heart-fill" data-icono aria-hidden="true"></i>{% if con_texto %} <span data-texto>Quitar de favoritos</span>{% else %}<span class="visually-hidden" data-texto>Quitar de favoritos</span>{% endif %}
       </button>
     {% else %}
-      <button type="submit" class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm{% endif %}" title="Guardar en favoritos" aria-pressed="false">
-        <span data-icono aria-hidden="true">🤍</span>{% if con_texto %} <span data-texto>Guardar en favoritos</span>{% else %}<span class="visually-hidden" data-texto>Guardar en favoritos</span>{% endif %}
+      <button type="submit" class="{% if con_texto %}btn btn-outline-primary btn-lg boton-corazon-texto{% else %}boton-corazon{% endif %}" title="Guardar en favoritos" aria-pressed="false">
+        <i class="bi bi-heart" data-icono aria-hidden="true"></i>{% if con_texto %} <span data-texto>Guardar en favoritos</span>{% else %}<span class="visually-hidden" data-texto>Guardar en favoritos</span>{% endif %}
       </button>
     {% endif %}
   </form>
 {% elif not user.is_authenticated %}
   <a href="{% url 'favoritos:guardar_despues' producto.pk %}"
-     class="btn {% if con_texto %}btn-outline-danger btn-lg{% else %}btn-light btn-sm rounded-circle shadow-sm boton-favorito{% endif %}"
+     class="{% if con_texto %}btn btn-outline-primary btn-lg boton-corazon-texto{% else %}boton-corazon boton-favorito{% endif %}"
      title="Inicia sesión para guardar en favoritos">
-    🤍{% if con_texto %} Guardar en favoritos{% endif %}
+    <i class="bi bi-heart" aria-hidden="true"></i>{% if con_texto %} Guardar en favoritos{% else %}<span class="visually-hidden">Guardar en favoritos</span>{% endif %}
   </a>
 {% endif %}
