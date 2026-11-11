@@ -4,6 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}NEXALYS Tec{% endblock %}</title>
+  <meta name="description" content="{% block descripcion %}Productos tecnológicos de las tiendas de Quillabamba: compara precios, mira dónde quedan y escríbeles por WhatsApp.{% endblock %}">
+  {# Vista previa al compartir un enlace (WhatsApp, Facebook): título, texto y foto. Producto y tienda la cambian. #}
+  <meta property="og:site_name" content="NEXALYS Tec">
+  <meta property="og:locale" content="es_PE">
+  <meta property="og:url" content="{{ SITIO_URL }}{{ request.path }}">
+  {% block vista_previa %}
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NEXALYS Tec">
+  <meta property="og:description" content="Productos tecnológicos de las tiendas de Quillabamba: compara precios, mira dónde quedan y escríbeles por WhatsApp.">
+  {% endblock %}
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -241,6 +251,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/visor.js' %}?v=3"></script>
 <script src="{% static 'js/whatsapp.js' %}?v=2"></script>
+<script src="{% static 'js/compartir.js' %}?v=1"></script>
 <script>
   // Evita el doble clic: al enviar un formulario POST, sus botones se desactivan y
   // muestran "Procesando…". Así no se registra dos veces el mismo pedido o producto.

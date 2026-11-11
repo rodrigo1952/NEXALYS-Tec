@@ -5,8 +5,8 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
-from django.contrib.auth.views import LoginView
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.contrib.auth.views import LoginView, PasswordResetView
+from django.core.exceptions import NON_FIELD_ERRORS, PermissionDenied, ValidationError
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -15,9 +15,10 @@ from catalogo.destacados import destacados_en_turnos
 from catalogo.models import Producto
 from favoritos.permisos import es_cliente
 
+from . import limites
 from .clave_temporal import CLAVE_SESION
 from .concurrencia import validar_y_guardar
-from .forms import EliminarCuentaForm, IngresoForm, NuevaClaveForm, PerfilForm, RegistroForm
+from .forms import EliminarCuentaForm, IngresoForm, NuevaClaveForm, PerfilForm, RecuperarClaveForm, RegistroForm
 from .models import DIAS_PARA_CONFIRMAR_CORREO, ClaveTemporal, CorreoPendiente
 from .reautenticacion import confirmada_recientemente, marcar_confirmada
 from .verificacion import enviar_correo_confirmacion, horas_validez, leer_token
@@ -108,6 +109,12 @@ def confirmacion_pendiente(request):
 @require_POST
 def reenviar_confirmacion(request):
     correo = request.POST.get("email", "").strip()
+    espera = limites.segundos_de_espera(limites.CORREO_CONFIRMACION, request, correo)
+    if espera:
+        request.session["correo_por_confirmar"] = correo
+        messages.error(request, limites.mensaje_de_espera(espera))
+        return redirect("confirmacion_pendiente")
+    limites.anotar(limites.CORREO_CONFIRMACION, request, correo)
     usuario = (
         User.objects.filter(email__iexact=correo, is_active=False, correo_pendiente__isnull=False).first()
         if correo else None
@@ -213,6 +220,56 @@ class IngresoView(LoginView):
 
     def get_default_redirect_url(self):
         return destino_por_rol(self.request.user)
+
+    # --- Límite de intentos (cuentas/limites.py): 5 contraseñas equivocadas → 15 minutos ---
+    def _usuario_escrito(self):
+        return self.request.POST.get("username", "")
+
+    def _bloqueado(self, segundos):
+        """Página de ingreso con el aviso de espera. No se revisa la contraseña."""
+        form = self.get_form_class()(
+            self.request,
+            initial={"username": self._usuario_escrito(), "tipo": self.request.POST.get("tipo") or None},
+        )
+        contexto = self.get_context_data(form=form, bloqueo=limites.mensaje_de_espera(segundos))
+        return self.render_to_response(contexto, status=429)
+
+    def post(self, request, *args, **kwargs):
+        espera = limites.segundos_de_espera(limites.LOGIN, request, self._usuario_escrito())
+        if espera:
+            return self._bloqueado(espera)
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        limites.olvidar(limites.LOGIN, self.request, self._usuario_escrito())
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # Solo cuenta la contraseña equivocada (no el tipo de cuenta ni una cuenta desactivada con su clave correcta).
+        clave_equivocada = form.has_error(NON_FIELD_ERRORS, "invalid_login") and not (
+            form.cuenta_desactivada or form.correo_sin_confirmar
+        )
+        if clave_equivocada:
+            limites.anotar(limites.LOGIN, self.request, self._usuario_escrito())
+            espera = limites.segundos_de_espera(limites.LOGIN, self.request, self._usuario_escrito())
+            if espera:
+                return self._bloqueado(espera)
+        return super().form_invalid(form)
+
+
+class RecuperarClaveView(PasswordResetView):
+    """«¿Olvidaste tu contraseña?» con límite: 3 correos por hora (para el mismo correo)."""
+
+    form_class = RecuperarClaveForm
+
+    def form_valid(self, form):
+        correo = form.cleaned_data["email"]
+        espera = limites.segundos_de_espera(limites.CORREO_CLAVE, self.request, correo)
+        if espera:
+            form.add_error(None, limites.mensaje_de_espera(espera))
+            return self.form_invalid(form)
+        limites.anotar(limites.CORREO_CLAVE, self.request, correo)
+        return super().form_valid(form)
 
 
 def destino_por_rol(user):

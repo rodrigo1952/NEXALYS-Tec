@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static formato %}
+{% load static formato miniaturas %}
 {% block titulo %}Mis favoritos | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% comment %}
@@ -87,7 +87,7 @@ avisos (bajó de precio, volvió a tener stock) y los botones WhatsApp y Quitar 
             {% endif %}
             <div class="tarjeta-producto__foto">
               {% if producto.imagen %}
-                <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}" loading="lazy">
+                <img src="{{ producto.imagen|miniatura }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}" loading="lazy">
               {% else %}
                 <div class="foto-vacia card-img-top"><i class="bi bi-box-seam" aria-hidden="true"></i></div>
               {% endif %}

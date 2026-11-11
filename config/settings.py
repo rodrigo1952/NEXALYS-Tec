@@ -12,20 +12,64 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
+from . import entorno
+from .entorno import cargar_env
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
+# Datos secretos y ajustes del servidor: se leen del archivo .env (ver config/entorno.py y .env.example).
+# Si no tienes .env:  python config/crear_env.py
+cargar_env(BASE_DIR / ".env")
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-3%a2a26y4ptcx0u6ug!59!174v@f27bo=!m0*1*c-xkb(i%yr2'
+# Con DEBUG=True Django muestra los errores con todos sus detalles: SOLO en tu PC.
+# Si falta en el .env, se asume False (lo seguro).
+DEBUG = entorno.si_o_no("DEBUG", False)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Firma las sesiones y los enlaces de los correos. Nunca se escribe aquí: va en el .env.
+SECRET_KEY = entorno.texto("SECRET_KEY")
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        "Falta SECRET_KEY. Crea el archivo .env con:  python config/crear_env.py"
+    )
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = entorno.lista("ALLOWED_HOSTS", ["localhost", "127.0.0.1"] if DEBUG else [])
+
+# Dirección pública del sitio, sin / al final. Arma los enlaces completos que se comparten
+# (mensaje de WhatsApp, botón «Compartir» y la vista previa con foto).
+SITIO_URL = entorno.texto("SITIO_URL", "http://127.0.0.1:8000" if DEBUG else "").rstrip("/")
+if not SITIO_URL:
+    raise ImproperlyConfigured("Falta SITIO_URL en el .env (por ejemplo: https://tu-dominio.com).")
+
+# Con HTTPS, Django exige que los formularios vengan del propio dominio.
+CSRF_TRUSTED_ORIGINS = entorno.lista(
+    "CSRF_TRUSTED_ORIGINS", [SITIO_URL] if SITIO_URL.startswith("https://") else []
+)
+
+# Django Admin en una dirección secreta (DJANGO_ADMIN_URL en el .env). Así no lo encuentran los robots.
+ADMIN_URL = entorno.texto("DJANGO_ADMIN_URL", "admin/").strip("/") + "/"
+
+# De dónde se toma la IP del visitante (límite de intentos). En PythonAnywhere: HTTP_X_REAL_IP.
+IP_CABECERA = entorno.texto("IP_CABECERA") or "REMOTE_ADDR"
+
+if not DEBUG:
+    # Servidor publicado con HTTPS.
+    SESSION_COOKIE_SECURE = entorno.si_o_no("COOKIES_SEGURAS", True)
+    CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+    SECURE_HSTS_SECONDS = entorno.entero("HSTS_SEGUNDOS", 3600)
+    if entorno.si_o_no("PROXY_HTTPS"):
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = entorno.si_o_no("FORZAR_HTTPS")
+    # Avisos de «check --deploy» que se apagan a propósito:
+    #  - W005 y W021: incluir subdominios y la lista «preload» solo sirven con un dominio propio;
+    #    en tu-usuario.pythonanywhere.com los subdominios no son tuyos.
+    #  - W008: en PythonAnywhere el paso a HTTPS lo hace el interruptor «Force HTTPS» (pestaña Web).
+    SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
+    if not SECURE_SSL_REDIRECT:
+        SILENCED_SYSTEM_CHECKS.append("security.W008")
 
 
 # Application definition
@@ -72,6 +116,7 @@ TEMPLATES = [
                 'cuentas.context_processors.roles',
                 'favoritos.context_processors.favoritos',
                 'catalogo.context_processors.categorias_menu',
+                'config.context_processors.sitio',
             ],
         },
     },
@@ -141,6 +186,12 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # Archivos subidos por los usuarios (imagenes de productos)
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Al borrar una foto, también se borran sus miniaturas (catalogo/almacenamiento.py).
+STORAGES = {
+    'default': {'BACKEND': 'catalogo.almacenamiento.AlmacenamientoConMiniaturas'},
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
 
 
 # Email

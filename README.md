@@ -26,6 +26,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\venv\Scripts\activate
 python --version    # debe decir Python 3.14.x
 pip install -r requirements.txt
+python config/crear_env.py   # crea el archivo .env con una clave secreta al azar (solo la primera vez)
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
@@ -160,8 +161,37 @@ Crea 3 tiendas de demostración (Selva Byte, Valle Digital Tech y Kantu Tech; us
 ## Administración de la base de datos
 
 - **Panel de administración** (`/panel/admin/`): pantallas con el diseño de NEXALYS para el trabajo diario del Administrador.
-- **Django Admin** (`/admin/`): herramienta avanzada con todas las tablas, como respaldo.
+- **Django Admin**: herramienta avanzada con todas las tablas, como respaldo. Está en una dirección secreta: la que dice `DJANGO_ADMIN_URL` en tu `.env` (por ejemplo `/control-abc123xyz456/`). Usa el mismo «Iniciar sesión» de la página.
 - **DB Browser for SQLite** (https://sqlitebrowser.org): abrir el archivo `db.sqlite3` para ver la estructura de las tablas y sus registros.
 
 En desarrollo, los correos se muestran en la consola donde corre `runserver`.
 Los enlaces de verificación de tienda y de recuperación de contraseña también se imprimen completos con el prefijo `[NEXALYS]`.
+
+## Datos secretos y publicación
+
+Los datos secretos **no están en el código**: van en el archivo `.env` (junto a `manage.py`), que no se sube a GitHub. El modelo con la explicación de cada dato es `.env.example`.
+
+| Dato | En tu PC | En el servidor |
+|---|---|---|
+| `SECRET_KEY` | la crea `python config/crear_env.py` | otra distinta: `python config/crear_env.py --produccion` |
+| `DEBUG` | `True` | `False` |
+| `ALLOWED_HOSTS` | `localhost,127.0.0.1` | tu dominio, p. ej. `tu-usuario.pythonanywhere.com` |
+| `SITIO_URL` | `http://127.0.0.1:8000` | `https://tu-usuario.pythonanywhere.com` |
+| `DJANGO_ADMIN_URL` | dirección secreta al azar | otra dirección secreta |
+| `IP_CABECERA` | vacío | `HTTP_X_REAL_IP` (PythonAnywhere) |
+
+Con `DEBUG=False` las cookies viajan solo por HTTPS y el navegador recuerda usar HTTPS (`HSTS_SEGUNDOS`, empieza en 1 hora). En PythonAnywhere, activar **Force HTTPS** en la pestaña *Web*.
+
+Antes de publicar, revisar con: `python manage.py check --deploy` (en el servidor).
+
+### Seguridad del inicio de sesión
+
+- 5 contraseñas equivocadas para un usuario desde la misma conexión → 15 minutos de espera; 20 desde una misma conexión con cualquier usuario → 15 minutos.
+- Reenviar el enlace de confirmación o verificación y «¿Olvidaste tu contraseña?»: máximo 3 correos por hora.
+- Mensaje: «Demasiados intentos. Vuelve a intentarlo en N minutos». Ver `cuentas/limites.py`.
+
+### Fotos más livianas y enlaces para compartir
+
+- Las tarjetas usan **miniaturas** (600 px; 160 px en las miniaturas pequeñas) en `media/miniaturas/`. Se crean solas la primera vez y se borran junto con la foto original. Para crearlas todas de una vez: `python manage.py crear_miniaturas`.
+- El mensaje de WhatsApp lleva el enlace del producto al final; WhatsApp muestra una vista previa con foto, nombre y precio (solo con la página publicada en internet).
+- Botón **Compartir** en el detalle del producto y en la página de la tienda: en el celular abre el menú de compartir; en la PC copia el enlace.

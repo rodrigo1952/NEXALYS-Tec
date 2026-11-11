@@ -47,3 +47,59 @@ def optimizar_campo(campo, lado_maximo):
     except Exception:  # si Pillow no puede procesarla, se guarda la original
         return
     campo.save(optimizada.name, optimizada, save=False)
+
+
+# --- Miniaturas -------------------------------------------------------------------------------
+# Las tarjetas del catálogo no necesitan la foto de 1200 px: usan una copia chica que pesa mucho menos.
+# Se crean la primera vez que una página las pide (y con: python manage.py crear_miniaturas) y se
+# guardan en media/miniaturas/<tipo>/... Al borrar la foto original, se borran también (almacenamiento.py).
+CARPETA_MINIATURAS = "miniaturas"
+MINIATURAS = {
+    "tarjeta": (600, "WEBP"),    # tarjetas del catálogo, inicio, favoritos y la tienda
+    "icono": (160, "WEBP"),      # miniaturas pequeñas (tabla de Mis productos, galería del detalle)
+    "compartir": (600, "JPEG"),  # foto de la vista previa al compartir el enlace (WhatsApp, Facebook)
+}
+
+
+def ruta_miniatura(nombre, tipo):
+    """productos/tienda/laptop.webp → miniaturas/tarjeta/productos/tienda/laptop.webp"""
+    lado, formato = MINIATURAS[tipo]
+    extension = ".jpg" if formato == "JPEG" else ".webp"
+    return f"{CARPETA_MINIATURAS}/{tipo}/{os.path.splitext(nombre)[0]}{extension}"
+
+
+def _guardar_miniatura(origen, destino, tipo):
+    lado, formato = MINIATURAS[tipo]
+    with Image.open(origen) as original:
+        imagen = ImageOps.exif_transpose(original)
+        if formato == "JPEG":
+            # JPEG no tiene transparencia: los logos transparentes van sobre fondo blanco.
+            imagen = imagen.convert("RGBA")
+            fondo = Image.new("RGB", imagen.size, "white")
+            fondo.paste(imagen, mask=imagen.split()[3])
+            imagen = fondo
+        elif imagen.mode not in ("RGB", "RGBA"):
+            imagen = imagen.convert("RGBA" if imagen.mode in ("LA", "P") else "RGB")
+        imagen.thumbnail((lado, lado))
+        os.makedirs(os.path.dirname(destino), exist_ok=True)
+        temporal = f"{destino}.{os.getpid()}.tmp"
+        imagen.save(temporal, format=formato, quality=80 if formato == "JPEG" else CALIDAD_WEBP)
+    os.replace(temporal, destino)  # aparece completa de una vez, aunque dos visitas la pidan juntas
+
+
+def url_miniatura(campo, tipo="tarjeta"):
+    """
+    Dirección de la miniatura de una imagen (la crea si falta o si la original es más nueva).
+    Si algo falla, devuelve la imagen original: la página nunca se queda sin foto.
+    """
+    if not campo:
+        return ""
+    almacenamiento = campo.storage
+    ruta = ruta_miniatura(campo.name, tipo)
+    try:
+        origen, destino = almacenamiento.path(campo.name), almacenamiento.path(ruta)
+        if not os.path.exists(destino) or os.path.getmtime(destino) < os.path.getmtime(origen):
+            _guardar_miniatura(origen, destino, tipo)
+        return almacenamiento.url(ruta)
+    except Exception:  # p. ej. la original no existe o el almacenamiento no es una carpeta
+        return campo.url

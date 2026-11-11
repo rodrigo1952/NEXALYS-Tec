@@ -38,7 +38,10 @@
     <div class="ingreso__tarjeta">
       <h1 class="ingreso__titulo">{% include "_logo.html" with claro=True solo_icono=True tamano=32 %} Iniciar sesión</h1>
 
-      {% if form.cuenta_desactivada %}
+      {% if bloqueo %}
+        {# Límite de intentos (cuentas/limites.py): 5 contraseñas equivocadas → 15 minutos de espera. #}
+        <div class="alert alert-danger" role="alert">{{ bloqueo }}</div>
+      {% elif form.cuenta_desactivada %}
         <div class="alert alert-warning">
           <strong>Tu cuenta fue desactivada por el administrador.</strong>
           {% if form.motivo_desactivacion %}<br>Motivo: {{ form.motivo_desactivacion }}{% endif %}

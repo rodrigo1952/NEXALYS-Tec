@@ -28,7 +28,9 @@ class TablaMisProductosTests(BaseCatalogo):
         con_foto = self.crear_producto(nombre="Con foto", imagen=foto("principal.png"))
         self.crear_producto(nombre="Sin foto")
         respuesta = self.client.get(reverse("catalogo:mis_productos"))
-        self.assertContains(respuesta, f'<img src="{con_foto.imagen.url}" alt="" class="miniatura-tabla" width="48" height="48" loading="lazy"')
+        # Usa la miniatura chica (160 px) y no la foto de 1200 px.
+        icono = "/media/miniaturas/icono/" + con_foto.imagen.name.rsplit(".", 1)[0] + ".webp"
+        self.assertContains(respuesta, f'<img src="{icono}" alt="" class="miniatura-tabla" width="48" height="48" loading="lazy"')
         self.assertContains(respuesta, 'class="miniatura-tabla miniatura-tabla--vacia" title="Sin foto"', count=1)
 
     def test_estados_y_botones_con_iconos(self):

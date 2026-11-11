@@ -60,3 +60,24 @@ class ClaveTemporal(models.Model):
         from django.utils import timezone
 
         return (ahora or timezone.now()) >= self.vence
+
+
+class IntentoAcceso(models.Model):
+    """
+    Registro para el límite de intentos (cuentas/limites.py): cada contraseña equivocada al iniciar
+    sesión y cada correo pedido (reenviar enlace o recuperar contraseña). Se borran solos al día siguiente.
+    No guarda contraseñas: solo qué se intentó, para quién (usuario o correo) y desde qué conexión (IP).
+    """
+
+    accion = models.CharField("acción", max_length=20)
+    clave = models.CharField("usuario o correo", max_length=254, blank=True)
+    ip = models.CharField("conexión (IP)", max_length=45, blank=True)
+    creado = models.DateTimeField("fecha", auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "intento de acceso"
+        verbose_name_plural = "intentos de acceso"
+        indexes = [models.Index(fields=["accion", "creado"], name="intento_accion_fecha")]
+
+    def __str__(self):
+        return f"{self.accion} · {self.clave or '-'} · {self.ip or '-'}"

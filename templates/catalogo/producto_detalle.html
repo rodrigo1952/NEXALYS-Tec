@@ -1,5 +1,19 @@
 {% extends "base.html" %}
+{% load formato miniaturas %}
 {% block titulo %}{{ producto.nombre }} | NEXALYS Tec{% endblock %}
+{% block descripcion %}{{ producto.nombre }} a {{ producto.precio_final|soles }} en {{ producto.tienda }}, Quillabamba. {{ producto.marca }} · {{ producto.categoria }}.{% endblock %}
+{% block vista_previa %}
+  {# Lo que WhatsApp muestra al recibir el enlace: foto, nombre y precio. #}
+  <meta property="og:type" content="product">
+  <meta property="og:title" content="{{ producto.nombre }} · {{ producto.precio_final|soles }}">
+  <meta property="og:description" content="{{ producto.marca }} · {{ producto.categoria }}. En {{ producto.tienda }}, Quillabamba.{% if producto.agotado %} Agotado.{% endif %}">
+  {% if producto.imagen %}
+    <meta property="og:image" content="{{ SITIO_URL }}{{ producto.imagen|miniatura:'compartir' }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:alt" content="{{ producto.nombre }}">
+    <meta name="twitter:card" content="summary_large_image">
+  {% endif %}
+{% endblock %}
 {% block contenido %}
 <a href="{% url 'catalogo:catalogo' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver al catálogo</a>
 <div class="row g-4 mt-1">
@@ -30,7 +44,7 @@
         <div class="d-flex flex-wrap gap-2 mt-2">
           {% for foto in fotos %}
             <button type="button" class="miniatura-galeria{% if forloop.first %} activa{% endif %}" data-bs-target="#galeria" data-bs-slide-to="{{ forloop.counter0 }}" data-miniatura aria-label="Ver foto {{ forloop.counter }}"{% if forloop.first %} aria-current="true"{% endif %}>
-              <img src="{{ foto.url }}" alt="" width="64" height="64" style="object-fit:contain" loading="lazy">
+              <img src="{{ foto|miniatura:'icono' }}" alt="" width="64" height="64" style="object-fit:contain" loading="lazy">
             </button>
           {% endfor %}
         </div>
@@ -70,10 +84,13 @@
         {% endif %}
       </div>
     </div>
-    <a href="{{ producto.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-lg">
-      Consultar por WhatsApp
-    </a>
-    {% include "favoritos/_boton_corazon.html" with con_texto=True %}
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <a href="{{ producto.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-lg">
+        Consultar por WhatsApp
+      </a>
+      {% include "favoritos/_boton_corazon.html" with con_texto=True %}
+      {% include "_compartir.html" with url=producto.enlace_publico titulo=producto.nombre texto=producto.nombre|add:" en NEXALYS Tec" clase="btn-lg" %}
+    </div>
 
     {% if producto.descripcion %}
       {# Descripción: si es larga se muestra solo el inicio y un botón para leerla completa. #}

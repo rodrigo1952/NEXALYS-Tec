@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formato %}
+{% load formato miniaturas %}
 {% block titulo %}Mis productos | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% comment %}
@@ -72,7 +72,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
         <tr id="producto-{{ producto.pk }}" class="fila-producto">
           <td><div class="celda-producto">
             {# Miniatura de la foto principal (decorativa: el nombre va al lado). #}
-            {% if producto.imagen %}<img src="{{ producto.imagen.url }}" alt="" class="miniatura-tabla" width="48" height="48" loading="lazy" decoding="async">
+            {% if producto.imagen %}<img src="{{ producto.imagen|miniatura:'icono' }}" alt="" class="miniatura-tabla" width="48" height="48" loading="lazy" decoding="async">
             {% else %}<span class="miniatura-tabla miniatura-tabla--vacia" title="Sin foto"><i class="bi bi-image" aria-hidden="true"></i></span>{% endif %}
             <div>{{ producto.nombre }}{% if producto.codigo %}<div class="small text-muted">Código: {{ producto.codigo }}</div>{% endif %}
             {% if producto.costo is None %}<div><a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle text-decoration-none sin-precio-compra" title="Solo tú ves este aviso">Falta precio de compra</a></div>{% endif %}</div>

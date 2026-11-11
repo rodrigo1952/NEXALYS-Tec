@@ -12,6 +12,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from catalogo.models import Producto
+from cuentas import limites
 from cuentas.concurrencia import validar_y_guardar
 from cuentas.reautenticacion import confirmada_recientemente, marcar_confirmada
 
@@ -100,7 +101,15 @@ def reenviar_verificacion(request):
     tienda = request.tienda
     if tienda.estado != Tienda.Estado.PENDIENTE:
         messages.info(request, "Tu tienda no necesita verificación.")
-    elif _enviar_verificacion(request, tienda):
+        return redirect("tiendas:panel")
+    # Límite: 3 enlaces por hora (cuentas/limites.py).
+    clave = f"tienda-{tienda.pk}"
+    espera = limites.segundos_de_espera(limites.CORREO_TIENDA, request, clave)
+    if espera:
+        messages.error(request, limites.mensaje_de_espera(espera))
+        return redirect("tiendas:panel")
+    limites.anotar(limites.CORREO_TIENDA, request, clave)
+    if _enviar_verificacion(request, tienda):
         messages.success(request, f"Te enviamos un nuevo enlace a {request.user.email}.")
     return redirect("tiendas:panel")
 

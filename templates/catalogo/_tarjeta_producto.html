@@ -1,4 +1,4 @@
-{% comment %}
+{% load miniaturas %}{% comment %}
 Tarjeta de producto. Toda la tarjeta lleva al detalle (el nombre usa «stretched-link»);
 el corazón de favoritos y el enlace de la tienda siguen funcionando aparte.
 {% endcomment %}
@@ -9,7 +9,7 @@ el corazón de favoritos y el enlace de la tienda siguen funcionando aparte.
   {% endif %}
   <div class="tarjeta-producto__foto">
     {% if producto.imagen %}
-      <img src="{{ producto.imagen.url }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}" loading="lazy">
+      <img src="{{ producto.imagen|miniatura }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}" loading="lazy">
     {% else %}
       <div class="foto-vacia card-img-top"><i class="bi bi-box-seam" aria-hidden="true"></i></div>
     {% endif %}

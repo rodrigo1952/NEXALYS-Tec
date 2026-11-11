@@ -11,7 +11,10 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.urls import reverse
 from django.utils import timezone
+
+from config.context_processors import enlace_completo
 
 from .archivos import ruta_foto_producto, ruta_imagen_producto
 from .busqueda import normalizar
@@ -362,9 +365,23 @@ class Producto(models.Model):
             return 0
         return round((1 - self.precio_oferta / self.precio) * 100)
 
+    # --- Enlaces ------------------------------------------------------------------
+    def get_absolute_url(self):
+        return reverse("catalogo:detalle", args=[self.pk])
+
+    def enlace_publico(self):
+        """Enlace completo del producto (con el dominio de SITIO_URL), para compartir."""
+        return enlace_completo(self.get_absolute_url())
+
     # --- WhatsApp ----------------------------------------------------------------
     def mensaje_whatsapp(self):
-        return f"Hola, me interesa el producto \"{self.nombre}\" (S/ {self.precio_final}) que vi en NEXALYS Tec."
+        """Con el enlace al final: WhatsApp le muestra a la tienda una vista previa con foto, nombre y precio."""
+        from .templatetags.formato import soles
+
+        return (
+            f"Hola, me interesa el producto \"{self.nombre}\" ({soles(self.precio_final)}) "
+            f"que vi en NEXALYS Tec: {self.enlace_publico()}"
+        )
 
     def enlace_whatsapp(self):
         return self.tienda.enlace_whatsapp(self.mensaje_whatsapp())

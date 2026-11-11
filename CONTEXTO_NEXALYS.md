@@ -20,9 +20,15 @@
   **OpenStreetMap** (sin clave ni costo). Letra Space Grotesk (Google Fonts); el logo animado de Inicio usa Lilita One.
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
   Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html` (va en **v=31**).
-  Lo mismo con los scripts propios: `galeria_producto.js?v=5`, `catalogo.js?v=2`, `mapas.js?v=1`, `horario.js?v=2`, `whatsapp.js?v=2`.
+  Lo mismo con los scripts propios: `galeria_producto.js?v=5`, `catalogo.js?v=2`, `mapas.js?v=1`, `horario.js?v=2`, `whatsapp.js?v=2`, `compartir.js?v=1`.
   Tarjetas, campos de formulario y **filas de todas las tablas en blanco** en todo el sitio (el fondo de la página
   sigue gris claro); al enfocar un campo, borde y brillo cian; al pasar el mouse por una fila, celeste muy suave.
+- **Datos secretos en `.env`** (junto a `manage.py`, NO va a GitHub; modelo en `.env.example`, lo lee
+  `config/entorno.py`). Lo crea `python config/crear_env.py` (o `--produccion`). Datos: `SECRET_KEY`, `DEBUG`
+  (si falta = False), `ALLOWED_HOSTS`, `SITIO_URL` (enlaces completos para compartir), `DJANGO_ADMIN_URL`
+  (Django Admin en dirección secreta; su /login/ redirige al login de la página), `IP_CABECERA`
+  (PythonAnywhere: `HTTP_X_REAL_IP`), y con DEBUG=False: `COOKIES_SEGURAS`, `HSTS_SEGUNDOS`, `PROXY_HTTPS`,
+  `FORZAR_HTTPS`. Nunca escribir ni mostrar la SECRET_KEY. `check --deploy` solo marca el correo de consola.
 - `db.sqlite3`, `media/` y `.vscode/` **no** van a GitHub (`.gitignore`). Para llevar datos de prueba a otra PC:
   `python manage.py exportar_demo` / `python manage.py cargar_demo` (ver README).
 - Para la presentación: `python manage.py cargar_productos_presentacion` crea 3 tiendas ficticias
@@ -241,13 +247,23 @@
   defecto (`same-origin`) no lo envía (sin esto el mapa sale en blanco). En plantillas, las coordenadas se
   imprimen con `stringformat:'s'` o como texto, porque el formato local de Django pondría coma decimal.
   El navegador solo comparte la ubicación en https o en 127.0.0.1.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **593 pruebas, OK**.
+- Límite de intentos (`cuentas/limites.py`, modelo `IntentoAcceso`, migración 0005): login 5 claves
+  equivocadas usuario+IP → 15 min (20 por IP); correos (confirmación, verificación de tienda, recuperar
+  contraseña) 3 por hora (10 por IP). Mensaje «Demasiados intentos. Vuelve a intentarlo en N minutos».
+- Miniaturas: filtro `{% load miniaturas %}` `|miniatura` (600 px webp), `|miniatura:'icono'` (160 px),
+  `|miniatura:'compartir'` (JPEG 600 px para og:image). Se crean al pedirlas en `media/miniaturas/<tipo>/` y el
+  almacenamiento `catalogo.almacenamiento.AlmacenamientoConMiniaturas` las borra con la original. Comando
+  `crear_miniaturas`. El detalle grande y el admin siguen con la foto original.
+- Compartir: `Producto/Tienda.get_absolute_url()` y `enlace_publico()` (SITIO_URL); mensaje de WhatsApp con el
+  enlace al final; etiquetas Open Graph en `base.html` (bloques `descripcion` y `vista_previa`), producto y
+  tienda; botón `templates/_compartir.html` + `static/js/compartir.js` (táctil → menú del teléfono; PC → copia).
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **648 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 
 - Publicar la página: hosting para Django (cotizado PythonAnywhere, plan Developer) y dominio .pe.
-  Al publicar: **https obligatorio** (sin él no funciona «Usar mi ubicación»), `DEBUG = False`, `ALLOWED_HOSTS`,
-  `SECRET_KEY` fuera del código, correo SMTP real. Si los mapas tuvieran mucho tráfico, cambiar el proveedor de
+  Al publicar: **https obligatorio** (sin él no funciona «Usar mi ubicación»), `.env` de producción
+  (`python config/crear_env.py --produccion`), Force HTTPS en PythonAnywhere, correo SMTP real. Si los mapas tuvieran mucho tráfico, cambiar el proveedor de
   cuadros de OpenStreetMap (una línea en `mapas.js`).
 - El correo de soporte `soporte@nexalys.pe` es de demostración (`cuentas/views.py`, `CORREO_SOPORTE`).
 - Los manuales del Entregable 8 se hicieron antes de: la galería única de fotos, el stock bloqueado al editar,

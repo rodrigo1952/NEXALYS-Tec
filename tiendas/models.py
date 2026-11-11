@@ -4,6 +4,7 @@ from urllib.parse import quote
 from django.conf import settings
 from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
+from django.urls import reverse
 from django.utils import timezone
 
 from catalogo.archivos import ruta_logo_tienda
@@ -90,6 +91,15 @@ class Tienda(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def get_absolute_url(self):
+        return reverse("tiendas:perfil", args=[self.pk])
+
+    def enlace_publico(self):
+        """Enlace completo de la página de la tienda (con el dominio de SITIO_URL), para compartir."""
+        from config.context_processors import enlace_completo
+
+        return enlace_completo(self.get_absolute_url())
 
     @property
     def esta_activa(self):

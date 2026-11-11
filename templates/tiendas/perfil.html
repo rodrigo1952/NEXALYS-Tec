@@ -1,5 +1,17 @@
 {% extends "base.html" %}
+{% load miniaturas %}
 {% block titulo %}{{ tienda.nombre }} | NEXALYS Tec{% endblock %}
+{% block descripcion %}{{ tienda.nombre }}: tienda de tecnología en Quillabamba. {{ tienda.direccion }}. Mira sus productos y su horario.{% endblock %}
+{% block vista_previa %}
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ tienda.nombre }} · NEXALYS Tec">
+  <meta property="og:description" content="Tienda de tecnología en Quillabamba. {{ tienda.direccion }}. Mira sus productos, su horario y escríbele por WhatsApp.">
+  {% if tienda.logo %}
+    <meta property="og:image" content="{{ SITIO_URL }}{{ tienda.logo|miniatura:'compartir' }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:alt" content="Logo de {{ tienda.nombre }}">
+  {% endif %}
+{% endblock %}
 {% block contenido %}
 <div class="perfil-tienda">
   {# ---------- Datos de la tienda ---------- #}
@@ -24,6 +36,7 @@
       {% else %}
         <a href="{{ tienda.enlace_mapa }}" target="_blank" rel="noopener" class="btn btn-outline-secondary"><i class="bi bi-map" aria-hidden="true"></i> Ver en Google Maps</a>
       {% endif %}
+      {% include "_compartir.html" with url=tienda.enlace_publico titulo=tienda.nombre texto="Mira los productos de "|add:tienda.nombre|add:" en NEXALYS Tec" %}
     </div>
     {% if tienda.tiene_ubicacion %}
       {# Mapa pequeño con el local (OpenStreetMap). #}
