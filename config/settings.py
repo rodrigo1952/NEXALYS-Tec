@@ -199,7 +199,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 STORAGES = {
     'default': {'BACKEND': 'catalogo.almacenamiento.AlmacenamientoConMiniaturas'},
     'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage' if DEBUG
+        # En tu PC, cada enlace lleva ?v=<fecha del archivo> para que el navegador no use una copia vieja.
+        'BACKEND': 'config.estaticos.EstaticosConVersion' if DEBUG
         else 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage',
     },
 }

@@ -35,11 +35,37 @@ class IngresoConLimiteTests(TestCase):
             self.assertContains(respuesta, "Usuario o contraseña incorrectos.")
         self.assertRedirects(self.entrar(CLAVE), reverse("inicio"), fetch_redirect_response=False)
 
+    def test_avisa_cuantos_intentos_quedan_desde_el_primer_error(self):
+        esperado = {1: "Te quedan <strong>4 intentos</strong>", 2: "Te quedan <strong>3 intentos</strong>",
+                    3: "Te quedan <strong>2 intentos</strong>", 4: "Te queda <strong>1 intento</strong>"}
+        for numero, texto in esperado.items():
+            respuesta = self.entrar()
+            self.assertContains(respuesta, texto, html=False)
+            self.assertContains(respuesta, "después tendrás que esperar 15 minutos para volver a intentarlo.")
+            self.assertContains(respuesta, f'href="{reverse("password_reset")}" class="alert-link')
+
+    def test_otro_usuario_desde_la_misma_conexion_tiene_sus_propios_intentos(self):
+        for _ in range(3):
+            self.entrar()
+        self.assertContains(self.entrar(usuario="otro"), "Te quedan <strong>4 intentos</strong>")
+
+    def test_campos_vacios_no_cuentan_intentos(self):
+        respuesta = self.client.post(self.url, {"username": "", "password": "", "tipo": "cliente"})
+        self.assertNotContains(respuesta, "Te quedan")
+
+    def test_intentos_restantes_usa_la_regla_mas_cercana(self):
+        # 18 errores con otros usuarios desde la misma conexión: quedan 2 por la regla de 20 por conexión.
+        for i in range(18):
+            IntentoAcceso.objects.create(accion=limites.LOGIN, clave=f"u{i}", ip="10.0.0.1")
+        respuesta = self.entrar()
+        self.assertContains(respuesta, "Te queda <strong>1 intento</strong>")
+
     def test_al_quinto_error_espera_15_minutos(self):
         for _ in range(4):
             self.entrar()
         respuesta = self.entrar()
         self.assertContains(respuesta, f"{AVISO} 15 minutos.", status_code=429)
+        self.assertContains(respuesta, "recupérala aquí", status_code=429)
         self.assertNotContains(respuesta, "Usuario o contraseña incorrectos.", status_code=429)
         # Bloqueado: ni con la contraseña correcta entra, y el usuario escrito se conserva.
         respuesta = self.entrar(CLAVE)

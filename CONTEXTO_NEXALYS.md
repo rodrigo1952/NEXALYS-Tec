@@ -21,9 +21,8 @@
   Ningún CDN: solo los cuadros del mapa vienen de **OpenStreetMap**. Se descargaron con
   `Claude outputs/descargar_librerias.ps1`. QR con **segno 1.6.6** (en requirements).
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
-  (Antes se subía `?v=` a mano; ya no hace falta.)
-  Lo mismo con los scripts propios: `galeria_producto.js?v=5`, `catalogo.js?v=2`, `mapas.js?v=1`, `horario.js?v=2`, `whatsapp.js?v=2`, `compartir.js?v=1`.
-  **Ya no se usa `?v=`**: en el servidor `ManifestStaticFilesStorage` + `collectstatic` ponen la huella al nombre
+  **No se escribe `?v=` a mano**: en tu PC (DEBUG=True) `config/estaticos.py` (EstaticosConVersion) agrega solo
+  `?v=<fecha del archivo>`; en el servidor `ManifestStaticFilesStorage` + `collectstatic` ponen la huella al nombre
   (`STATIC_ROOT = staticfiles/`, fuera de git). `requirements.txt` con versiones exactas (pillow 12.3.0, openpyxl 3.1.5).
   Tarjetas, campos de formulario y **filas de todas las tablas en blanco** en todo el sitio (el fondo de la página
   sigue gris claro); al enfocar un campo, borde y brillo cian; al pasar el mouse por una fila, celeste muy suave.
@@ -291,7 +290,20 @@
   catalogo/views.py): todo menos stock (0), fotos y código interno; sin publicar ni destacar; la oferta solo si
   sigue vigente y la categoría/marca solo si siguen activas. Solo productos de la misma tienda (404 si no).
   Enlace en «Más» de Mis productos y botón «Duplicar» al editar.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **739 pruebas, OK**.
+- **Compartir** (`static/js/compartir.js`): ventanita «Compartir en…» con WhatsApp (en la PC respeta la elección Web/App
+  de whatsapp.js), Facebook (sharer.php), X (twitter.com/intent/tweet), Telegram (t.me/share/url), Correo (mailto) y
+  Copiar enlace; «Más opciones» (navigator.share) solo si el navegador lo tiene. En el celular sale desde abajo
+  (`.menu-compartir--abajo`) con «Cancelar». TikTok e Instagram no tienen enlace web para compartir.
+- **Precio en ingresos**: el costo se promedia (promedio ponderado) y el precio de venta NO cambia solo (un solo precio
+  por producto). En Nuevo ingreso, bajo cada línea, se ve el costo promedio nuevo y la ganancia por unidad (rojo si no
+  gana) y un campo opcional «Nuevo precio de venta» (`precio_venta` en LineaIngresoForm; si está en oferta, debe ser
+  mayor que la oferta). Queda anotado en `LineaIngreso.precio_anterior/precio_nuevo` (migración inventario 0006) y se
+  ve en el detalle; anular el ingreso NO devuelve el precio (se avisa). Al guardar, `servicios.ventas_sin_ganancia`
+  avisa los productos que quedan con precio ≤ costo.
+- **Login**: desde el 1.er error dice cuántos intentos quedan (`limites.intentos_restantes`, la regla más cercana) y
+  enlaza «¿Olvidaste tu contraseña?». Avisos (`.alert`) en todo el sitio: tarjeta blanca, borde izquierdo de color,
+  ícono en círculo (`--alerta-color`, `--alerta-fondo`) y texto azul marino.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **753 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

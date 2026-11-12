@@ -253,6 +253,14 @@ Gmail permite unos 500 correos al día. En PythonAnywhere gratis, Gmail es el ú
 - Si es contra una tienda, ella la responde desde **Datos de mi tienda → Libro de Reclamaciones**; el administrador las supervisa en **Control → Libro de Reclamaciones** y responde las dirigidas a NEXALYS Tec. Las hojas no se borran (se conservan al menos 2 años).
 - La tienda puede registrar su **RUC** en «Editar datos» para que aparezca en sus hojas.
 
+### Compartir
+
+El botón **Compartir** (producto y tienda) abre una ventanita con WhatsApp, Facebook, X, Telegram, Correo y Copiar enlace. En el celular sale desde abajo y, si el teléfono lo permite, trae «Más opciones» (el menú del teléfono, donde aparecen TikTok o Instagram si están instalados; esas dos redes no tienen un enlace web para compartir).
+
+### Precio y costo al ingresar mercadería
+
+El costo se promedia con cada ingreso (promedio ponderado) y el **precio de venta no cambia solo**: cada producto tiene un solo precio. En **Nuevo ingreso** se ve, bajo cada producto, el costo promedio nuevo y cuánto se gana por unidad (en rojo si no deja ganancia), con un campo opcional para poner ahí mismo el **nuevo precio de venta**. El cambio queda anotado en el detalle del ingreso. Al guardar, la página avisa qué productos quedaron sin ganancia.
+
 ### Duplicar un producto
 
 En **Mis productos → Más → Duplicar** (o el botón **Duplicar** al editar) se abre un producto nuevo con los datos de otro: nombre con «(copia)», categoría, marca, precios, oferta vigente, descripción, precio de compra y stock mínimo. No se copian el stock (empieza en 0), las fotos ni el código interno, y queda **sin publicar** hasta que la tienda lo revise. Nada se guarda hasta presionar «Guardar producto».

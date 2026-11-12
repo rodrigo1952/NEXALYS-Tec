@@ -85,5 +85,9 @@ class CompartirTests(BaseCatalogo):
         self.assertContains(respuesta, "js/compartir.js")
         with open(finders.find("js/compartir.js"), encoding="utf-8") as archivo:
             codigo = archivo.read()
-        for texto in ("navigator.share", "(pointer: coarse)", "clipboard.writeText", "AbortError", "Enlace copiado"):
+        for texto in ("navigator.share", "clipboard.writeText", "AbortError", "Enlace copiado", "Compartir en…",
+                      "https://www.facebook.com/sharer/sharer.php?u=", "https://twitter.com/intent/tweet?url=",
+                      "https://t.me/share/url?url=", "https://wa.me/?text=", "https://web.whatsapp.com/send?text=",
+                      "whatsapp://send?text=", "mailto:?subject=", "nexalys_whatsapp_modo", 'rel = "noopener"'):
             self.assertIn(texto, codigo)
+        self.assertNotIn("innerHTML = d.", codigo)  # los datos del producto nunca van como HTML

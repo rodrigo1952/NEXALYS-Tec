@@ -75,6 +75,9 @@ class SelectProducto(forms.Select):
         producto = getattr(value, "instance", None)
         if producto is not None:
             opcion["attrs"]["data-precio"] = str(producto.precio_final)
+            opcion["attrs"]["data-precio-normal"] = str(producto.precio)
+            if producto.en_oferta:
+                opcion["attrs"]["data-oferta"] = str(producto.precio_oferta)
             opcion["attrs"]["data-stock"] = str(producto.stock)
             costo = getattr(producto, "costo_ficha", None)
             if costo is not None:
@@ -193,6 +196,11 @@ class LineaIngresoForm(EstiloBootstrapMixin, forms.Form):
         min_value=Decimal("0"), max_digits=10, decimal_places=2, required=False,
         widget=forms.NumberInput(attrs={"step": "0.01", "min": "0", "placeholder": "Costo unitario"}),
     )
+    # Opcional: si el costo subió (o bajó), la tienda puede cambiar aquí mismo el precio de venta.
+    precio_venta = forms.DecimalField(
+        min_value=Decimal("0.01"), max_digits=10, decimal_places=2, required=False,
+        widget=forms.NumberInput(attrs={"step": "0.01", "min": "0.01", "placeholder": "Sin cambio"}),
+    )
 
     def __init__(self, *args, tienda, **kwargs):
         super().__init__(*args, **kwargs)
@@ -201,12 +209,16 @@ class LineaIngresoForm(EstiloBootstrapMixin, forms.Form):
     def clean(self):
         datos = super().clean()
         producto, cantidad, costo = datos.get("producto"), datos.get("cantidad"), datos.get("costo")
+        precio_venta = datos.get("precio_venta")
         if producto:
             if not cantidad and "cantidad" not in self.errors:
                 self.add_error("cantidad", "Indica la cantidad.")
             if costo is None and "costo" not in self.errors:
                 self.add_error("costo", "Indica cuánto pagaste por unidad.")
-        elif cantidad or costo is not None:
+            if precio_venta is not None and producto.en_oferta and precio_venta <= producto.precio_oferta:
+                # Si el precio normal quedara igual o menor que la oferta, la oferta dejaría de valer sin aviso.
+                self.add_error("precio_venta", f"Está en oferta a {soles(producto.precio_oferta)}: el precio normal debe ser mayor.")
+        elif cantidad or costo is not None or precio_venta is not None:
             self.add_error("producto", "Elige el producto.")
         return datos
 

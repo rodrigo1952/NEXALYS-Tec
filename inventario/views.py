@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from catalogo.models import Categoria, Producto
+from catalogo.templatetags.formato import soles
 from tiendas.decorators import tienda_requerida
 
 from . import reportes, servicios
@@ -260,7 +261,8 @@ def ingreso_nuevo(request):
                                   form_kwargs={"tienda": request.tienda}, prefix="lineas")
     if datos is not None and form.is_valid() and lineas.is_valid():
         recibidas = [
-            servicios.LineaRecibida(f.cleaned_data["producto"].pk, f.cleaned_data["cantidad"], f.cleaned_data["costo"])
+            servicios.LineaRecibida(f.cleaned_data["producto"].pk, f.cleaned_data["cantidad"], f.cleaned_data["costo"],
+                                    f.cleaned_data.get("precio_venta"))
             for f in lineas.forms if f.cleaned_data.get("producto")
         ]
         try:
@@ -268,8 +270,15 @@ def ingreso_nuevo(request):
         except servicios.OperacionNoPermitida as error:
             form.add_error(None, str(error))
         else:
+            cambios = sum(1 for l in ingreso.lineas.all() if l.precio_nuevo is not None)
             messages.success(request, f"Ingreso N.° {servicios.numero_ingreso(ingreso)} registrado. "
-                                      "El stock y el costo promedio se actualizaron.")
+                                      "El stock y el costo promedio se actualizaron"
+                                      + (f", y cambiaste el precio de venta de {cambios} producto{'s' if cambios != 1 else ''}."
+                                         if cambios else "."))
+            productos = Producto.objects.filter(pk__in=[l.producto_id for l in recibidas])
+            for producto, precio, costo in servicios.ventas_sin_ganancia(productos):
+                messages.warning(request, f"«{producto.nombre}» se vende a {soles(precio)} y ahora te cuesta {soles(costo)} "
+                                          "en promedio: no te deja ganancia. Revisa su precio de venta o su oferta.")
             return redirect("inventario:ingreso_detalle", pk=ingreso.pk)
     return render(request, "inventario/ingreso_form.html", {"form": form, "lineas": lineas, "visibles": 3})
 

@@ -1,11 +1,12 @@
 {% comment %}
 Botón «Compartir» (detalle del producto y página de la tienda). Lo maneja static/js/compartir.js:
-  - En el celular abre el menú de compartir del teléfono (WhatsApp, Facebook, Messenger…).
-  - En la PC copia el enlace y avisa abajo a la derecha.
+abre una ventanita con WhatsApp, Facebook, X, Telegram, Correo, Copiar enlace y «Más opciones»
+(el menú del teléfono o de la computadora, donde aparecen TikTok, Instagram… si están instalados).
+Al copiar el enlace, avisa abajo a la derecha.
 Usar con: {% include "_compartir.html" with url=… titulo=… texto=… clase="btn-lg" %}
 La «url» debe ser completa (con el dominio de SITIO_URL): así el enlace funciona fuera de la página.
 {% endcomment %}
-<button type="button" class="btn btn-outline-secondary{% if clase %} {{ clase }}{% endif %}" data-compartir
+<button type="button" class="btn btn-outline-secondary{% if clase %} {{ clase }}{% endif %}" data-compartir aria-haspopup="dialog"
         data-url="{{ url }}" data-titulo="{{ titulo }}" data-texto="{{ texto }}" title="Compartir este enlace">
   <i class="bi bi-share" aria-hidden="true"></i> Compartir
 </button>

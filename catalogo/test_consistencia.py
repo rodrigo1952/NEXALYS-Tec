@@ -78,8 +78,12 @@ class ConsistenciaTests(BaseCatalogo):
         self.assertIn(".btn-sm { --bs-btn-border-radius: 10px; --bs-btn-padding-x: .7rem; min-height: 32px;", css)
         self.assertIn(".table, .nota-venta, .precio { font-variant-numeric: tabular-nums; }", css)
         self.assertIn("--nx-texto-suave: #46566D;", css)
-        for regla in ('.alert-success::before { content: "\\f633"; }', '.alert-warning::before { content: "\\f333"; }',
-                      '.alert-danger::before { content: "\\f659"; }'):
+        for regla in ('.alert-success::before { content: "\\f633"; }', '.alert-warning::before { content: "\\f63c"; }',
+                      '.alert-danger::before { content: "\\f659"; }', '.alert-info::before { content: "\\f646"; }',
+                      # Avisos como tarjeta blanca: borde izquierdo de color, ícono en un círculo y texto azul marino.
+                      "--bs-alert-bg: var(--nx-blanco); --bs-alert-color: var(--nx-texto);",
+                      "border-left: 4px solid var(--alerta-color);",
+                      "border-radius: 50%; background: var(--alerta-fondo); color: var(--alerta-color);"):
             self.assertIn(regla, css)
 
     def test_pie_de_pagina_completo(self):

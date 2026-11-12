@@ -5,7 +5,7 @@
 {% include "inventario/_menu.html" %}
 <a href="{% url 'inventario:ingresos' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a ingresos</a>
 <h3 class="h5 my-2">Nuevo ingreso de mercadería</h3>
-<p class="text-muted small">Registra lo que recibiste y cuánto pagaste por unidad. Al guardar, el stock sube y el costo de la ficha se actualiza con el promedio.</p>
+<p class="text-muted small">Registra lo que recibiste y cuánto pagaste por unidad. Al guardar, el stock sube y el costo de la ficha se actualiza con el promedio. Debajo de cada producto verás el costo nuevo y cuánto ganas; si hace falta, cambia ahí mismo su precio de venta.</p>
 
 <form method="post" novalidate id="form-ingreso">
   {% csrf_token %}
@@ -40,6 +40,17 @@
           {% for e in f.costo.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
         <div class="col-4 col-md-2 text-end pt-2 fw-semibold subtotal">—</div>
+        {# Costo promedio nuevo, ganancia por unidad y precio de venta nuevo (opcional). Lo llena el script de abajo. #}
+        <div class="col-12 ganancia-linea{% if not f.precio_venta.value and not f.precio_venta.errors %} d-none{% endif %}">
+          <div class="ganancia-linea__caja">
+            <p class="ganancia-linea__texto mb-0" aria-live="polite"></p>
+            <div class="ganancia-linea__precio">
+              <label class="form-label small mb-1" for="{{ f.precio_venta.id_for_label }}">Nuevo precio de venta (opcional)</label>
+              <div class="input-group input-group-sm"><span class="input-group-text">S/</span>{{ f.precio_venta }}</div>
+              {% for e in f.precio_venta.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+        </div>
       </div>
     {% endfor %}
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
@@ -75,7 +86,49 @@
 (function () {
   const filas = Array.from(document.querySelectorAll("#form-ingreso .linea"));
   const totalEl = document.getElementById("total");
-  const soles = (n) => "S/ " + n.toFixed(2);
+  const soles = (n) => "S/ " + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // Mismo cálculo que servicios.costo_promedio: (stock × costo actual + cantidad × costo nuevo) / (stock + cantidad).
+  function costoPromedio(stock, costoActual, n, costoNuevo) {
+    if (costoActual === null || stock <= 0) return costoNuevo;
+    return Math.round((stock * costoActual + n * costoNuevo) / (stock + n) * 100) / 100;
+  }
+
+  function mostrarGanancia(fila, opcion, n, unitario) {
+    const caja = fila.querySelector(".ganancia-linea");
+    const texto = caja.querySelector(".ganancia-linea__texto");
+    const precioNuevo = fila.querySelector("input[name$='-precio_venta']");
+    if (!opcion || !opcion.value || unitario === null || !(n > 0)) {
+      caja.classList.add("d-none");
+      return;
+    }
+    caja.classList.remove("d-none");
+    const stock = parseInt(opcion.dataset.stock, 10) || 0;
+    const costoActual = opcion.dataset.costo ? parseFloat(opcion.dataset.costo) : null;
+    const promedio = costoPromedio(stock, costoActual, n, unitario);
+    const oferta = opcion.dataset.oferta ? parseFloat(opcion.dataset.oferta) : null;
+    const normal = precioNuevo.value !== "" ? parseFloat(precioNuevo.value) : parseFloat(opcion.dataset.precioNormal);
+    const paga = oferta !== null ? oferta : normal;
+    const ganancia = Math.round((paga - promedio) * 100) / 100;
+    const antes = costoActual !== null && stock > 0 ? " (antes " + soles(costoActual) + ")" : "";
+    const venta = soles(paga) + (oferta !== null ? " en oferta" : "") + (precioNuevo.value !== "" && oferta === null ? " (precio nuevo)" : "");
+    texto.replaceChildren();
+    const linea1 = document.createElement("span");
+    linea1.className = "d-block";
+    linea1.textContent = "Costo promedio después del ingreso: " + soles(promedio) + antes + ".";
+    const linea2 = document.createElement("span");
+    linea2.className = "d-block fw-semibold";
+    if (ganancia > 0) {
+      const margen = Math.round(ganancia / paga * 100);
+      linea2.textContent = "Se vende a " + venta + ": ganas " + soles(ganancia) + " por unidad (" + margen + " % del precio).";
+      caja.classList.remove("ganancia-linea--perdida");
+    } else {
+      linea2.textContent = "Se vende a " + venta + ": " + (ganancia === 0 ? "no ganas nada" : "pierdes " + soles(-ganancia) + " por unidad") +
+        (oferta !== null ? ". El cliente paga la oferta: revísala editando el producto." : ". Pon un precio de venta nuevo.");
+      caja.classList.add("ganancia-linea--perdida");
+    }
+    texto.append(linea1, linea2);
+  }
 
   function calcular() {
     let total = 0;
@@ -91,6 +144,7 @@
       } else {
         celda.textContent = "—";
       }
+      mostrarGanancia(fila, select.selectedOptions[0], n, unitario);
     });
     totalEl.textContent = soles(total);
   }

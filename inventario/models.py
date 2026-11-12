@@ -174,6 +174,11 @@ class Ingreso(models.Model):
     def __str__(self):
         return f"Ingreso N.° {self.numero:05d} · {self.proveedor_nombre or 'sin proveedor'}"
 
+    @property
+    def cambio_precios(self):
+        """True si en este ingreso se cambió el precio de venta de algún producto."""
+        return any(linea.precio_nuevo is not None for linea in self.lineas.all())
+
 
 class LineaIngreso(models.Model):
     ingreso = models.ForeignKey(Ingreso, on_delete=models.CASCADE, related_name="lineas", verbose_name="ingreso")
@@ -183,6 +188,9 @@ class LineaIngreso(models.Model):
     producto_nombre = models.CharField("producto (nombre)", max_length=200)
     cantidad = models.PositiveIntegerField("cantidad", validators=[MinValueValidator(1)])
     costo_unitario = models.DecimalField("costo unitario (S/)", **PRECIO, validators=[no_negativo])
+    # Si en este ingreso la tienda cambió el precio de venta del producto (queda como historial).
+    precio_anterior = models.DecimalField("precio de venta anterior (S/)", **PRECIO, null=True, blank=True)
+    precio_nuevo = models.DecimalField("precio de venta nuevo (S/)", **PRECIO, null=True, blank=True)
 
     class Meta:
         verbose_name = "línea de ingreso"

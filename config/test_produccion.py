@@ -294,3 +294,23 @@ class LibreriasPropiasTests(SimpleTestCase):
         for letra in ("space-grotesk-latin", "space-grotesk-latin-ext", "lilita-one-latin", "lilita-one-latin-ext"):
             self.assertEqual((self.VENDOR / "fuentes" / f"{letra}.woff2").read_bytes()[:4], b"wOF2", letra)
 
+
+class EstaticosEnTuPCTests(TestCase):
+    """Con DEBUG=True, los CSS y JS llevan ?v=<fecha del archivo>: el navegador no usa copias viejas."""
+
+    def test_el_enlace_lleva_la_fecha_del_archivo(self):
+        import os
+
+        from django.contrib.staticfiles import finders
+
+        from config.estaticos import EstaticosConVersion
+
+        almacen = EstaticosConVersion()
+        fecha = int(os.path.getmtime(finders.find("js/compartir.js")))
+        self.assertEqual(almacen.url("js/compartir.js"), f"/static/js/compartir.js?v={fecha}")
+        self.assertEqual(almacen.url("no-existe.js"), "/static/no-existe.js")
+
+    def test_settings_lo_usa_solo_en_tu_pc(self):
+        texto = (RAIZ / "config" / "settings.py").read_text(encoding="utf-8")
+        self.assertIn("'config.estaticos.EstaticosConVersion' if DEBUG", texto)
+

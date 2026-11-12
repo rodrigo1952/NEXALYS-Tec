@@ -51,6 +51,7 @@ class LineaRecibida:
     producto_id: int
     cantidad: int
     costo: Decimal
+    precio_venta: Decimal | None = None  # nuevo precio de venta (opcional)
 
 
 def numero_venta(venta):
@@ -178,7 +179,10 @@ def quitar_del_promedio(stock_actual, costo_actual, cantidad, costo_quitado):
 
 @transaction.atomic
 def registrar_ingreso(tienda, usuario, lineas, *, proveedor=None, documento="", nota=""):
-    """Registra mercadería recibida: suma stock, actualiza el costo promedio y anota en el kardex."""
+    """
+    Registra mercadería recibida: suma stock, actualiza el costo promedio y anota en el kardex.
+    Si la línea trae un precio de venta nuevo, se cambia el precio del producto (queda anotado en la línea).
+    """
     if not lineas:
         raise OperacionNoPermitida("Agrega al menos un producto al ingreso.")
     tienda = Tienda.objects.select_for_update().get(pk=tienda.pk)
@@ -198,20 +202,41 @@ def registrar_ingreso(tienda, usuario, lineas, *, proveedor=None, documento="", 
     total = Decimal("0")
     for linea in lineas:
         producto = productos[linea.producto_id]
+        cambia_precio = linea.precio_venta is not None and linea.precio_venta != producto.precio
         LineaIngreso.objects.create(
             ingreso=ingreso, producto=producto, producto_nombre=producto.nombre,
             cantidad=linea.cantidad, costo_unitario=linea.costo,
+            precio_anterior=producto.precio if cambia_precio else None,
+            precio_nuevo=linea.precio_venta if cambia_precio else None,
         )
         total += linea.costo * linea.cantidad
         ficha, _ = FichaInventario.objects.get_or_create(producto=producto)
         ficha.costo = costo_promedio(producto.stock, ficha.costo, linea.cantidad, linea.costo)
         ficha.save(update_fields=["costo", "actualizado"])
         producto.stock += linea.cantidad
-        producto.save(update_fields=["stock", "actualizado"])
+        campos = ["stock", "actualizado"]
+        if cambia_precio:
+            # Un solo precio por producto: el nuevo vale para todo el stock (el antiguo y el que entra).
+            producto.precio = linea.precio_venta
+            campos.append("precio")
+        producto.save(update_fields=campos)
         registrar(producto, Tipo.INGRESO, linea.cantidad, usuario=usuario, ingreso=ingreso, nota=detalle)
     ingreso.total = total
     ingreso.save(update_fields=["total"])
     return ingreso
+
+
+def ventas_sin_ganancia(productos):
+    """
+    Productos que, con su costo promedio actual, se venden a un precio igual o menor que lo que costaron.
+    Devuelve [(producto, precio que paga el cliente, costo)].
+    """
+    resultado = []
+    for producto in productos:
+        costo = FichaInventario.objects.filter(producto=producto).values_list("costo", flat=True).first()
+        if costo is not None and producto.precio_final <= costo:
+            resultado.append((producto, producto.precio_final, costo))
+    return resultado
 
 
 @transaction.atomic

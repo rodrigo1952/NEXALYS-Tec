@@ -11,6 +11,8 @@ Reglas (REGLAS, abajo):
   - Solicitudes de derechos sobre los datos personales y hojas del Libro de Reclamaciones:
     igual que los correos (3 por hora).
 
+Desde la primera contraseña equivocada, la página avisa cuántos intentos le quedan (intentos_restantes).
+
 Cuenta el bloqueo desde el intento que completa el límite: si alguien falla 5 veces seguidas,
 espera 15 minutos desde la quinta. Mientras espera, sus intentos no se cuentan ni se revisan.
 Al entrar bien, se borran sus contraseñas equivocadas (las de ese usuario desde esa conexión).
@@ -84,6 +86,30 @@ def segundos_de_espera(accion, request, clave=""):
         if fin and fin > ahora:
             espera = max(espera, (fin - ahora).total_seconds())
     return math.ceil(espera)
+
+
+def intentos_restantes(accion, request, clave=""):
+    """
+    Cuántos intentos más puede hacer antes de que lo hagan esperar (para avisarle con tiempo).
+    Es lo que falta para llegar al límite de cada regla en el periodo actual; manda la regla más cercana.
+    """
+    ahora = timezone.now()
+    ip, clave = ip_de(request), _normalizar(clave)
+    restantes = None
+    for campos, maximo, periodo in REGLAS[accion]:
+        filtro = {"accion": accion, "creado__gt": ahora - periodo}
+        if "clave" in campos:
+            filtro["clave"] = clave
+        if "ip" in campos:
+            filtro["ip"] = ip
+        quedan = max(0, maximo - IntentoAcceso.objects.filter(**filtro).count())
+        restantes = quedan if restantes is None else min(restantes, quedan)
+    return restantes
+
+
+def minutos_de_espera(accion):
+    """Minutos que se espera al llegar al límite (el periodo de la primera regla)."""
+    return int(REGLAS[accion][0][2].total_seconds() // 60)
 
 
 def anotar(accion, request, clave=""):

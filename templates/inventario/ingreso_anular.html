@@ -9,8 +9,9 @@
       <h3 class="h5 text-danger">Anular el ingreso N.° {{ ingreso.numero|stringformat:"05d" }}</h3>
       <p class="small mb-2">{{ ingreso.fecha|date:"d/m/Y H:i" }} · {{ ingreso.proveedor_nombre|default:"Sin proveedor" }} · {{ ingreso.total|soles }}</p>
       <ul class="small">
-        {% for l in ingreso.lineas.all %}<li>{{ l.cantidad }} × {{ l.producto_nombre }}</li>{% endfor %}
+        {% for l in ingreso.lineas.all %}<li>{{ l.cantidad }} × {{ l.producto_nombre }}{% if l.precio_nuevo is not None %} <span class="text-muted">(precio cambiado a {{ l.precio_nuevo|soles }})</span>{% endif %}</li>{% endfor %}
       </ul>
+      {% if ingreso.cambio_precios %}<div class="alert alert-info small">Los precios de venta que cambiaste en este ingreso <strong>no vuelven solos</strong> al anterior. Si hace falta, cámbialos editando cada producto.</div>{% endif %}
       <p>Estas unidades <strong>se restarán del stock</strong> y su costo saldrá del costo promedio. Si ya vendiste parte de ellas, no se podrá anular: en ese caso corrige con un ajuste.</p>
       <form method="post" novalidate>
         {% csrf_token %}

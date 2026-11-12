@@ -199,23 +199,31 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
 /* Precios alineados: cifras de ancho fijo en tablas, notas de venta y precios. */
 .table, .nota-venta, .precio { font-variant-numeric: tabular-nums; }
 
-/* Mensajes iguales en todo el sitio: éxito (✓ verde), aviso (! ámbar), error (✕ rojo), información (i celeste). */
+/* Mensajes iguales en todo el sitio: tarjeta blanca con borde izquierdo de color, ícono en un círculo
+   y texto azul marino. Éxito (✓ verde), aviso (! ámbar), error (✕ rojo), información (i celeste). */
 .alert {
-  --bs-alert-border-color: transparent; --bs-alert-border-radius: 12px;
-  position: relative; padding-left: 2.85rem;
+  --alerta-color: var(--nx-acento-texto); --alerta-fondo: #E3F5FA;
+  --bs-alert-bg: var(--nx-blanco); --bs-alert-color: var(--nx-texto); --bs-alert-link-color: var(--nx-acento-texto);
+  --bs-alert-border-color: var(--nx-borde-suave); --bs-alert-border-radius: 12px;
+  position: relative; padding-left: 3.5rem;
+  border-left: 4px solid var(--alerta-color); box-shadow: var(--nx-sombra);
 }
 .alert::before {
-  position: absolute; left: 1.05rem; top: calc(var(--bs-alert-padding-y) + .1em);
-  font-family: "bootstrap-icons"; font-size: 1.05em; line-height: 1.4; font-weight: 400;
+  position: absolute; left: .95rem; top: calc(var(--bs-alert-padding-y) - .1rem);
+  display: inline-flex; align-items: center; justify-content: center; width: 1.85rem; height: 1.85rem;
+  border-radius: 50%; background: var(--alerta-fondo); color: var(--alerta-color);
+  font-family: "bootstrap-icons"; font-size: .95rem; line-height: 1; font-weight: 400;
 }
-.alert-success { --bs-alert-bg: #E6F4EA; --bs-alert-color: #1E5E34; --bs-alert-link-color: #1E5E34; }
+.alert .alert-link { font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.alert .btn-close { opacity: .45; }
+.alert-success { --alerta-color: #1E8E4E; --alerta-fondo: #E6F4EA; }
 .alert-success::before { content: "\f633"; }
-.alert-warning { --bs-alert-bg: #FDF3D0; --bs-alert-color: #6B4E00; --bs-alert-link-color: #6B4E00; }
-.alert-warning::before { content: "\f333"; }
-.alert-danger { --bs-alert-bg: #FCE8E6; --bs-alert-color: #8E1F17; --bs-alert-link-color: #8E1F17; }
+.alert-warning { --alerta-color: #C98A00; --alerta-fondo: #FDF3D0; }
+.alert-warning::before { content: "\f63c"; }
+.alert-danger { --alerta-color: #D93025; --alerta-fondo: #FCE8E6; }
 .alert-danger::before { content: "\f659"; }
-.alert-info { --bs-alert-bg: #E3F5FA; --bs-alert-color: #0A5A70; --bs-alert-link-color: #0A5A70; }
-.alert-info::before { content: "\f431"; }
+.alert-info { --alerta-color: var(--nx-acento-texto); --alerta-fondo: #E3F5FA; }
+.alert-info::before { content: "\f646"; }
 
 /* 6. Tarjetas, formularios y tablas ----------------------------------- */
 /* Tarjetas y cajas de texto en BLANCO sobre el fondo gris claro de la página (como el login).
@@ -315,7 +323,7 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
   .card { border: 0 !important; box-shadow: none !important; }
   .nota-venta .card-body { padding: 0 !important; }
   .nota-venta__columna { flex: 0 0 100%; max-width: 100%; }
-  .barra-categorias, .modal, .modal-backdrop, .aviso-whatsapp, .menu-whatsapp { display: none !important; }
+  .barra-categorias, .modal, .modal-backdrop, .aviso-whatsapp, .menu-whatsapp, .menu-compartir { display: none !important; }
   main { margin: 0 !important; }
   a[href]::after { content: none !important; }
 }
@@ -1460,6 +1468,48 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 .aviso-whatsapp > .bi-whatsapp { color: #198754; font-size: 1.1rem; }
 .aviso-whatsapp .btn-link { font-weight: 600; }
 
+/* Ventanita «Compartir en…» (static/js/compartir.js): mismo estilo que el menú de WhatsApp */
+.menu-compartir {
+  position: fixed; z-index: 1080; width: min(300px, calc(100vw - 16px)); padding: .6rem;
+  background: var(--nx-blanco); border: 1px solid var(--nx-borde); border-radius: .9rem;
+  box-shadow: 0 .75rem 2rem rgba(11, 27, 58, .18);
+}
+.menu-compartir__titulo { margin: .1rem .35rem .45rem; font-size: .8rem; font-weight: 700; color: var(--nx-texto-suave); }
+.menu-compartir__rejilla { display: grid; grid-template-columns: repeat(3, 1fr); gap: .2rem; }
+.menu-compartir__opcion {
+  display: flex; flex-direction: column; align-items: center; gap: .35rem; padding: .55rem .25rem;
+  background: transparent; border: 0; border-radius: .65rem; color: var(--nx-texto); text-decoration: none;
+  font-size: .78rem; font-weight: 600; text-align: center; line-height: 1.15;
+}
+.menu-compartir__opcion:hover, .menu-compartir__opcion:focus-visible,
+.menu-compartir__mas:hover, .menu-compartir__mas:focus-visible { background: rgba(var(--nx-acento-rgb), .1); color: var(--nx-texto); outline: none; }
+.menu-compartir__opcion:focus-visible, .menu-compartir__mas:focus-visible { box-shadow: 0 0 0 2px var(--nx-acento); }
+.menu-compartir__opcion .bi {
+  width: 2.5rem; height: 2.5rem; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 1.15rem; color: #fff;
+}
+.menu-compartir__opcion--whatsapp .bi { background: #25D366; }
+.menu-compartir__opcion--facebook .bi { background: #1877F2; }
+.menu-compartir__opcion--x .bi { background: #000; }
+.menu-compartir__opcion--telegram .bi { background: #229ED9; }
+.menu-compartir__opcion--correo .bi { background: var(--nx-oscuro); }
+.menu-compartir__opcion--copiar .bi { background: var(--nx-fondo-suave); color: var(--nx-oscuro); }
+.menu-compartir__mas {
+  display: flex; align-items: center; gap: .7rem; width: 100%; margin-top: .35rem; padding: .55rem .6rem;
+  text-align: left; background: transparent; border: 0; border-top: 1px solid var(--nx-borde-suave);
+  border-radius: 0 0 .65rem .65rem; color: var(--nx-texto);
+}
+.menu-compartir__mas .bi {
+  flex: 0 0 2.1rem; height: 2.1rem; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: var(--nx-fondo-suave); color: var(--nx-oscuro); font-size: 1.05rem;
+}
+.menu-compartir__mas strong { display: block; font-size: .9rem; }
+.menu-compartir__mas small { display: block; font-size: .75rem; color: var(--nx-texto-suave); }
+.menu-compartir--abajo {
+  left: 0; right: 0; bottom: 0; top: auto; width: 100%; padding: .9rem .9rem calc(.9rem + env(safe-area-inset-bottom));
+  border-radius: 1.1rem 1.1rem 0 0; border-bottom: 0; box-shadow: 0 -.5rem 2rem rgba(11, 27, 58, .22);
+}
+
 /* Mis productos: encabezado limpio, miniatura de la foto y estados con íconos */
 .tabla-productos > thead > tr > th {
   --bs-table-bg: #EDF2F8; color: var(--nx-texto-suave); font-size: .74rem; font-weight: 700;
@@ -1579,3 +1629,13 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
   .cartel-qr { border-width: 4px; margin-top: 1cm; break-inside: avoid; }
   .cartel-qr__codigo svg { max-width: 9cm; }
 }
+
+/* Nuevo ingreso: costo promedio nuevo, ganancia por unidad y precio de venta nuevo (inventario/ingreso_form.html) */
+.ganancia-linea__caja {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: .5rem 1rem;
+  padding: .6rem .8rem; border-radius: .65rem; background: #EEF8F1; border-left: 3px solid #1E8E4E;
+  font-size: .85rem; color: var(--nx-texto);
+}
+.ganancia-linea--perdida .ganancia-linea__caja { background: #FCE8E6; border-left-color: #D93025; }
+.ganancia-linea--perdida .ganancia-linea__texto .fw-semibold { color: #8E1F17; }
+.ganancia-linea__precio { flex: 0 0 13rem; max-width: 100%; }

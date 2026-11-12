@@ -349,6 +349,12 @@ class IngresoView(LoginView):
             espera = limites.segundos_de_espera(limites.LOGIN, self.request, self._usuario_escrito())
             if espera:
                 return self._bloqueado(espera)
+            # Aviso desde el primer error: «Te quedan N intentos; después tendrás que esperar 15 minutos».
+            return self.render_to_response(self.get_context_data(
+                form=form,
+                intentos_restantes=limites.intentos_restantes(limites.LOGIN, self.request, self._usuario_escrito()),
+                minutos_espera=limites.minutos_de_espera(limites.LOGIN),
+            ))
         return super().form_invalid(form)
 
 
