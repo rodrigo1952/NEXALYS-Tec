@@ -38,6 +38,7 @@
       {% endif %}
       {% include "_compartir.html" with url=tienda.enlace_publico titulo=tienda.nombre texto="Mira los productos de "|add:tienda.nombre|add:" en NEXALYS Tec" %}
     </div>
+    <p class="small mt-2 mb-0"><a href="{% url 'reclamos:libro' %}?tienda={{ tienda.pk }}" class="link-secondary"><i class="bi bi-journal-text" aria-hidden="true"></i> Libro de Reclamaciones de esta tienda</a></p>
     {% if tienda.tiene_ubicacion %}
       {# Mapa pequeño con el local (OpenStreetMap). #}
       <div class="mapa mapa--perfil mt-3" data-mapa-tienda data-lat="{{ tienda.latitud|stringformat:'s' }}" data-lng="{{ tienda.longitud|stringformat:'s' }}"

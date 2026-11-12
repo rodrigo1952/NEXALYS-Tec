@@ -78,7 +78,7 @@ class ResumenTests(TestCase):
         self.assertContains(respuesta, "Tareas pendientes")
         self.assertContains(respuesta, "Tienda Pendiente")
         self.assertContains(respuesta, 'id="grafico-ventas-admin"')
-        self.assertContains(respuesta, "Chart.js")
+        self.assertContains(respuesta, "vendor/chartjs/chart.umd.js")
         self.assertEqual(len(respuesta.context["grafico_montos"]), 6)
         self.assertContains(respuesta, "Últimas acciones")
         self.assertContains(respuesta, "Producto «X»")

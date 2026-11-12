@@ -22,5 +22,8 @@ urlpatterns = [
     path("errores/", views.errores, name="errores"),
     path("errores/revisado/", views.errores_revisado, name="errores_revisado"),
     path("privacidad/", views.solicitudes, name="solicitudes"),
+    path("copias/", views.copias_lista, name="copias"),
+    path("copias/crear/", views.copias_crear, name="copias_crear"),
+    path("copias/<str:nombre>/", views.copias_descargar, name="copias_descargar"),
     path("privacidad/<int:pk>/", views.solicitud_detalle, name="solicitud_detalle"),
 ]

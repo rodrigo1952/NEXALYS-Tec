@@ -21,6 +21,7 @@ class AccionAdmin(models.Model):
         ELIMINACION_AUTOMATICA = "eliminacion_auto", "Eliminación automática (90 días suspendida)"
         RESTABLECER_CLAVE = "restablecer_clave", "Restableció una contraseña"
         RESPONDER_SOLICITUD = "responder_derecho", "Respondió una solicitud de datos personales"
+        RESPONDER_RECLAMO = "responder_reclamo", "Respondió una hoja del Libro de Reclamaciones"
 
     fecha = models.DateTimeField("fecha", auto_now_add=True, db_index=True)
     admin = models.ForeignKey(

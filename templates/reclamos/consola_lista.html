@@ -1,0 +1,21 @@
+{% extends "administracion/_consola.html" %}
+{% block titulo %}Libro de Reclamaciones | Administración | NEXALYS Tec{% endblock %}
+{% block consola %}
+<div class="consola-cabecera">
+  <div>
+    <p class="consola-cabecera__antetitulo">Control</p>
+    <h1 class="h3 mb-0">Libro de Reclamaciones</h1>
+  </div>
+  <a href="{% url 'reclamos:libro' %}" class="btn btn-outline-primary" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Ver el formulario</a>
+</div>
+{% if vencidas %}
+  <div class="alert alert-danger"><strong>{{ vencidas }} hoja{{ vencidas|pluralize }} sin responder pasaron su plazo.</strong> Si son de una tienda, comunícate con ella.</div>
+{% endif %}
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item"><a class="nav-link{% if ver == 'pendientes' %} active" aria-current="page{% endif %}" href="?ver=pendientes">Sin responder <span class="badge text-bg-light">{{ pendientes }}</span></a></li>
+  <li class="nav-item"><a class="nav-link{% if ver == 'nexalys' %} active" aria-current="page{% endif %}" href="?ver=nexalys">Contra NEXALYS Tec</a></li>
+  <li class="nav-item"><a class="nav-link{% if ver == 'todas' %} active" aria-current="page{% endif %}" href="?ver=todas">Todas</a></li>
+</ul>
+{% include "reclamos/_tabla.html" with url_detalle="consola" con_proveedor=True vacio="No hay hojas en esta lista." %}
+<p class="nota-consola"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Cada tienda responde sus hojas desde su panel; tú respondes las dirigidas a NEXALYS Tec. Plazo: 15 días hábiles. Las hojas no se borran (se conservan al menos 2 años).</span></p>
+{% endblock %}

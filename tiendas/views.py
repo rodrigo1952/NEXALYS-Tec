@@ -249,3 +249,39 @@ def cercanas(request):
         "con_ubicacion": sum(1 for t in lista if t["lat"] is not None),
         "centro_mapa": [str(c) for c in CENTRO_QUILLABAMBA],  # texto con punto (sin formato local)
     })
+
+
+# ---------------------------------------------------------------------------
+# Código QR de la tienda (cartel para imprimir y descargas)
+# ---------------------------------------------------------------------------
+
+@tienda_requerida()
+def qr_cartel(request):
+    """Cartel con logo, nombre y QR para pegar en el local (se imprime o se guarda en PDF)."""
+    from django.conf import settings
+    from django.utils.safestring import mark_safe
+
+    from . import qr
+
+    tienda = request.tienda
+    return render(request, "tiendas/qr_cartel.html", {
+        "tienda": tienda,
+        "qr_svg": mark_safe(qr.svg(tienda)),  # lo genera segno: solo dibujos, sin texto del usuario
+        "enlace": tienda.enlace_publico(),
+        "es_local": "127.0.0.1" in settings.SITIO_URL or "localhost" in settings.SITIO_URL,
+    })
+
+
+@tienda_requerida()
+def qr_descargar(request, formato):
+    from django.http import Http404, HttpResponse
+    from django.utils.text import slugify
+
+    from . import qr
+
+    if formato not in ("png", "svg"):
+        raise Http404
+    respuesta = HttpResponse(qr.archivo(request.tienda, formato), content_type="image/png" if formato == "png" else "image/svg+xml")
+    respuesta["Content-Disposition"] = f'attachment; filename="qr-{slugify(request.tienda.nombre) or "tienda"}.{formato}"'
+    return respuesta
+

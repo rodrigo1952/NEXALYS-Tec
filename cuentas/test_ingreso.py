@@ -86,7 +86,7 @@ class LogoYCerrarSesionTests(TestCase):
         respuesta = self.client.get(reverse("inicio"))
         self.assertContains(respuesta, 'class="logo-portada"')
         self.assertContains(respuesta, 'NEXALYS <tspan fill="#19C3E6">TEC.</tspan>')
-        self.assertContains(respuesta, "Lilita+One")
+        self.assertContains(respuesta, "vendor/fuentes/fuentes.css")  # ahí está Lilita One (logo animado)
 
     def test_cerrar_sesion_con_el_estilo_de_la_marca(self):
         self.client.force_login(crear_tienda().usuario)

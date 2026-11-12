@@ -46,6 +46,7 @@ urlpatterns = [
     path("favoritos/", include("favoritos.urls")),
     path("administracion/", include("administracion.urls")),
     path("inventario/", include("inventario.urls")),
+    path("libro-de-reclamaciones/", include("reclamos.urls")),
     path("", include("cuentas.urls")),
 ]
 

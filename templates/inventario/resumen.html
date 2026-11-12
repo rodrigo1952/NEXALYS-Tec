@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formato %}
+{% load static formato %}
 {% block titulo %}Resumen | NEXALYS Tec{% endblock %}
 {% block contenido %}
 <div class="no-imprimir">{% include "inventario/_menu.html" %}</div>
@@ -129,7 +129,7 @@
 </div></div>
 
 {{ grafico|json_script:"datos-grafico" }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
 <script {% csp_nonce_attr %}>
 (function () {
   if (!window.Chart) return; // sin internet: se ven las tablas, sin gráficos

@@ -1,0 +1,10 @@
+{% autoescape off %}Hola, {{ r.nombre }}:
+
+Recibimos tu hoja de reclamación. Esta es tu copia:
+
+{% include "reclamos/_datos_hoja.txt" %}
+
+{{ r.proveedor_nombre }} debe responderte a este correo a más tardar el {{ r.vence|date:"d/m/Y" }} (15 días hábiles).
+La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es requisito previo para interponer una denuncia ante el INDECOPI.
+
+NEXALYS Tec{% endautoescape %}

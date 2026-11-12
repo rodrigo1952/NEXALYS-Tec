@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     'favoritos',
     'administracion',
     'inventario',
+    'reclamos',
 ]
 
 MIDDLEWARE = [
@@ -208,11 +209,30 @@ STORAGES = {
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# Correo real: con CORREO_SERVIDOR en el .env se envía por SMTP (p. ej. Gmail con contraseña de aplicación).
+# Sin CORREO_SERVIDOR (tu PC), los correos se muestran en la terminal donde corre runserver.
+# Para probarlo: python manage.py probar_correo tu@correo.com
+CORREO_SERVIDOR = entorno.texto("CORREO_SERVIDOR")
+if CORREO_SERVIDOR:
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+            'OPTIONS': {
+                'host': CORREO_SERVIDOR,
+                'port': entorno.entero("CORREO_PUERTO", 587),
+                'username': entorno.texto("CORREO_USUARIO"),
+                'password': entorno.texto("CORREO_CLAVE"),
+                'use_tls': entorno.si_o_no("CORREO_TLS", True),
+                'timeout': 20,  # segundos: si el servidor de correo no responde, la página no se queda colgada
+            },
+        },
+    }
+else:
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+        },
+    }
 
 # Aviso de errores (administracion/registro_errores.py): cada error 500 queda en la consola del
 # administrador (Control → Errores). Con DEBUG=False y correo real, Django también lo manda a ADMINS.
@@ -226,6 +246,9 @@ LOGGING = {
     'loggers': {
         # propagate=True: siguen funcionando el aviso de Django en la terminal y el correo a ADMINS.
         'django.request': {'handlers': ['consola_admin'], 'level': 'ERROR', 'propagate': True},
+        # Fallas que el código atrapa pero hay que revisar (p. ej. una copia de seguridad que no se pudo crear).
+        'administracion': {'handlers': ['consola_admin'], 'level': 'ERROR', 'propagate': True},
+        'reclamos': {'handlers': ['consola_admin'], 'level': 'ERROR', 'propagate': True},
     },
 }
 
@@ -245,7 +268,8 @@ PRIVACIDAD_OBLIGATORIA = True
 TEST_RUNNER = 'config.pruebas.Pruebas'
 
 # Remitente de los correos del sistema (en desarrollo se muestran en la consola)
-DEFAULT_FROM_EMAIL = 'NEXALYS Tec <no-responder@nexalys.local>'
+# Con Gmail, el remitente debe ser la misma cuenta de CORREO_USUARIO: NEXALYS Tec <tu-cuenta@gmail.com>
+DEFAULT_FROM_EMAIL = entorno.texto("CORREO_REMITENTE", "NEXALYS Tec <no-responder@nexalys.local>")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL  # remitente de los avisos de error
 
 # Autenticacion
@@ -263,26 +287,17 @@ VERIFICACION_TIENDA_HORAS = 24
 FORMAT_MODULE_PATH = ["config.formats"]
 
 
-# Cabecera de seguridad CSP: el navegador solo ejecuta scripts de la propia página, de las librerías
-# de los CDN con su versión exacta y los <script> en línea que llevan {% csp_nonce_attr %} (un código
-# al azar distinto en cada visita). Un script inyectado por un atacante no tiene ese código y no corre.
-# Si agregas una librería de otro sitio, súmala aquí. Los estilos en línea (style="...") siguen permitidos.
+# Cabecera de seguridad CSP: el navegador solo ejecuta los scripts de la propia página (las librerías están
+# en static/vendor) y los <script> en línea que llevan {% csp_nonce_attr %} (un código al azar distinto en
+# cada visita). Un script inyectado por un atacante no tiene ese código y no corre. Los estilos en línea
+# (style="...") siguen permitidos. Lo único de otro sitio son los cuadros del mapa (OpenStreetMap).
 SECURE_CSP = {
     'default-src': [CSP.SELF],
-    'script-src': [
-        CSP.SELF, CSP.NONCE,
-        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/',
-        'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/',
-        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/',
-    ],
-    'style-src': [
-        CSP.SELF, CSP.UNSAFE_INLINE, 'https://fonts.googleapis.com',
-        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/',
-        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/',
-    ],
-    'font-src': [CSP.SELF, 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/'],
+    'script-src': [CSP.SELF, CSP.NONCE],
+    'style-src': [CSP.SELF, CSP.UNSAFE_INLINE],
+    'font-src': [CSP.SELF],
     # data: = íconos de Bootstrap dentro del CSS; los cuadros del mapa vienen de OpenStreetMap.
-    'img-src': [CSP.SELF, 'data:', 'blob:', 'https://tile.openstreetmap.org', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/'],
+    'img-src': [CSP.SELF, 'data:', 'blob:', 'https://tile.openstreetmap.org'],
     'connect-src': [CSP.SELF],
     'object-src': [CSP.NONE],
     'base-uri': [CSP.SELF],

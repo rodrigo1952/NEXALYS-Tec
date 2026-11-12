@@ -9,8 +9,10 @@ Proyecto del IV ciclo de Arquitectura de Plataformas y Servicios de TI — IESTP
 - Python 3.14
 - Django 6.1.1
 - SQLite (base de datos de desarrollo)
-- Bootstrap 5.3.3 (interfaz)
-- Chart.js (gráficos del Resumen)
+- Bootstrap 5.3.3 e íconos Bootstrap Icons 1.11.3 (interfaz)
+- Chart.js 4.4.1 (gráficos del Resumen) y Leaflet 1.9.4 con OpenStreetMap (mapas)
+- Letras Space Grotesk y Lilita One
+- segno (códigos QR de las tiendas)
 - Pillow (imágenes de productos)
 - openpyxl (descarga en Excel)
 
@@ -223,4 +225,35 @@ Cuando una página falla (error 500), el error queda en la consola del administr
 - Las cuentas que ya existían, o todas cuando cambia la política (`VERSION_POLITICA` en `cuentas/privacidad.py`), la aceptan al volver a entrar. El administrador no la acepta.
 - **Descargar mis datos** (Mi perfil) y **formulario de derechos** (`/privacidad/solicitud/`): las solicitudes llegan a **Control → Privacidad** con la fecha límite (8, 20 o 10 días hábiles); la respuesta se envía por correo y queda en el historial.
 - Las pruebas apagan «aceptar al entrar» (`config/pruebas.py`); las de privacidad la encienden.
+
+### Librerías dentro del proyecto
+
+Bootstrap, Bootstrap Icons, Chart.js, Leaflet y las letras están en `static/vendor/` (ver su `LEEME.md` con versiones y licencias). La página no depende de otros sitios: funciona sin internet en el laboratorio y solo los cuadros del mapa vienen de OpenStreetMap.
+
+### Correo real (SMTP)
+
+Sin `CORREO_SERVIDOR` en el `.env`, los correos se muestran en la terminal. Para enviarlos de verdad con Gmail:
+
+1. En la cuenta de Google: activar la verificación en 2 pasos y crear una **contraseña de aplicación**.
+2. En el `.env`: `CORREO_SERVIDOR=smtp.gmail.com`, `CORREO_PUERTO=587`, `CORREO_TLS=True`, `CORREO_USUARIO=tu-cuenta@gmail.com`, `CORREO_CLAVE=<contraseña de aplicación>`, `CORREO_REMITENTE=NEXALYS Tec <tu-cuenta@gmail.com>`.
+3. Probar: `python manage.py probar_correo tu@correo.com`.
+
+Gmail permite unos 500 correos al día. En PythonAnywhere gratis, Gmail es el único servidor de correo permitido.
+
+### Copias de seguridad
+
+- `python manage.py copia_seguridad`: guarda la base de datos y las fotos en `copias/` (fuera de git) y borra las de más de 14 días. En PythonAnywhere se programa una vez al día en la pestaña *Tasks*.
+- En la consola, **Control → Copias de seguridad**: crear una copia ahora y **descargarla** para guardarla en tu PC.
+- Para volver a una copia (con la página detenida): `python manage.py restaurar_copia copias/<archivo>.zip --confirmar`.
+
+### Libro de Reclamaciones
+
+- Enlace permanente en el pie de todas las páginas (`/libro-de-reclamaciones/`) y en la página de cada tienda.
+- Hoja con número correlativo por proveedor (000001-2026), copia al correo del cliente y plazo de 15 días hábiles.
+- Si es contra una tienda, ella la responde desde **Datos de mi tienda → Libro de Reclamaciones**; el administrador las supervisa en **Control → Libro de Reclamaciones** y responde las dirigidas a NEXALYS Tec. Las hojas no se borran (se conservan al menos 2 años).
+- La tienda puede registrar su **RUC** en «Editar datos» para que aparezca en sus hojas.
+
+### Código QR de la tienda
+
+En **Datos de mi tienda → Código QR**: cartel para imprimir (logo, nombre y QR que lleva a la página de la tienda) y descargas en PNG o SVG. El QR usa `SITIO_URL`: imprímelo cuando la página ya esté publicada.
 

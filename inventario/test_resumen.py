@@ -108,7 +108,7 @@ class ReportesTests(BaseCatalogo):
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "S/ 1,000.00")
         self.assertContains(respuesta, 'id="datos-grafico"')
-        self.assertContains(respuesta, "chart.umd.min.js")
+        self.assertContains(respuesta, "vendor/chartjs/chart.umd.js")
         self.assertContains(respuesta, reverse("inventario:resumen_excel"))
         self.assertContains(respuesta, f'href="{reverse("inventario:resumen")}"')  # pestaña
 

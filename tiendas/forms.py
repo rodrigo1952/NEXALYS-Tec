@@ -117,7 +117,7 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
 
     class Meta:
         model = Tienda
-        fields = ["nombre", "direccion", "whatsapp", "descripcion", "logo", "latitud", "longitud"]
+        fields = ["nombre", "direccion", "whatsapp", "ruc", "descripcion", "logo", "latitud", "longitud"]
         # La latitud y la longitud las llena el mapa (static/js/mapas.js) al poner el pin.
         widgets = {
             "descripcion": forms.Textarea(attrs={"rows": 3}),

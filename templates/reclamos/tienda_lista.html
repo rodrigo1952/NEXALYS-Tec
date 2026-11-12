@@ -1,0 +1,13 @@
+{% extends "cuentas/_centro.html" %}
+{% block titulo %}Libro de Reclamaciones | {{ tienda_actual.nombre }} | NEXALYS Tec{% endblock %}
+{% block centro %}
+<div class="seccion-cuenta__cabecera">
+  <h1 class="h3 mb-1">Libro de Reclamaciones</h1>
+  <p class="text-muted mb-0">Las hojas que tus clientes presentaron contra tu tienda. Respóndelas en máximo {{ plazo }} días hábiles: la respuesta le llega al cliente por correo.</p>
+</div>
+{% if not tienda_actual.ruc %}
+  <div class="alert alert-info">Tu RUC no aparece en las hojas. Agrégalo en <a href="{% url 'tiendas:editar' %}" class="alert-link">Editar datos</a>.</div>
+{% endif %}
+{% include "reclamos/_tabla.html" with url_detalle="tienda" puede_responder_todas=True vacio="Tu tienda no tiene hojas de reclamación." %}
+<p class="small text-muted mt-2">Las hojas no se pueden borrar: se conservan al menos 2 años. El administrador de NEXALYS también las ve.</p>
+{% endblock %}

@@ -49,6 +49,12 @@ class Tienda(models.Model):
         help_text="9 dígitos, sin +51 ni espacios. Ejemplo: 987654321",
     )
     descripcion = models.TextField("descripción", blank=True)
+    # Para el Libro de Reclamaciones: la hoja muestra los datos del proveedor (nombre, RUC y dirección).
+    ruc = models.CharField(
+        "RUC", max_length=11, blank=True, default="", db_default="",  # db_default: las filas viejas quedan en blanco
+        validators=[RegexValidator(r"^(10|15|17|20)\d{9}$", "El RUC tiene 11 dígitos y empieza con 10, 15, 17 o 20.")],
+        help_text="Opcional. Aparece en tu Libro de Reclamaciones.",
+    )
     # Ubicación del LOCAL en el mapa (opcional). La tienda la marca con un pin en «Editar datos»;
     # sirve para «Tiendas cercanas» y para el botón «Cómo llegar».
     latitud = models.DecimalField(

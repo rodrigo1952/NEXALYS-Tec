@@ -1,0 +1,8 @@
+{% autoescape off %}Hola, {{ r.proveedor_nombre }}:
+
+Un cliente presentó la hoja de reclamación N.° {{ r.codigo }} dirigida a tu tienda.
+Debes responderla a más tardar el {{ r.vence|date:"d/m/Y" }} (15 días hábiles), desde «Datos de mi tienda» → «Libro de Reclamaciones» en NEXALYS Tec.
+
+{% include "reclamos/_datos_hoja.txt" %}
+
+NEXALYS Tec{% endautoescape %}

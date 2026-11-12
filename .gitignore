@@ -7,3 +7,5 @@ media/
 Claude outputs/
 .vscode/
 staticfiles/
+copias/
+db.sqlite3.*

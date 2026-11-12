@@ -1,0 +1,57 @@
+{% load formato %}
+{% comment %}La hoja de reclamación completa (constancia, panel de la tienda y consola). Variable: r{% endcomment %}
+<article class="hoja-reclamo">
+  <header class="hoja-reclamo__cabecera">
+    <div>
+      <p class="hoja-reclamo__titulo">Libro de Reclamaciones · Hoja de reclamación</p>
+      <p class="hoja-reclamo__numero">N.° {{ r.codigo }}</p>
+    </div>
+    <div class="text-end small">
+      <div>Fecha: <strong>{{ r.creado|date:"d/m/Y H:i" }}</strong></div>
+      <span class="badge {% if r.tipo == 'reclamo' %}text-bg-danger{% else %}text-bg-warning{% endif %}">{{ r.get_tipo_display }}</span>
+    </div>
+  </header>
+  <section>
+    <h2 class="hoja-reclamo__seccion">Proveedor</h2>
+    <p class="mb-0"><strong>{{ r.proveedor_nombre }}</strong>{% if r.proveedor_ruc %} · RUC/DOC {{ r.proveedor_ruc }}{% endif %}</p>
+    {% if r.proveedor_direccion %}<p class="mb-0 small">{{ r.proveedor_direccion }}</p>{% endif %}
+  </section>
+  <section>
+    <h2 class="hoja-reclamo__seccion">1. Identificación del consumidor</h2>
+    <dl class="hoja-reclamo__datos">
+      <div><dt>Nombre</dt><dd>{{ r.nombre }}</dd></div>
+      <div><dt>{{ r.get_documento_tipo_display }}</dt><dd>{{ r.documento_numero }}</dd></div>
+      <div><dt>Domicilio</dt><dd>{{ r.domicilio }}</dd></div>
+      <div><dt>Correo</dt><dd>{{ r.correo }}</dd></div>
+      <div><dt>Teléfono</dt><dd>{{ r.telefono|default:"—" }}</dd></div>
+      {% if r.menor_de_edad %}<div><dt>Menor de edad · apoderado</dt><dd>{{ r.apoderado }}</dd></div>{% endif %}
+    </dl>
+  </section>
+  <section>
+    <h2 class="hoja-reclamo__seccion">2. Identificación del bien contratado</h2>
+    <dl class="hoja-reclamo__datos">
+      <div><dt>{{ r.get_bien_display }}</dt><dd>{{ r.descripcion_bien }}</dd></div>
+      <div><dt>Monto reclamado</dt><dd>{% if r.monto is not None %}{{ r.monto|soles }}{% else %}No indicado{% endif %}</dd></div>
+      <div><dt>Comprobante</dt><dd>{{ r.comprobante|default:"Sin comprobante" }}</dd></div>
+      <div><dt>Fecha de compra</dt><dd>{{ r.fecha_compra|date:"d/m/Y"|default:"—" }}</dd></div>
+    </dl>
+  </section>
+  <section>
+    <h2 class="hoja-reclamo__seccion">3. Detalle de la reclamación y pedido del consumidor</h2>
+    <p class="mb-2">{{ r.detalle|linebreaksbr }}</p>
+    <p class="mb-0"><strong>Pedido:</strong> {{ r.pedido|linebreaksbr }}</p>
+  </section>
+  <section>
+    <h2 class="hoja-reclamo__seccion">4. Observaciones y acciones adoptadas por el proveedor</h2>
+    {% if r.estado == "respondido" %}
+      <p class="mb-1">{{ r.respuesta|linebreaksbr }}</p>
+      <p class="small text-muted mb-0">Respondido el {{ r.respondido_en|date:"d/m/Y H:i" }}.</p>
+    {% else %}
+      <p class="mb-0 text-muted">Pendiente de respuesta. Plazo: hasta el <strong>{{ r.vence|date:"d/m/Y" }}</strong> (15 días hábiles).</p>
+    {% endif %}
+  </section>
+  <footer class="hoja-reclamo__pie small">
+    <p class="mb-1"><strong>Reclamo:</strong> disconformidad relacionada a los productos o servicios. <strong>Queja:</strong> disconformidad no relacionada a los productos o servicios, o malestar o descontento respecto a la atención al público.</p>
+    <p class="mb-0">La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es requisito previo para interponer una denuncia ante el INDECOPI. El proveedor debe responder en un plazo no mayor a quince (15) días hábiles.</p>
+  </footer>
+</article>

@@ -8,7 +8,8 @@ Reglas (REGLAS, abajo):
     en un colegio o una cabina de internet muchas personas comparten la misma IP.
   - Correos (reenviar el enlace de confirmación o verificación y «¿Olvidaste tu contraseña?»):
     3 por hora para el mismo correo o la misma tienda, y 10 por hora desde una misma conexión.
-  - Solicitudes de derechos sobre los datos personales: igual que los correos (3 por hora).
+  - Solicitudes de derechos sobre los datos personales y hojas del Libro de Reclamaciones:
+    igual que los correos (3 por hora).
 
 Cuenta el bloqueo desde el intento que completa el límite: si alguien falla 5 veces seguidas,
 espera 15 minutos desde la quinta. Mientras espera, sus intentos no se cuentan ni se revisan.
@@ -29,6 +30,7 @@ CORREO_CONFIRMACION = "confirmacion"
 CORREO_TIENDA = "verificacion"
 CORREO_CLAVE = "recuperar"
 SOLICITUD_DERECHO = "derechos"
+RECLAMO = "reclamo"
 
 _LOGIN = [(("clave", "ip"), 5, timedelta(minutes=15)), (("ip",), 20, timedelta(minutes=15))]
 _CORREO = [(("clave",), 3, timedelta(hours=1)), (("ip",), 10, timedelta(hours=1))]
@@ -40,6 +42,7 @@ REGLAS = {
     CORREO_TIENDA: _CORREO,
     CORREO_CLAVE: _CORREO,
     SOLICITUD_DERECHO: _CORREO,
+    RECLAMO: _CORREO,
 }
 
 

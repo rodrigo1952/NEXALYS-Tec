@@ -1,0 +1,22 @@
+{% load formato %}HOJA DE RECLAMACIÓN N.° {{ r.codigo }}
+Fecha: {{ r.creado|date:"d/m/Y H:i" }}
+
+PROVEEDOR
+{{ r.proveedor_nombre }}{% if r.proveedor_ruc %} · {{ r.proveedor_ruc }}{% endif %}{% if r.proveedor_direccion %}
+{{ r.proveedor_direccion }}{% endif %}
+
+1. CONSUMIDOR
+{{ r.nombre }} · {{ r.get_documento_tipo_display }} {{ r.documento_numero }}
+Domicilio: {{ r.domicilio }}
+Correo: {{ r.correo }}{% if r.telefono %} · Teléfono: {{ r.telefono }}{% endif %}{% if r.menor_de_edad %}
+Menor de edad. Padre, madre o apoderado: {{ r.apoderado }}{% endif %}
+
+2. BIEN CONTRATADO
+{{ r.get_bien_display }}: {{ r.descripcion_bien }}
+Monto reclamado: {% if r.monto is not None %}{{ r.monto|soles }}{% else %}no indicado{% endif %}
+Comprobante: {{ r.comprobante|default:"sin comprobante" }}{% if r.fecha_compra %} · Fecha: {{ r.fecha_compra|date:"d/m/Y" }}{% endif %}
+
+3. DETALLE ({{ r.get_tipo_display|upper }})
+{{ r.detalle }}
+
+Pedido: {{ r.pedido }}

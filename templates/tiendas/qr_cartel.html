@@ -1,0 +1,39 @@
+{% extends "cuentas/_centro.html" %}
+{% comment %}
+Cartel con el QR de la tienda para pegar en el local. Al imprimir (o «Guardar como PDF») solo sale el cartel:
+el menú, los botones y el pie se ocultan (marca.css, @media print).
+{% endcomment %}
+{% block titulo %}Código QR de {{ tienda.nombre }} | NEXALYS Tec{% endblock %}
+{% block centro %}
+<div class="seccion-cuenta__cabecera no-imprimir">
+  <h1 class="h3 mb-1">Código QR de tu tienda</h1>
+  <p class="text-muted mb-0">Imprímelo y pégalo en tu local. Al escanearlo, el cliente entra a tu página en NEXALYS Tec.</p>
+</div>
+
+{% if es_local %}
+  <div class="alert alert-warning no-imprimir">
+    Este QR lleva a <code>{{ enlace }}</code>, que solo funciona en esta computadora. Cuando la página esté publicada, el QR llevará a tu dominio: imprímelo recién entonces.</div>
+{% endif %}
+
+<div class="d-flex flex-wrap gap-2 mb-3 no-imprimir">
+  <button type="button" class="btn btn-primary" data-imprimir><i class="bi bi-printer" aria-hidden="true"></i> Imprimir o guardar en PDF</button>
+  <a href="{% url 'tiendas:qr_descargar' 'png' %}" class="btn btn-outline-primary"><i class="bi bi-download" aria-hidden="true"></i> Descargar QR (PNG)</a>
+  <a href="{% url 'tiendas:qr_descargar' 'svg' %}" class="btn btn-outline-primary"><i class="bi bi-download" aria-hidden="true"></i> Descargar QR (SVG, para imprenta)</a>
+</div>
+
+<section class="cartel-qr" aria-label="Cartel para imprimir">
+  <div class="cartel-qr__tienda">
+    {% if tienda.logo %}
+      <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" class="cartel-qr__logo">
+    {% else %}
+      <span class="cartel-qr__logo cartel-qr__logo--inicial" aria-hidden="true">{{ tienda.nombre|first|upper }}</span>
+    {% endif %}
+    <h2 class="cartel-qr__nombre">{{ tienda.nombre }}</h2>
+  </div>
+  <p class="cartel-qr__llamado">Mira nuestros productos, precios y horario</p>
+  <div class="cartel-qr__codigo" role="img" aria-label="Código QR que lleva a {{ enlace }}">{{ qr_svg }}</div>
+  <p class="cartel-qr__instruccion"><i class="bi bi-phone" aria-hidden="true"></i> Escanéame con la cámara de tu celular</p>
+  <p class="cartel-qr__enlace">{{ enlace }}</p>
+  <p class="cartel-qr__marca">{% include "_logo.html" with claro=True solo_icono=True tamano=22 %} NEXALYS <span>Tec.</span></p>
+</section>
+{% endblock %}

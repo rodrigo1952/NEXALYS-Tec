@@ -152,7 +152,8 @@ class ServidorListoTests(SimpleTestCase):
         with tempfile.TemporaryDirectory() as carpeta, override_settings(STATIC_ROOT=carpeta, STORAGES=MANIFIESTO):
             call_command("collectstatic", interactive=False, verbosity=0)
             self.assertTrue((Path(carpeta) / "staticfiles.json").exists())
-            for archivo in ("css/marca.css", "js/whatsapp.js", "js/compartir.js", "img/favicon.svg"):
+            for archivo in ("css/marca.css", "js/whatsapp.js", "js/compartir.js", "img/favicon.svg",
+                            "vendor/bootstrap/bootstrap.min.css", "vendor/leaflet/leaflet.css", "vendor/fuentes/fuentes.css"):
                 url = static(archivo)
                 nombre = Path(archivo).stem
                 self.assertRegex(url, rf"/static/.*{nombre}\.[0-9a-f]{{12}}\.", archivo)
@@ -204,7 +205,7 @@ class CabeceraCspTests(TestCase):
         directiva = next(d for d in politica.split(";") if d.strip().startswith("script-src"))
         self.assertNotIn("unsafe-inline", directiva)
         self.assertNotIn("unsafe-eval", directiva)
-        self.assertNotIn("https://cdn.jsdelivr.net ", directiva + " ")  # nunca todo el CDN, solo la librería
+        self.assertRegex(directiva.strip(), r"^script-src 'self' 'nonce-[^']+'$")  # nada de otros sitios
 
     def test_plantillas_sin_onclick_ni_scripts_sin_nonce(self):
         import re
@@ -224,3 +225,72 @@ class PlantillasTests(SimpleTestCase):
             for numero, linea in enumerate(plantilla.read_text(encoding="utf-8").splitlines(), 1):
                 sin_cerrar = re.sub(r"\{#.*?#\}", "", linea)
                 self.assertNotIn("{#", sin_cerrar, f"{plantilla.name}, línea {numero}")
+
+
+class CorreoRealTests(SimpleTestCase):
+    def test_con_servidor_en_el_env_usa_smtp(self):
+        resultado = correr_como_servidor(
+            "shell", "-c",
+            "from django.conf import settings; m = settings.MAILERS['default']; "
+            "print(m['BACKEND'], m['OPTIONS']['host'], m['OPTIONS']['port'], m['OPTIONS']['use_tls']); "
+            "print(settings.DEFAULT_FROM_EMAIL)",
+            CORREO_SERVIDOR="smtp.gmail.com", CORREO_USUARIO="nexalys@gmail.com", CORREO_CLAVE="abcd efgh ijkl mnop",
+            CORREO_REMITENTE="NEXALYS Tec <nexalys@gmail.com>",
+        )
+        self.assertIn("django.core.mail.backends.smtp.EmailBackend smtp.gmail.com 587 True", resultado.stdout)
+        self.assertIn("NEXALYS Tec <nexalys@gmail.com>", resultado.stdout)
+
+    def test_sin_servidor_usa_la_terminal(self):
+        resultado = correr_como_servidor(
+            "shell", "-c", "from django.conf import settings; print(settings.MAILERS['default']['BACKEND'])",
+            CORREO_SERVIDOR="",
+        )
+        self.assertIn("console.EmailBackend", resultado.stdout)
+
+    def test_check_deploy_sin_errores_con_correo_real(self):
+        resultado = correr_como_servidor(
+            "check", "--deploy", CORREO_SERVIDOR="smtp.gmail.com", CORREO_USUARIO="a@gmail.com", CORREO_CLAVE="x",
+        )
+        self.assertEqual(resultado.returncode, 0, resultado.stderr)
+        self.assertNotIn("mail.E001", resultado.stdout + resultado.stderr)
+
+    def test_comando_probar_correo(self):
+        from io import StringIO
+
+        from django.core import mail
+        from django.core.management import call_command
+
+        salida = StringIO()
+        call_command("probar_correo", "ana@ejemplo.com", stdout=salida)
+        self.assertIn("Listo: se envió el correo de prueba a ana@ejemplo.com.", salida.getvalue())
+        self.assertEqual(mail.outbox[-1].to, ["ana@ejemplo.com"])
+
+
+class LibreriasPropiasTests(SimpleTestCase):
+    """Bootstrap, íconos, Chart.js, Leaflet y las letras están en static/vendor: nada se pide a un CDN."""
+
+    VENDOR = RAIZ / "static" / "vendor"
+
+    def test_ninguna_plantilla_usa_un_cdn(self):
+        import re
+
+        for plantilla in (RAIZ / "templates").rglob("*.html"):
+            texto = plantilla.read_text(encoding="utf-8")
+            self.assertIsNone(re.search(r"cdn\.jsdelivr|cdnjs|fonts\.googleapis|fonts\.gstatic", texto), plantilla.name)
+
+    def test_estan_las_librerias_con_su_version_y_licencia(self):
+        versiones = {
+            "bootstrap/bootstrap.min.css": "Bootstrap  v5.3.3", "bootstrap/bootstrap.bundle.min.js": "Bootstrap v5.3.3",
+            "bootstrap-icons/bootstrap-icons.min.css": "Bootstrap Icons v1.11.3", "chartjs/chart.umd.js": "Chart.js v4.4.1",
+            "leaflet/leaflet.js": "Leaflet 1.9.4",
+        }
+        for archivo, version in versiones.items():
+            texto = (self.VENDOR / archivo).read_text(encoding="utf-8")
+            self.assertIn(version, texto[:400], archivo)
+            self.assertNotIn("sourceMappingURL", texto, archivo)
+        for licencia in ("bootstrap/LICENSE", "bootstrap-icons/LICENSE", "chartjs/LICENSE.md", "leaflet/LICENSE",
+                         "fuentes/LICENSE-space-grotesk", "fuentes/LICENSE-lilita-one"):
+            self.assertTrue((self.VENDOR / licencia).exists(), licencia)
+        for letra in ("space-grotesk-latin", "space-grotesk-latin-ext", "lilita-one-latin", "lilita-one-latin-ext"):
+            self.assertEqual((self.VENDOR / "fuentes" / f"{letra}.woff2").read_bytes()[:4], b"wOF2", letra)
+

@@ -45,7 +45,7 @@ class TiendasCercanasTests(BaseUbicacion):
         self.assertEqual(alfa["como_llegar"], "https://www.google.com/maps/dir/?api=1&destination=Jr.%20Espinar%2C%20Quillabamba")
         self.assertContains(respuesta, 'id="datos-tiendas"')
         self.assertContains(respuesta, "Aún no marcaron su local en el mapa", count=1)
-        self.assertContains(respuesta, "leaflet/1.9.4/leaflet.js")
+        self.assertContains(respuesta, "vendor/leaflet/leaflet.js")
         self.assertContains(respuesta, 'data-centro-lat="-12.86806"')  # con punto, no con coma
 
     def test_openstreetmap_recibe_el_dominio(self):

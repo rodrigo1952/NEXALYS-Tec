@@ -1,0 +1,29 @@
+{% comment %}Lista de hojas (panel de la tienda y consola). Variables: pagina, url_detalle ("tienda" o "consola"), con_proveedor{% endcomment %}
+<div class="tabla-consola">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr><th>N.°</th><th>Presentada</th>{% if con_proveedor %}<th>Proveedor</th>{% endif %}<th>Cliente</th><th>Tipo</th><th>Responder hasta</th><th>Estado</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for r in pagina %}
+          <tr>
+            <td class="small text-nowrap"><strong>{{ r.codigo }}</strong></td>
+            <td class="small text-nowrap">{{ r.creado|date:"d/m/Y" }}</td>
+            {% if con_proveedor %}<td class="small">{{ r.proveedor_nombre }}</td>{% endif %}
+            <td class="small">{{ r.nombre }}</td>
+            <td class="small">{{ r.get_tipo_display }}</td>
+            <td class="small text-nowrap">{{ r.vence|date:"d/m/Y" }}
+              {% if r.estado == "pendiente" %}<span class="badge {% if r.dias_restantes <= 2 %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{% if r.dias_restantes < 0 %}vencida{% else %}{{ r.dias_restantes }} día{{ r.dias_restantes|pluralize }}{% endif %}</span>{% endif %}
+            </td>
+            <td class="small">{% if r.estado == "pendiente" %}<span class="badge text-bg-warning">Sin responder</span>{% else %}<span class="badge text-bg-success">Respondida</span>{% endif %}</td>
+            <td class="text-end"><a href="{% if url_detalle == 'tienda' %}{% url 'reclamos:tienda_detalle' r.pk %}{% else %}{% url 'reclamos:consola_detalle' r.pk %}{% endif %}" class="btn btn-sm btn-outline-primary text-nowrap">{% if r.estado == "pendiente" and puede_responder_todas %}Responder{% else %}Ver{% endif %}</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-check2-circle" aria-hidden="true"></i> {{ vacio }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "catalogo/_paginacion.html" %}

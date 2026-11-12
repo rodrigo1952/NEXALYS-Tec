@@ -16,8 +16,10 @@
 ## 2. Tecnología
 
 - Python 3.14 (Windows; el venv se crea con `py -3.14 -m venv venv` y VS Code usa ese intérprete), **Django 6.1.1**, SQLite (`transaction_mode` IMMEDIATE), Pillow, openpyxl.
-- Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 (jsDelivr), Chart.js 4.4.1 y **Leaflet 1.9.4** (cdnjs) con los mapas de
-  **OpenStreetMap** (sin clave ni costo). Letra Space Grotesk (Google Fonts); el logo animado de Inicio usa Lilita One.
+- Bootstrap 5.3.3, Bootstrap Icons 1.11.3, Chart.js 4.4.1, **Leaflet 1.9.4** y las letras Space Grotesk y Lilita One
+  están **dentro del proyecto** en `static/vendor/` (LEEME.md con versiones y licencias; sin `sourceMappingURL`).
+  Ningún CDN: solo los cuadros del mapa vienen de **OpenStreetMap**. Se descargaron con
+  `Claude outputs/descargar_librerias.ps1`. QR con **segno 1.6.6** (en requirements).
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
   (Antes se subía `?v=` a mano; ya no hace falta.)
   Lo mismo con los scripts propios: `galeria_producto.js?v=5`, `catalogo.js?v=2`, `mapas.js?v=1`, `horario.js?v=2`, `whatsapp.js?v=2`, `compartir.js?v=1`.
@@ -271,7 +273,20 @@
   `config/pruebas.py`), `/privacidad/aceptar/`, `/privacidad/solicitud/`, `/mi-cuenta/mis-datos/` (JSON), consola
   Control → Privacidad (responder envía correo y queda en el historial). Datos del responsable en el .env
   (`PRIVACIDAD_*`); mientras falten: «por completar» en la política y tarea en el Resumen.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **698 pruebas, OK**.
+- **Correo real**: `MAILERS` SMTP si hay `CORREO_SERVIDOR` en el .env (Gmail + contraseña de aplicación; puerto 587
+  TLS; `CORREO_REMITENTE`); si no, consola. Prueba: `python manage.py probar_correo correo@x.com`.
+- **Copias de seguridad**: `administracion/copias.py` (backup de SQLite + media sin miniaturas en zip, carpeta `copias/`
+  fuera de git, 14 días, nunca borra la última); comandos `copia_seguridad` y `restaurar_copia --confirmar`; consola
+  Control → Copias de seguridad (crear y descargar). Sus pruebas usan TransactionTestCase (SQLite no copia con una
+  transacción abierta).
+- **Libro de Reclamaciones**: app `reclamos` (modelo `Reclamo`, correlativo por proveedor y año «000001-2026»,
+  datos del proveedor copiados en la hoja, 15 días hábiles, constancia por correo, aviso a la tienda). URLs en
+  `/libro-de-reclamaciones/` (público, `hoja/<pk>/`, `mi-tienda/` para la tienda, `consola/` para el admin). La tienda
+  responde las suyas; el admin responde las de NEXALYS o de una tienda eliminada. Enlace en el pie y en la página de
+  la tienda. `Tienda.ruc` (opcional, migración tiendas 0008).
+- **QR de la tienda**: `tiendas/qr.py` (segno, corrección Q), `/tiendas/panel/qr/` cartel para imprimir y
+  `/tiendas/panel/qr.png|svg`. Solo tiendas activas.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **731 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

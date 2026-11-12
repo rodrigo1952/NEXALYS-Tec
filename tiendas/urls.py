@@ -11,6 +11,8 @@ urlpatterns = [
     path("panel/", views.panel, name="panel"),
     path("panel/editar/", views.editar, name="editar"),
     path("panel/logo/", views.cambiar_logo, name="logo"),
+    path("panel/qr/", views.qr_cartel, name="qr"),
+    path("panel/qr.<str:formato>", views.qr_descargar, name="qr_descargar"),
     path("cercanas/", views.cercanas, name="cercanas"),
     path("<int:pk>/", views.perfil, name="perfil"),
 ]

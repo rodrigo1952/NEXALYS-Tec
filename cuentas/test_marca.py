@@ -8,7 +8,7 @@ class MarcaTests(TestCase):
         respuesta = self.client.get(reverse("inicio"))
         self.assertContains(respuesta, "css/marca.css")
         self.assertContains(respuesta, "img/favicon.svg")
-        self.assertContains(respuesta, "Space+Grotesk")
+        self.assertContains(respuesta, "vendor/fuentes/fuentes.css")
         self.assertContains(respuesta, 'class="navbar navbar-expand-lg navbar-dark navbar-marca"')
         self.assertContains(respuesta, 'class="logo-marca"')
         self.assertContains(respuesta, "portada-marca")

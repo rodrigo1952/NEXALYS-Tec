@@ -1,0 +1,6 @@
+<div class="{{ ancho|default:'col-12' }}">
+  <label class="form-label" for="{{ c.id_for_label }}">{{ c.label|capfirst }}{% if c.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+  {{ c }}
+  {% if c.help_text %}<div class="form-text">{{ c.help_text }}</div>{% endif %}
+  {% for e in c.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+</div>

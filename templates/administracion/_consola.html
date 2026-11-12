@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load consola %}
+{% load consola reclamos_tags %}
 {% comment %}
 Consola de administración: una zona aparte de la tienda pública.
 - Cabecera simple: logo, «Ver página pública ↗» y el menú de la cuenta (sin buscador ni categorías).
@@ -34,6 +34,7 @@ Cada página llena el bloque «consola».
 {% tiendas_por_verificar as globo_tiendas %}
 {% errores_sin_revisar as globo_errores %}
 {% solicitudes_pendientes as globo_solicitudes %}
+{% reclamos_pendientes todas=True as globo_reclamos %}
 <div class="consola__marco">
   <aside class="consola__lateral offcanvas-lg offcanvas-start" tabindex="-1" id="consola-menu" aria-labelledby="titulo-consola-menu">
     <div class="offcanvas-header">
@@ -60,6 +61,8 @@ Cada página llena el bloque «consola».
       <a href="{% url 'administracion:historial' %}" class="{% if ns == 'administracion' and vista == 'historial' %}activo{% endif %}"{% if ns == 'administracion' and vista == 'historial' %} aria-current="page"{% endif %}><i class="bi bi-clock-history" aria-hidden="true"></i>Historial</a>
       <a href="{% url 'administracion:errores' %}" class="{% if ns == 'administracion' and 'errores' in vista %}activo{% endif %}"{% if ns == 'administracion' and vista == 'errores' %} aria-current="page"{% endif %}><i class="bi bi-bug" aria-hidden="true"></i>Errores{% if globo_errores %}<span class="consola__globo" title="Errores sin revisar">{{ globo_errores }}</span>{% endif %}</a>
       <a href="{% url 'administracion:solicitudes' %}" class="{% if ns == 'administracion' and 'solicitud' in vista %}activo{% endif %}"{% if ns == 'administracion' and vista == 'solicitudes' %} aria-current="page"{% endif %}><i class="bi bi-file-earmark-lock" aria-hidden="true"></i>Privacidad{% if globo_solicitudes %}<span class="consola__globo" title="Solicitudes sin responder">{{ globo_solicitudes }}</span>{% endif %}</a>
+      <a href="{% url 'reclamos:consola_lista' %}" class="{% if ns == 'reclamos' %}activo{% endif %}"{% if ns == 'reclamos' and vista == 'consola_lista' %} aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i>Libro de Reclamaciones{% if globo_reclamos %}<span class="consola__globo" title="Hojas sin responder">{{ globo_reclamos }}</span>{% endif %}</a>
+      <a href="{% url 'administracion:copias' %}" class="{% if ns == 'administracion' and 'copias' in vista %}activo{% endif %}"{% if ns == 'administracion' and vista == 'copias' %} aria-current="page"{% endif %}><i class="bi bi-cloud-arrow-down" aria-hidden="true"></i>Copias de seguridad</a>
 
       <div class="consola__pie">
         <a href="{% url 'admin:index' %}" title="Base de datos completa: úsalo solo si la consola no tiene la opción que necesitas."><i class="bi bi-database-gear" aria-hidden="true"></i>Django Admin</a>

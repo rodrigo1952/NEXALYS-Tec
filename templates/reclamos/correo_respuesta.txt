@@ -1,0 +1,9 @@
+{% autoescape off %}Hola, {{ r.nombre }}:
+
+{{ r.proveedor_nombre }} respondió tu hoja de reclamación N.° {{ r.codigo }}:
+
+{{ r.respuesta }}
+
+Si no estás conforme con la respuesta, puedes acudir al INDECOPI.
+
+NEXALYS Tec{% endautoescape %}

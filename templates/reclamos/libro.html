@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% comment %}
+Libro de Reclamaciones virtual (enlace permanente en el pie de todas las páginas). La hoja va a NEXALYS Tec
+o a una tienda; la tienda la responde desde su panel en máximo {{ plazo }} días hábiles.
+{% endcomment %}
+{% block titulo %}Libro de Reclamaciones | NEXALYS Tec{% endblock %}
+{% block descripcion %}Libro de Reclamaciones virtual de NEXALYS Tec y de las tiendas de Quillabamba que publican en la página.{% endblock %}
+{% block contenido %}
+<div class="libro-reclamos">
+  <div class="libro-reclamos__cabecera">
+    <i class="bi bi-journal-text" aria-hidden="true"></i>
+    <div>
+      <h1 class="h3 mb-1">Libro de Reclamaciones</h1>
+      <p class="text-muted mb-0">Conforme al Código de Protección y Defensa del Consumidor. Te responderán en un plazo máximo de {{ plazo }} días hábiles y recibirás una copia de esta hoja en tu correo.</p>
+    </div>
+  </div>
+
+  <form method="post" novalidate class="card shadow-sm"><div class="card-body p-4">
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
+
+    {% with c=form.dirigido_a %}
+    <div class="mb-4">
+      <label class="form-label fw-semibold" for="{{ c.id_for_label }}">{{ c.label }} <span class="text-danger">*</span></label>
+      {{ c }}
+      <div class="form-text">Si tu problema es con una tienda (un producto, la atención, una garantía), elígela: ella te responderá.</div>
+      {% for e in c.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+    </div>
+    {% endwith %}
+
+    <fieldset class="mb-4">
+      <legend class="libro-reclamos__seccion">1. Tus datos</legend>
+      <div class="row g-3">
+        {% include "reclamos/_campo.html" with c=form.nombre %}
+        {% include "reclamos/_campo.html" with c=form.documento_tipo ancho="col-md-4" %}
+        {% include "reclamos/_campo.html" with c=form.documento_numero ancho="col-md-8" %}
+        {% include "reclamos/_campo.html" with c=form.domicilio %}
+        {% include "reclamos/_campo.html" with c=form.correo ancho="col-md-7" %}
+        {% include "reclamos/_campo.html" with c=form.telefono ancho="col-md-5" %}
+        <div class="col-12">
+          <div class="form-check">
+            {{ form.menor_de_edad }}
+            <label class="form-check-label" for="{{ form.menor_de_edad.id_for_label }}">{{ form.menor_de_edad.label|capfirst }}</label>
+          </div>
+        </div>
+        <div class="col-12" data-apoderado>
+          <label class="form-label" for="{{ form.apoderado.id_for_label }}">{{ form.apoderado.label|capfirst }}</label>
+          {{ form.apoderado }}
+          <div class="form-text">{{ form.apoderado.help_text }}</div>
+          {% for e in form.apoderado.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="mb-4">
+      <legend class="libro-reclamos__seccion">2. Producto o servicio</legend>
+      <div class="d-flex gap-3 mb-3">
+        {% for opcion in form.bien %}<div class="form-check">{{ opcion.tag }}<label class="form-check-label" for="{{ opcion.id_for_label }}">{{ opcion.choice_label }}</label></div>{% endfor %}
+      </div>
+      <div class="row g-3">
+        {% include "reclamos/_campo.html" with c=form.descripcion_bien %}
+        {% include "reclamos/_campo.html" with c=form.monto ancho="col-md-4" %}
+        {% include "reclamos/_campo.html" with c=form.comprobante ancho="col-md-4" %}
+        {% include "reclamos/_campo.html" with c=form.fecha_compra ancho="col-md-4" %}
+      </div>
+    </fieldset>
+
+    <fieldset class="mb-4">
+      <legend class="libro-reclamos__seccion">3. Detalle</legend>
+      <div class="opciones-derecho mb-3">
+        {% for opcion in form.tipo %}
+          <div class="form-check">{{ opcion.tag }}<label class="form-check-label" for="{{ opcion.id_for_label }}"><strong>{{ opcion.choice_label }}:</strong>
+            {% if opcion.data.value == "reclamo" %}no estás conforme con el producto o el servicio.{% else %}no estás conforme con la atención que recibiste.{% endif %}</label></div>
+        {% endfor %}
+      </div>
+      <div class="row g-3">
+        {% include "reclamos/_campo.html" with c=form.detalle %}
+        {% include "reclamos/_campo.html" with c=form.pedido %}
+      </div>
+    </fieldset>
+
+    <div class="form-check mb-3">
+      {{ form.acepto }}
+      <label class="form-check-label" for="{{ form.acepto.id_for_label }}">{{ form.acepto.label }}</label>
+      {% for e in form.acepto.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+    </div>
+    <p class="small text-muted">La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es requisito previo para interponer una denuncia ante el INDECOPI.</p>
+    <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-send" aria-hidden="true"></i> Enviar hoja de reclamación</button>
+  </div></form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script {% csp_nonce_attr %}>
+  // El nombre del padre, madre o apoderado solo se pide si la persona es menor de edad.
+  (function () {
+    var casilla = document.getElementById("{{ form.menor_de_edad.id_for_label }}");
+    var bloque = document.querySelector("[data-apoderado]");
+    if (!casilla || !bloque) return;
+    function actualizar() { bloque.classList.toggle("d-none", !casilla.checked); }
+    casilla.addEventListener("change", actualizar);
+    actualizar();
+  })();
+</script>
+{% endblock %}

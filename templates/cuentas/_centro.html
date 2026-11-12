@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load reclamos_tags %}
 {% comment %}
 Centro de cuenta: Mi perfil, Datos de mi tienda, Seguridad, Ayuda y soporte, Privacidad y términos.
 Es una zona aparte: la cabecera es simple (logo, «Volver a la página» y el menú de la cuenta),
@@ -53,6 +54,8 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
           <li><a href="{% url 'mi_cuenta' %}" class="{% if not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta' %}activo{% endif %}"{% if not ns and vista == 'mi_cuenta' %} aria-current="page"{% endif %}><i class="bi bi-person" aria-hidden="true"></i>Mi perfil</a></li>
           {% if tienda_actual %}
             <li><a href="{% url 'tiendas:panel' %}" class="{% if ns == 'tiendas' %}activo{% endif %}"{% if ns == 'tiendas' and vista == 'panel' %} aria-current="page"{% endif %}><i class="bi bi-shop" aria-hidden="true"></i>Datos de mi tienda</a></li>
+            {% reclamos_pendientes tienda_actual as globo_reclamos %}
+            <li><a href="{% url 'reclamos:tienda_lista' %}" class="{% if ns == 'reclamos' %}activo{% endif %}"{% if ns == 'reclamos' and vista == 'tienda_lista' %} aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i>Libro de Reclamaciones{% if globo_reclamos %} <span class="badge rounded-pill text-bg-warning" title="Hojas sin responder">{{ globo_reclamos }}</span>{% endif %}</a></li>
           {% endif %}
           <li><a href="{% url 'password_change' %}" class="{% if vista == 'password_change' or vista == 'password_change_done' %}activo{% endif %}"{% if vista == 'password_change' %} aria-current="page"{% endif %}><i class="bi bi-shield-lock" aria-hidden="true"></i>Seguridad</a></li>
         {% endif %}

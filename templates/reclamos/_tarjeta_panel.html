@@ -1,0 +1,12 @@
+{% load reclamos_tags %}{% reclamos_pendientes tienda as pendientes_libro %}
+<div class="tarjeta-cuenta mt-3">
+  <div class="tarjeta-cuenta__titulo">
+    <h2 class="h6 mb-0"><i class="bi bi-journal-text" aria-hidden="true"></i> Libro de Reclamaciones</h2>
+    <a href="{% url 'reclamos:tienda_lista' %}" class="enlace-accion small">Ver hojas</a>
+  </div>
+  {% if pendientes_libro %}
+    <p class="mb-0 text-danger"><strong>{{ pendientes_libro }} hoja{{ pendientes_libro|pluralize }} sin responder.</strong> Tienes 15 días hábiles desde que la presentaron.</p>
+  {% else %}
+    <p class="small text-muted mb-0">No tienes hojas sin responder. Tus clientes llegan a tu libro desde tu página: <a href="{% url 'reclamos:libro' %}?tienda={{ tienda.pk }}">ver formulario</a>.</p>
+  {% endif %}
+</div>

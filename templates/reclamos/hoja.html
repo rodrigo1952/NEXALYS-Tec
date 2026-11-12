@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Hoja de reclamación N.° {{ r.codigo }} | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="libro-reclamos">
+  {% if recien_enviada %}
+    <div class="alert alert-success no-imprimir">
+      <strong>Tu hoja N.° {{ r.codigo }} fue registrada.</strong> Te enviamos una copia a {{ r.correo }}.
+      {{ r.proveedor_nombre }} debe responderte a más tardar el <strong>{{ r.vence|date:"d/m/Y" }}</strong>.
+    </div>
+  {% endif %}
+  <div class="d-flex flex-wrap gap-2 mb-3 no-imprimir">
+    <button type="button" class="btn btn-outline-primary" data-imprimir><i class="bi bi-printer" aria-hidden="true"></i> Imprimir o guardar en PDF</button>
+    <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">Volver a la página</a>
+  </div>
+  {% include "reclamos/_hoja.html" %}
+</div>
+{% endblock %}

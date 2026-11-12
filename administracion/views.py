@@ -6,6 +6,7 @@ usuarios. Categorías y marcas siguen en catalogo/gestion.py. Django Admin queda
 como herramienta avanzada.
 """
 
+import logging
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 
@@ -26,6 +27,7 @@ from catalogo.models import Categoria, Marca, Producto, borrar_archivo_al_confir
 from cuentas import clave_temporal
 from cuentas.models import SolicitudDerecho
 from cuentas.privacidad import datos_faltantes
+from reclamos.models import Reclamo
 from cuentas.views import rol_requerido
 from inventario.models import Venta
 from tiendas.models import DIAS_PARA_ELIMINAR_SUSPENDIDA, Tienda
@@ -37,6 +39,7 @@ from .forms import (
 from .models import AccionAdmin, ErrorRegistrado
 
 solo_admin = rol_requerido("Administrador")
+logger = logging.getLogger(__name__)
 
 MESES_VENTAS = 6  # columnas de la tabla de ventas por tienda
 NOMBRES_MES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Set", "Oct", "Nov", "Dic"]
@@ -135,6 +138,10 @@ def resumen(request):
     errores_sin_revisar = ErrorRegistrado.objects.filter(revisado=False).count()
     solicitudes_pendientes = list(SolicitudDerecho.objects.filter(estado=SolicitudDerecho.Estado.PENDIENTE)[:5])
     faltantes = datos_faltantes()
+    reclamos_pendientes = Reclamo.objects.filter(estado=Reclamo.Estado.PENDIENTE)
+    # Las de NEXALYS (o de una tienda eliminada) las respondes tú; de las tiendas, solo las vencidas.
+    reclamos_mios = list(reclamos_pendientes.filter(Q(proveedor_clave="nexalys") | Q(tienda=None))[:5])
+    reclamos_vencidos = reclamos_pendientes.exclude(tienda=None).filter(vence__lt=timezone.localdate()).count()
     return render(request, "cuentas/panel_admin.html", {
         "tiendas_activas": estados.get(Tienda.Estado.ACTIVA, 0),
         "tiendas_pendientes": estados.get(Tienda.Estado.PENDIENTE, 0),
@@ -158,8 +165,11 @@ def resumen(request):
         "errores_sin_revisar": errores_sin_revisar,
         "solicitudes_pendientes": solicitudes_pendientes,
         "datos_privacidad_faltantes": faltantes,
+        "reclamos_mios": reclamos_mios,
+        "reclamos_vencidos": reclamos_vencidos,
         "num_pendientes": (
             len(por_verificar) + len(por_eliminarse) + errores_sin_revisar + len(solicitudes_pendientes) + bool(faltantes)
+            + len(reclamos_mios) + bool(reclamos_vencidos)
         ),
     })
 
@@ -747,4 +757,51 @@ def solicitud_detalle(request, pk):
             messages.warning(request, f"Respuesta guardada, pero el correo no salió. Escríbele a {solicitud.correo}.")
         return redirect("administracion:solicitud_detalle", pk=pk)
     return render(request, "administracion/solicitud_detalle.html", {"solicitud": solicitud, "form": form})
+
+
+# ---------------------------------------------------------------------------
+# Copias de seguridad (administracion/copias.py)
+# ---------------------------------------------------------------------------
+
+@solo_admin
+def copias_lista(request):
+    from . import copias
+
+    lista = copias.listar()
+    ultima = lista[0]["fecha"] if lista else None
+    return render(request, "administracion/copias.html", {
+        "copias": lista,
+        "dias": copias.DIAS_GUARDADAS,
+        "sin_copia_reciente": ultima is None or timezone.now() - ultima > timedelta(days=2),
+    })
+
+
+@require_POST
+@solo_admin
+def copias_crear(request):
+    from django.template.defaultfilters import filesizeformat
+
+    from . import copias
+
+    try:
+        copia = copias.crear()
+    except Exception:
+        logger.exception("No se pudo crear la copia de seguridad", extra={"request": request})
+        messages.error(request, "No se pudo crear la copia. Revisa el detalle en Control → Errores o en el registro del servidor.")
+    else:
+        messages.success(request, f"Copia creada: {copia['nombre']} ({filesizeformat(copia['tamano'])}).")
+    return redirect("administracion:copias")
+
+
+@never_cache
+@solo_admin
+def copias_descargar(request, nombre):
+    from django.http import FileResponse, Http404
+
+    from . import copias
+
+    ruta = copias.buscar(nombre)
+    if ruta is None:
+        raise Http404("No existe esa copia.")
+    return FileResponse(open(ruta, "rb"), as_attachment=True, filename=ruta.name, content_type="application/zip")
 
