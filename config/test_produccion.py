@@ -72,6 +72,19 @@ class CrearEnvTests(SimpleTestCase):
             self.assertEqual(ruta.read_text(encoding="utf-8"), "SECRET_KEY=mia\n")
 
 
+def correr_como_servidor(*argumentos, **variables):
+    """Arranca Django como en el servidor (sin leer tu .env: las variables del sistema ganan)."""
+    entorno_servidor = {
+        **os.environ, "DEBUG": "False", "SECRET_KEY": crear_env.clave_secreta(), "ALLOWED_HOSTS": "nexalys.pythonanywhere.com",
+        "SITIO_URL": "https://nexalys.pythonanywhere.com", "DJANGO_ADMIN_URL": "control-prueba/",
+        **variables,
+    }
+    return subprocess.run(
+        [sys.executable, "manage.py", *argumentos], cwd=RAIZ, env=entorno_servidor,
+        capture_output=True, text=True, timeout=120,
+    )
+
+
 class AjustesTests(SimpleTestCase):
     def test_la_clave_secreta_no_esta_en_el_codigo(self):
         codigo = (RAIZ / "config" / "settings.py").read_text(encoding="utf-8")
@@ -83,17 +96,7 @@ class AjustesTests(SimpleTestCase):
         modelo = (RAIZ / ".env.example").read_text(encoding="utf-8")
         self.assertIn("SECRET_KEY=\n", modelo)
 
-    def correr(self, *argumentos, **variables):
-        """Arranca Django como en el servidor (sin leer tu .env: las variables del sistema ganan)."""
-        entorno_servidor = {
-            **os.environ, "DEBUG": "False", "SECRET_KEY": crear_env.clave_secreta(), "ALLOWED_HOSTS": "nexalys.pythonanywhere.com",
-            "SITIO_URL": "https://nexalys.pythonanywhere.com", "DJANGO_ADMIN_URL": "control-prueba/",
-            **variables,
-        }
-        return subprocess.run(
-            [sys.executable, "manage.py", *argumentos], cwd=RAIZ, env=entorno_servidor,
-            capture_output=True, text=True, timeout=120,
-        )
+    correr = staticmethod(lambda *a, **v: correr_como_servidor(*a, **v))
 
     def test_check_deploy_sin_avisos_de_seguridad(self):
         resultado = self.correr("check", "--deploy")
@@ -131,3 +134,93 @@ class AdminSecretoTests(TestCase):
         User.objects.create_superuser("jefe", "j@ejemplo.com", "ClaveSegura#2026")
         self.client.post(reverse("login"), {"username": "jefe", "password": "ClaveSegura#2026"})
         self.assertEqual(self.client.get(reverse("admin:index")).status_code, 200)
+
+
+MANIFIESTO = {
+    "default": settings.STORAGES["default"],
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"},
+}
+
+
+class ServidorListoTests(SimpleTestCase):
+    def test_collectstatic_con_huella(self):
+        """Como en el servidor: junta los archivos y les pone una huella al nombre."""
+        from django.core.management import call_command
+        from django.templatetags.static import static
+        from django.test import override_settings
+
+        with tempfile.TemporaryDirectory() as carpeta, override_settings(STATIC_ROOT=carpeta, STORAGES=MANIFIESTO):
+            call_command("collectstatic", interactive=False, verbosity=0)
+            self.assertTrue((Path(carpeta) / "staticfiles.json").exists())
+            for archivo in ("css/marca.css", "js/whatsapp.js", "js/compartir.js", "img/favicon.svg"):
+                url = static(archivo)
+                nombre = Path(archivo).stem
+                self.assertRegex(url, rf"/static/.*{nombre}\.[0-9a-f]{{12}}\.", archivo)
+                self.assertTrue((Path(carpeta) / url.removeprefix("/static/")).exists(), url)
+
+    def test_en_el_servidor_usa_huellas(self):
+        resultado = correr_como_servidor(
+            "shell", "-c", "from django.conf import settings; print(settings.STORAGES['staticfiles']['BACKEND'])"
+        )
+        self.assertIn("ManifestStaticFilesStorage", resultado.stdout)
+
+    def test_sin_numeros_v_a_mano(self):
+        for plantilla in (RAIZ / "templates").rglob("*.html"):
+            self.assertNotIn("%}?v=", plantilla.read_text(encoding="utf-8"), plantilla.name)
+
+    def test_versiones_fijas(self):
+        lineas = (RAIZ / "requirements.txt").read_text(encoding="utf-8").split()
+        self.assertTrue(lineas)
+        for linea in lineas:
+            self.assertRegex(linea, r"^[A-Za-z0-9_.-]+==[0-9][0-9A-Za-z.]*$", linea)
+
+    def test_staticfiles_fuera_de_git(self):
+        self.assertIn("staticfiles/", (RAIZ / ".gitignore").read_text(encoding="utf-8").split())
+
+
+class CabeceraCspTests(TestCase):
+    def test_cabecera_con_nonce_en_cada_script_en_linea(self):
+        import re
+
+        for url in (reverse("inicio"), reverse("catalogo:catalogo"), reverse("login")):
+            respuesta = self.client.get(url)
+            politica = respuesta["Content-Security-Policy"]
+            nonce = re.search(r"'nonce-([^']+)'", politica).group(1)
+            self.assertIn("object-src 'none'", politica)
+            self.assertIn("frame-ancestors 'none'", politica)
+            html = respuesta.content.decode()
+            scripts = re.findall(r"<script(?![^>]*\bsrc=)(?![^>]*application/json)([^>]*)>", html)
+            self.assertTrue(scripts, url)
+            for atributos in scripts:
+                self.assertIn(f'nonce="{nonce}"', atributos, url)
+
+    def test_cada_visita_tiene_otro_nonce(self):
+        primera = self.client.get(reverse("inicio"))["Content-Security-Policy"]
+        segunda = self.client.get(reverse("inicio"))["Content-Security-Policy"]
+        self.assertNotEqual(primera, segunda)
+
+    def test_scripts_solo_de_la_pagina_y_librerias_con_version(self):
+        politica = self.client.get(reverse("inicio"))["Content-Security-Policy"]
+        directiva = next(d for d in politica.split(";") if d.strip().startswith("script-src"))
+        self.assertNotIn("unsafe-inline", directiva)
+        self.assertNotIn("unsafe-eval", directiva)
+        self.assertNotIn("https://cdn.jsdelivr.net ", directiva + " ")  # nunca todo el CDN, solo la librería
+
+    def test_plantillas_sin_onclick_ni_scripts_sin_nonce(self):
+        import re
+
+        for plantilla in (RAIZ / "templates").rglob("*.html"):
+            texto = plantilla.read_text(encoding="utf-8")
+            self.assertIsNone(re.search(r"\son(click|change|submit|load|input)=", texto), plantilla.name)
+            self.assertNotIn("<script>", texto, plantilla.name)
+
+
+class PlantillasTests(SimpleTestCase):
+    def test_comentarios_de_una_sola_linea(self):
+        """{# … #} solo sirve en una línea: si se parte en dos, el texto aparece en la página."""
+        import re
+
+        for plantilla in (RAIZ / "templates").rglob("*.html"):
+            for numero, linea in enumerate(plantilla.read_text(encoding="utf-8").splitlines(), 1):
+                sin_cerrar = re.sub(r"\{#.*?#\}", "", linea)
+                self.assertNotIn("{#", sin_cerrar, f"{plantilla.name}, línea {numero}")

@@ -1188,7 +1188,7 @@ a.kpi:hover, a.kpi:focus-visible { transform: translateY(-2px); border-color: va
 .linea-tiempo__punto--suspender_tienda, .linea-tiempo__punto--desactivar_cuenta, .linea-tiempo__punto--eliminar_cuenta,
 .linea-tiempo__punto--ocultar_producto, .linea-tiempo__punto--eliminacion_auto { background: #DC3545; }
 .linea-tiempo__punto--reactivar_tienda, .linea-tiempo__punto--reactivar_cuenta, .linea-tiempo__punto--mostrar_producto { background: #198754; }
-.linea-tiempo__punto--restablecer_clave { background: var(--nx-acento); }
+.linea-tiempo__punto--restablecer_clave, .linea-tiempo__punto--responder_derecho { background: var(--nx-acento); }
 .consola-datos { display: flex; flex-wrap: wrap; gap: 1.25rem; }
 .consola-datos .bi { color: var(--nx-acento-texto); }
 
@@ -1523,3 +1523,16 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 .tarjeta-cercana__botones { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .7rem; }
 .distancia { padding: .1rem .55rem; border-radius: 999px; background: rgba(var(--nx-acento-rgb), .15); color: var(--nx-acento-texto); font-size: .8rem; font-weight: 700; }
 .text-acento { color: var(--nx-acento-texto); }
+
+/* Política de privacidad: dato del responsable que falta en el .env (PRIVACIDAD_*) */
+.dato-pendiente { color: #B42318; font-weight: 600; font-style: italic; }
+
+/* Aceptar la política al entrar y formulario de derechos */
+.aceptar-politica { max-width: 640px; margin: 0 auto; }
+.aceptar-politica__resumen { display: grid; gap: .65rem; margin: 1rem 0 1.25rem; padding: 0; list-style: none; }
+.aceptar-politica__resumen li { display: flex; gap: .65rem; align-items: flex-start; }
+.aceptar-politica__resumen i { color: var(--nx-acento-oscuro, #0E7490); font-size: 1.15rem; line-height: 1.3; }
+.opciones-derecho { display: grid; gap: .5rem; }
+.opciones-derecho .form-check { border: 1px solid var(--nx-borde); border-radius: .6rem; padding: .6rem .75rem .6rem 2.25rem; background: var(--nx-blanco); }
+.opciones-derecho .form-check:has(input:checked) { border-color: var(--nx-acento); box-shadow: 0 0 0 .15rem rgba(var(--nx-acento-rgb), .2); }
+

@@ -19,4 +19,8 @@ urlpatterns = [
     path("usuarios/<int:pk>/eliminar/", views.usuario_eliminar, name="usuario_eliminar"),
     path("usuarios/<int:pk>/clave/", views.usuario_clave, name="usuario_clave"),
     path("historial/", views.historial, name="historial"),
+    path("errores/", views.errores, name="errores"),
+    path("errores/revisado/", views.errores_revisado, name="errores_revisado"),
+    path("privacidad/", views.solicitudes, name="solicitudes"),
+    path("privacidad/<int:pk>/", views.solicitud_detalle, name="solicitud_detalle"),
 ]

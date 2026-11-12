@@ -107,7 +107,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script {% csp_nonce_attr %}>
   // "Soy cliente / Soy tienda": cambia el subtítulo, el botón y el enlace de registro.
   (function () {
     function actualizar(tipo) {

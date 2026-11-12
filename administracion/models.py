@@ -20,6 +20,7 @@ class AccionAdmin(models.Model):
         MOSTRAR_PRODUCTO = "mostrar_producto", "Volvió a mostrar un producto"
         ELIMINACION_AUTOMATICA = "eliminacion_auto", "Eliminación automática (90 días suspendida)"
         RESTABLECER_CLAVE = "restablecer_clave", "Restableció una contraseña"
+        RESPONDER_SOLICITUD = "responder_derecho", "Respondió una solicitud de datos personales"
 
     fecha = models.DateTimeField("fecha", auto_now_add=True, db_index=True)
     admin = models.ForeignKey(
@@ -50,3 +51,33 @@ class AccionAdmin(models.Model):
 
     def __str__(self):
         return f"{self.fecha:%d/%m/%Y %H:%M} · {self.admin_nombre} · {self.get_tipo_display()} · {self.objetivo}"
+
+
+class ErrorRegistrado(models.Model):
+    """
+    Error de la página (respuesta 500) para que el administrador se entere sin mirar el servidor.
+
+    Los errores iguales (mismo tipo, mismo lugar del código y misma página) se juntan en una sola fila
+    que cuenta cuántas veces pasó. Lo guarda administracion/registro_errores.py.
+    No guarda contraseñas ni lo que la persona escribió en los formularios: solo dónde falló el código.
+    """
+
+    firma = models.CharField("firma", max_length=64, unique=True)
+    tipo = models.CharField("tipo de error", max_length=120)
+    mensaje = models.CharField("mensaje", max_length=500, blank=True)
+    ruta = models.CharField("página", max_length=300)
+    metodo = models.CharField("método", max_length=10, blank=True)
+    usuario = models.CharField("cuenta", max_length=150, blank=True)
+    detalle = models.TextField("detalle técnico", blank=True)
+    veces = models.PositiveIntegerField("veces", default=1)
+    primera = models.DateTimeField("primera vez", auto_now_add=True)
+    ultima = models.DateTimeField("última vez", db_index=True)
+    revisado = models.BooleanField("revisado", default=False)
+
+    class Meta:
+        ordering = ["revisado", "-ultima"]
+        verbose_name = "error de la página"
+        verbose_name_plural = "errores de la página"
+
+    def __str__(self):
+        return f"{self.tipo} en {self.ruta} ({self.veces})"

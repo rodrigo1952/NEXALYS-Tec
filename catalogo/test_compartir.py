@@ -82,7 +82,7 @@ class CompartirTests(BaseCatalogo):
 
     def test_script_compartir(self):
         respuesta = self.client.get(reverse("inicio"))
-        self.assertContains(respuesta, "js/compartir.js?v=1")
+        self.assertContains(respuesta, "js/compartir.js")
         with open(finders.find("js/compartir.js"), encoding="utf-8") as archivo:
             codigo = archivo.read()
         for texto in ("navigator.share", "(pointer: coarse)", "clipboard.writeText", "AbortError", "Enlace copiado"):

@@ -2,5 +2,6 @@ asgiref==3.12.1
 Django==6.1.1
 sqlparse==0.6.0
 tzdata==2026.4
-pillow>=11.3
-openpyxl>=3.1
+pillow==12.3.0
+openpyxl==3.1.5
+et_xmlfile==2.0.0

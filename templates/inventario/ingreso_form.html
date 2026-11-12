@@ -70,8 +70,8 @@
   </div>
 </form>
 
-<script src="{% static 'js/buscador_productos.js' %}?v=1"></script>
-<script>
+<script src="{% static 'js/buscador_productos.js' %}"></script>
+<script {% csp_nonce_attr %}>
 (function () {
   const filas = Array.from(document.querySelectorAll("#form-ingreso .linea"));
   const totalEl = document.getElementById("total");

@@ -7,7 +7,7 @@
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <a href="{% url 'inventario:ventas' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a ventas</a>
     <div class="d-flex gap-2">
-      <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i> Imprimir</button>
+      <button type="button" class="btn btn-primary" data-imprimir><i class="bi bi-printer" aria-hidden="true"></i> Imprimir</button>
       {# Abre la ventana de confirmación; sin JavaScript, el enlace lleva a la página para anular. #}
       {% if not venta.anulada %}<a href="{% url 'inventario:venta_anular' venta.pk %}" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modal-anular-venta">Anular venta</a>{% endif %}
     </div>

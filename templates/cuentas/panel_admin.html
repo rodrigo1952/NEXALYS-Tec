@@ -71,13 +71,38 @@
         <h2 class="h6 mb-0" id="titulo-pendientes">Tareas pendientes</h2>
         {% if num_pendientes %}<span class="badge rounded-pill text-bg-warning">{{ num_pendientes }}</span>{% endif %}
       </div>
-      {% if not por_verificar and not por_eliminarse %}
+      {% if not num_pendientes %}
         <div class="vacio-consola">
           <i class="bi bi-check2-circle" aria-hidden="true"></i>
-          <p class="mb-0">Todo al día: no hay tiendas por verificar ni por eliminarse.</p>
+          <p class="mb-0">Todo al día: no hay tiendas por verificar ni por eliminarse, ni errores ni solicitudes de datos personales.</p>
         </div>
       {% else %}
         <ul class="tareas">
+          {% for s in solicitudes_pendientes %}
+            <li>
+              <a href="{% url 'administracion:solicitud_detalle' s.pk %}">
+                <span class="tareas__icono tareas__icono--ambar"><i class="bi bi-file-earmark-lock" aria-hidden="true"></i></span>
+                <span class="min-w-0"><strong class="text-truncate d-block">{{ s.nombre_corto_tipo }} · {{ s.nombre }}</strong><small>Datos personales · responder hasta el {{ s.vence|date:"d/m/Y" }}</small></span>
+                <span class="badge ms-auto {% if s.dias_restantes <= 2 %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{% if s.dias_restantes < 0 %}vencida{% else %}{{ s.dias_restantes }} día{{ s.dias_restantes|pluralize }}{% endif %}</span>
+              </a>
+            </li>
+          {% endfor %}
+          {% if datos_privacidad_faltantes %}
+            <li>
+              <a href="{% url 'administracion:solicitudes' %}">
+                <span class="tareas__icono tareas__icono--rojo"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span>
+                <span class="min-w-0"><strong class="text-truncate d-block">Completa los datos de privacidad</strong><small>Faltan {{ datos_privacidad_faltantes|length }} en el .env · la política dice «por completar»</small></span>
+              </a>
+            </li>
+          {% endif %}
+          {% if errores_sin_revisar %}
+            <li>
+              <a href="{% url 'administracion:errores' %}">
+                <span class="tareas__icono tareas__icono--rojo"><i class="bi bi-bug" aria-hidden="true"></i></span>
+                <span class="min-w-0"><strong class="text-truncate d-block">{{ errores_sin_revisar }} error{{ errores_sin_revisar|pluralize:"es" }} de la página</strong><small>Alguna página falló · revisa el detalle</small></span>
+              </a>
+            </li>
+          {% endif %}
           {% for t in por_verificar %}
             <li>
               <a href="{% url 'administracion:tienda_detalle' t.pk %}">
@@ -136,7 +161,7 @@
 
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script>
+<script {% csp_nonce_attr %}>
 (function () {
   if (!window.Chart) return;  // sin internet: queda la lista con los mismos datos
   var meses = JSON.parse(document.getElementById("datos-meses").textContent);

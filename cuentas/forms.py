@@ -11,8 +11,66 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
+from django.utils.html import format_html
+
 from .estilos import EstiloBootstrapMixin
+from .models import SolicitudDerecho
 from .reautenticacion import ConfirmarClaveMixin
+
+
+class AceptarPrivacidadMixin:
+    """
+    Casilla «Acepto la política de privacidad» (Ley 29733): empieza SIN marcar y es obligatoria.
+    La prueba (versión y fecha) la guarda la vista con cuentas.privacidad.registrar_aceptacion.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["acepto_privacidad"] = forms.BooleanField(
+            required=True,
+            label=format_html(
+                'He leído y acepto la <a href="{}" target="_blank" rel="noopener">política de privacidad</a>',
+                reverse("privacidad"),
+            ),
+            help_text=(
+                "Usamos tus datos solo para tu cuenta y para que funcione la página; no los vendemos. "
+                "Puedes pedir verlos, corregirlos o borrarlos cuando quieras."
+            ),
+            error_messages={"required": "Para crear la cuenta debes aceptar la política de privacidad."},
+            widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        )
+
+
+class AceptarPoliticaForm(forms.Form):
+    """Para las cuentas que ya existían o cuando la política cambia: aceptar al entrar."""
+
+    acepto = forms.BooleanField(
+        required=True,
+        label="He leído y acepto la política de privacidad",
+        error_messages={"required": "Marca la casilla para aceptar la política y seguir."},
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
+    )
+
+
+class SolicitudDerechoForm(EstiloBootstrapMixin, forms.ModelForm):
+    """Formulario para pedir un derecho sobre los datos personales (información, acceso, etc.)."""
+
+    class Meta:
+        model = SolicitudDerecho
+        fields = ("nombre", "correo", "tipo", "detalle")
+        widgets = {"tipo": forms.RadioSelect, "detalle": forms.Textarea(attrs={"rows": 4})}
+        help_texts = {
+            "detalle": "Cuéntanos qué necesitas. Si es una corrección, indica el dato correcto.",
+            "correo": "Te responderemos a este correo. Si tienes cuenta, usa el correo de tu cuenta.",
+        }
+
+    def __init__(self, *args, usuario=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["tipo"].widget.attrs["class"] = "form-check-input"
+        self.fields["tipo"].choices = [c for c in self.fields["tipo"].choices if c[0]]
+        if usuario is not None and usuario.is_authenticated:
+            self.fields["nombre"].initial = usuario.get_full_name() or usuario.username
+            self.fields["correo"].initial = usuario.email
 
 
 class IngresoForm(AuthenticationForm):
@@ -101,7 +159,7 @@ class IngresoForm(AuthenticationForm):
             raise
 
 
-class RegistroForm(EstiloBootstrapMixin, UserCreationForm):
+class RegistroForm(AceptarPrivacidadMixin, EstiloBootstrapMixin, UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True, label="Nombres")
     last_name = forms.CharField(max_length=150, required=True, label="Apellidos")
     email = forms.EmailField(required=True, label="Correo electrónico")

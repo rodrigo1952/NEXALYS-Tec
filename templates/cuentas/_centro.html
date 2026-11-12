@@ -57,7 +57,7 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
           <li><a href="{% url 'password_change' %}" class="{% if vista == 'password_change' or vista == 'password_change_done' %}activo{% endif %}"{% if vista == 'password_change' %} aria-current="page"{% endif %}><i class="bi bi-shield-lock" aria-hidden="true"></i>Seguridad</a></li>
         {% endif %}
         <li><a href="{% url 'ayuda' %}" class="{% if vista == 'ayuda' %}activo{% endif %}"{% if vista == 'ayuda' %} aria-current="page"{% endif %}><i class="bi bi-question-circle" aria-hidden="true"></i>Ayuda y soporte</a></li>
-        <li><a href="{% url 'privacidad' %}" class="{% if vista == 'privacidad' %}activo{% endif %}"{% if vista == 'privacidad' %} aria-current="page"{% endif %}><i class="bi bi-file-earmark-lock" aria-hidden="true"></i>Privacidad y términos</a></li>
+        <li><a href="{% url 'privacidad' %}" class="{% if vista == 'privacidad' or vista == 'privacidad_solicitud' %}activo{% endif %}"{% if vista == 'privacidad' %} aria-current="page"{% endif %}><i class="bi bi-file-earmark-lock" aria-hidden="true"></i>Privacidad y términos</a></li>
       </ul>
       {% if user.is_authenticated %}
         <ul class="centro-cuenta__enlaces centro-cuenta__enlaces--accesos">
@@ -75,7 +75,7 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
         <a href="{% url 'login' %}" class="btn btn-primary w-100 mt-3">Iniciar sesión</a>
       {% endif %}
     </nav>
-    <script>
+    <script {% csp_nonce_attr %}>
       // En el celular las secciones son una fila que se desliza: se deja a la vista la que está abierta.
       (function () {
         var activo = document.querySelector(".centro-cuenta__enlaces a.activo");
@@ -114,7 +114,7 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
     </div>
   </div>
 </form>
-<script>
+<script {% csp_nonce_attr %}>
   (function () {
     var boton = document.getElementById("cambiar-logo");
     var archivo = document.getElementById("archivo-logo");

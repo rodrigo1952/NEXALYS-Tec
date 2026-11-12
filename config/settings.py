@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.csp import CSP
 
 from . import entorno
 from .entorno import cargar_env
@@ -98,7 +99,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'cuentas.middleware.ClaveTemporalMiddleware',  # obliga a cambiar una clave temporal
+    'cuentas.middleware.PrivacidadMiddleware',  # pide aceptar la política de privacidad vigente
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.csp.ContentSecurityPolicyMiddleware',  # cabecera CSP (ver SECURE_CSP)
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -117,6 +120,7 @@ TEMPLATES = [
                 'favoritos.context_processors.favoritos',
                 'catalogo.context_processors.categorias_menu',
                 'config.context_processors.sitio',
+                'django.template.context_processors.csp',  # {% csp_nonce_attr %} en los <script> de las plantillas
             ],
         },
     },
@@ -182,15 +186,22 @@ USE_TZ = True
 STATIC_URL = 'static/'
 # Carpeta con los archivos propios del proyecto: static/css/marca.css (colores) y static/img/favicon.svg
 STATICFILES_DIRS = [BASE_DIR / 'static']
+# En el servidor: python manage.py collectstatic junta aquí los archivos para que el hosting los sirva.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Archivos subidos por los usuarios (imagenes de productos)
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Al borrar una foto, también se borran sus miniaturas (catalogo/almacenamiento.py).
+# En el servidor (DEBUG=False), collectstatic le pone una huella a cada CSS/JS (marca.abc123.css):
+# si el archivo cambia, cambia el nombre y los navegadores bajan la versión nueva sin subir ?v= a mano.
 STORAGES = {
     'default': {'BACKEND': 'catalogo.almacenamiento.AlmacenamientoConMiniaturas'},
-    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage' if DEBUG
+        else 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage',
+    },
 }
 
 
@@ -203,8 +214,39 @@ MAILERS = {
     },
 }
 
+# Aviso de errores (administracion/registro_errores.py): cada error 500 queda en la consola del
+# administrador (Control → Errores). Con DEBUG=False y correo real, Django también lo manda a ADMINS.
+ADMINS = entorno.lista("CORREO_ADMIN")
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'consola_admin': {'level': 'ERROR', 'class': 'administracion.registro_errores.GuardarError'},
+    },
+    'loggers': {
+        # propagate=True: siguen funcionando el aviso de Django en la terminal y el correo a ADMINS.
+        'django.request': {'handlers': ['consola_admin'], 'level': 'ERROR', 'propagate': True},
+    },
+}
+
+# Correo de ayuda que se muestra en «Ayuda y soporte».
+CORREO_SOPORTE = entorno.texto("CORREO_SOPORTE", "soporte@nexalys.pe")
+
+# Datos del responsable de los datos personales (Ley 29733), para la política de privacidad.
+# Mientras falten, la consola del administrador lo avisa en «Tareas pendientes» (ver .env.example).
+PRIVACIDAD_TITULAR = entorno.texto("PRIVACIDAD_TITULAR")
+PRIVACIDAD_DOCUMENTO = entorno.texto("PRIVACIDAD_DOCUMENTO")
+PRIVACIDAD_DIRECCION = entorno.texto("PRIVACIDAD_DIRECCION")
+PRIVACIDAD_CORREO = entorno.texto("PRIVACIDAD_CORREO")
+PRIVACIDAD_BANCO_DATOS = entorno.texto("PRIVACIDAD_BANCO_DATOS")
+PRIVACIDAD_SERVIDOR = entorno.texto("PRIVACIDAD_SERVIDOR")
+# Si es True, quien no aceptó la política vigente debe aceptarla al entrar (las pruebas lo apagan).
+PRIVACIDAD_OBLIGATORIA = True
+TEST_RUNNER = 'config.pruebas.Pruebas'
+
 # Remitente de los correos del sistema (en desarrollo se muestran en la consola)
 DEFAULT_FROM_EMAIL = 'NEXALYS Tec <no-responder@nexalys.local>'
+SERVER_EMAIL = DEFAULT_FROM_EMAIL  # remitente de los avisos de error
 
 # Autenticacion
 LOGIN_URL = 'login'
@@ -219,3 +261,31 @@ VERIFICACION_TIENDA_HORAS = 24
 
 # Usar el formato numérico de config/formats (punto decimal)
 FORMAT_MODULE_PATH = ["config.formats"]
+
+
+# Cabecera de seguridad CSP: el navegador solo ejecuta scripts de la propia página, de las librerías
+# de los CDN con su versión exacta y los <script> en línea que llevan {% csp_nonce_attr %} (un código
+# al azar distinto en cada visita). Un script inyectado por un atacante no tiene ese código y no corre.
+# Si agregas una librería de otro sitio, súmala aquí. Los estilos en línea (style="...") siguen permitidos.
+SECURE_CSP = {
+    'default-src': [CSP.SELF],
+    'script-src': [
+        CSP.SELF, CSP.NONCE,
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/',
+        'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/',
+        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/',
+    ],
+    'style-src': [
+        CSP.SELF, CSP.UNSAFE_INLINE, 'https://fonts.googleapis.com',
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/',
+        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/',
+    ],
+    'font-src': [CSP.SELF, 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/'],
+    # data: = íconos de Bootstrap dentro del CSS; los cuadros del mapa vienen de OpenStreetMap.
+    'img-src': [CSP.SELF, 'data:', 'blob:', 'https://tile.openstreetmap.org', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/'],
+    'connect-src': [CSP.SELF],
+    'object-src': [CSP.NONE],
+    'base-uri': [CSP.SELF],
+    'form-action': [CSP.SELF],
+    'frame-ancestors': [CSP.NONE],
+}

@@ -13,6 +13,8 @@ from django.views.decorators.http import require_POST
 
 from catalogo.models import Producto
 from cuentas import limites
+from cuentas.models import ConsentimientoPrivacidad
+from cuentas.privacidad import registrar_aceptacion
 from cuentas.concurrencia import validar_y_guardar
 from cuentas.reautenticacion import confirmada_recientemente, marcar_confirmada
 
@@ -63,6 +65,8 @@ def registro_tienda(request):
         usuario = validar_y_guardar(form)  # usuario y tienda se guardan juntos o no se guarda nada
         if usuario:
             login(request, usuario)
+            # Prueba del consentimiento (Ley 29733): versión de la política, fecha y conexión.
+            registrar_aceptacion(request, usuario, ConsentimientoPrivacidad.Origen.REGISTRO_TIENDA)
             if _enviar_verificacion(request, usuario.tienda):
                 messages.success(
                     request,

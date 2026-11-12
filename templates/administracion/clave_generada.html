@@ -27,7 +27,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script {% csp_nonce_attr %}>
   (function () {
     var boton = document.getElementById("copiar-clave");
     if (!boton || !navigator.clipboard) { if (boton) boton.classList.add("d-none"); return; }

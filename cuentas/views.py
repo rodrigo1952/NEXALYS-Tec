@@ -1,6 +1,7 @@
 import logging
 from functools import wraps
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
@@ -9,6 +10,8 @@ from django.contrib.auth.views import LoginView, PasswordResetView
 from django.core.exceptions import NON_FIELD_ERRORS, PermissionDenied, ValidationError
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from catalogo.destacados import destacados_en_turnos
@@ -73,6 +76,11 @@ def registro(request):
             grupo, _ = Group.objects.get_or_create(name="Cliente")
             usuario.groups.add(grupo)
             CorreoPendiente.objects.create(usuario=usuario)
+            # Prueba del consentimiento (Ley 29733): versión de la política, fecha y conexión.
+            from .models import ConsentimientoPrivacidad
+            from .privacidad import registrar_aceptacion
+
+            registrar_aceptacion(request, usuario, ConsentimientoPrivacidad.Origen.REGISTRO_CLIENTE)
             _enviar_confirmacion(request, usuario)
             request.session["correo_por_confirmar"] = usuario.email
             return redirect("confirmacion_pendiente")
@@ -197,7 +205,7 @@ def eliminar_cuenta(request):
 # Ayuda y soporte / Privacidad y términos (menú de la cuenta)
 # ---------------------------------------------------------------------------
 
-CORREO_SOPORTE = "soporte@nexalys.pe"  # de demostración: cámbialo cuando tengan uno real
+CORREO_SOPORTE = settings.CORREO_SOPORTE  # CORREO_SOPORTE en el .env
 
 
 def ayuda(request):
@@ -206,8 +214,95 @@ def ayuda(request):
 
 
 def privacidad(request):
-    """Qué datos se guardan y para qué (Ley 29733) y reglas de uso del marketplace."""
-    return render(request, "cuentas/privacidad.html", {"correo_soporte": CORREO_SOPORTE})
+    """Política de privacidad (Ley 29733: los 10 puntos que hay que informar) y reglas de uso."""
+    from .privacidad import PLAZOS, VERSION_POLITICA, datos_titular
+
+    return render(request, "cuentas/privacidad.html", {
+        "correo_soporte": CORREO_SOPORTE,
+        "titular": datos_titular(),
+        "version": VERSION_POLITICA,
+        "plazos": PLAZOS,
+        "dias_sesion": settings.SESSION_COOKIE_AGE // 86400,
+    })
+
+
+def privacidad_aceptar(request):
+    """Cuentas anteriores a la casilla o política nueva: aceptar la política vigente para seguir."""
+    from .forms import AceptarPoliticaForm
+    from .models import ConsentimientoPrivacidad
+    from .privacidad import VERSION_POLITICA, acepto_version_vigente, registrar_aceptacion
+
+    if not request.user.is_authenticated:
+        return redirect("privacidad")
+    siguiente = request.POST.get("next") or request.GET.get("next") or ""
+    if not url_has_allowed_host_and_scheme(siguiente, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        siguiente = ""
+    if acepto_version_vigente(request):
+        return redirect(siguiente or destino_por_rol(request.user))
+    form = AceptarPoliticaForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        registrar_aceptacion(request, request.user, ConsentimientoPrivacidad.Origen.AL_ENTRAR)
+        messages.success(request, "Gracias. Aceptaste la política de privacidad.")
+        return redirect(siguiente or destino_por_rol(request.user))
+    return render(request, "cuentas/privacidad_aceptar.html", {
+        "form": form,
+        "next": siguiente,
+        "version": VERSION_POLITICA,
+        "es_actualizacion": ConsentimientoPrivacidad.objects.filter(usuario=request.user).exists(),
+        "puede_eliminar": _puede_eliminar_cuenta(request.user),
+    })
+
+
+def privacidad_solicitud(request):
+    """Pedir un derecho sobre los datos personales. Llega a la consola con su fecha límite."""
+    from .forms import SolicitudDerechoForm
+    from .privacidad import PLAZOS, sumar_dias_habiles
+
+    form = SolicitudDerechoForm(request.POST or None, usuario=request.user)
+    if request.method == "POST" and form.is_valid():
+        correo = form.cleaned_data["correo"]
+        espera = limites.segundos_de_espera(limites.SOLICITUD_DERECHO, request, correo)
+        if espera:
+            form.add_error(None, limites.mensaje_de_espera(espera))
+        else:
+            limites.anotar(limites.SOLICITUD_DERECHO, request, correo)
+            solicitud = form.save(commit=False)
+            solicitud.usuario = request.user if request.user.is_authenticated else None
+            solicitud.vence = sumar_dias_habiles(timezone.localdate(), PLAZOS[solicitud.tipo])
+            solicitud.save()
+            _avisar_solicitud_recibida(solicitud)
+            return render(request, "cuentas/privacidad_solicitud_enviada.html", {"solicitud": solicitud})
+    return render(request, "cuentas/privacidad_solicitud.html", {"form": form, "plazos": PLAZOS})
+
+
+def _avisar_solicitud_recibida(solicitud):
+    """Constancia por correo para quien pidió (si el correo no sale, la solicitud igual queda guardada)."""
+    from django.core.mail import send_mail
+
+    try:
+        send_mail(
+            "Recibimos tu solicitud sobre tus datos personales | NEXALYS Tec",
+            f"Hola, {solicitud.nombre}:\n\n"
+            f"Recibimos tu solicitud de {solicitud.nombre_corto_tipo.lower()} el {solicitud.creada:%d/%m/%Y}.\n"
+            f"Te responderemos a este correo a más tardar el {solicitud.vence:%d/%m/%Y}.\n\n"
+            f"Tu pedido:\n{solicitud.detalle}\n\nNEXALYS Tec",
+            None,
+            [solicitud.correo],
+        )
+    except Exception:
+        logger.exception("No se pudo enviar la constancia de la solicitud de derechos")
+
+
+@login_required
+def mis_datos(request):
+    """Descargar mis datos (derecho de acceso): un archivo con todo lo que la página guarda de la cuenta."""
+    from django.http import HttpResponse
+
+    from .mis_datos import archivo_json
+
+    respuesta = HttpResponse(archivo_json(request.user), content_type="application/json; charset=utf-8")
+    respuesta["Content-Disposition"] = f'attachment; filename="mis-datos-nexalys-{request.user.username}.json"'
+    return respuesta
 
 
 class IngresoView(LoginView):

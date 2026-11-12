@@ -1,0 +1,52 @@
+{% extends "administracion/_consola.html" %}
+{% block titulo %}Privacidad | Administración | NEXALYS Tec{% endblock %}
+{% block consola %}
+<div class="consola-cabecera">
+  <div>
+    <p class="consola-cabecera__antetitulo">Control</p>
+    <h1 class="h3 mb-0">Solicitudes de datos personales</h1>
+  </div>
+  <a href="{% url 'privacidad' %}" class="btn btn-outline-primary" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Ver la política</a>
+</div>
+
+{% if faltantes %}
+  <div class="alert alert-warning">
+    <strong>Faltan datos en la política de privacidad.</strong> Escríbelos en el archivo <code>.env</code> (ver <code>.env.example</code>) y reinicia la página:
+    {{ faltantes|join:", " }}.
+  </div>
+{% endif %}
+
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item"><a class="nav-link{% if ver != 'todas' %} active" aria-current="page{% endif %}" href="?ver=pendientes">Sin responder <span class="badge text-bg-light">{{ pendientes }}</span></a></li>
+  <li class="nav-item"><a class="nav-link{% if ver == 'todas' %} active" aria-current="page{% endif %}" href="?ver=todas">Todas</a></li>
+</ul>
+
+<div class="tabla-consola">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr><th>Recibida</th><th>Persona</th><th>Pide</th><th>Responder hasta</th><th>Estado</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for s in pagina %}
+          <tr>
+            <td class="small text-nowrap">{{ s.creada|date:"d/m/Y H:i" }}</td>
+            <td class="small">{{ s.nombre }}<br><span class="text-muted">{{ s.correo }}{% if s.usuario %} · cuenta {{ s.usuario.username }}{% else %} · sin cuenta{% endif %}</span></td>
+            <td class="small">{{ s.nombre_corto_tipo }}</td>
+            <td class="small text-nowrap">
+              {{ s.vence|date:"d/m/Y" }}
+              {% if s.estado == "pendiente" %}<span class="badge {% if s.dias_restantes <= 2 %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{% if s.dias_restantes < 0 %}vencida{% else %}{{ s.dias_restantes }} día{{ s.dias_restantes|pluralize }}{% endif %}</span>{% endif %}
+            </td>
+            <td class="small">{% if s.estado == "pendiente" %}<span class="badge text-bg-warning">Sin responder</span>{% else %}<span class="badge text-bg-success">Respondida</span>{% endif %}</td>
+            <td class="text-end"><a href="{% url 'administracion:solicitud_detalle' s.pk %}" class="btn btn-sm btn-outline-primary text-nowrap">{% if s.estado == "pendiente" %}Responder{% else %}Ver{% endif %}</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-5"><i class="bi bi-check2-circle" aria-hidden="true"></i> {% if ver == 'todas' %}Todavía no llegó ninguna solicitud.{% else %}No hay solicitudes sin responder.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="nota-consola"><i class="bi bi-info-circle" aria-hidden="true"></i><span>La Ley 29733 da como máximo 8 días hábiles para la información, 20 para el acceso y 10 para corregir, borrar u oponerse. La fecha cuenta de lunes a viernes, sin feriados.</span></p>
+{% include "catalogo/_paginacion.html" %}
+{% endblock %}

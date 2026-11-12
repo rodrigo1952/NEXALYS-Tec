@@ -19,8 +19,10 @@
 - Bootstrap 5.3.3 y Bootstrap Icons 1.11.3 (jsDelivr), Chart.js 4.4.1 y **Leaflet 1.9.4** (cdnjs) con los mapas de
   **OpenStreetMap** (sin clave ni costo). Letra Space Grotesk (Google Fonts); el logo animado de Inicio usa Lilita One.
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
-  Si se cambia `marca.css`, subir el número `?v=` en `templates/base.html` (va en **v=31**).
+  (Antes se subía `?v=` a mano; ya no hace falta.)
   Lo mismo con los scripts propios: `galeria_producto.js?v=5`, `catalogo.js?v=2`, `mapas.js?v=1`, `horario.js?v=2`, `whatsapp.js?v=2`, `compartir.js?v=1`.
+  **Ya no se usa `?v=`**: en el servidor `ManifestStaticFilesStorage` + `collectstatic` ponen la huella al nombre
+  (`STATIC_ROOT = staticfiles/`, fuera de git). `requirements.txt` con versiones exactas (pillow 12.3.0, openpyxl 3.1.5).
   Tarjetas, campos de formulario y **filas de todas las tablas en blanco** en todo el sitio (el fondo de la página
   sigue gris claro); al enfocar un campo, borde y brillo cian; al pasar el mouse por una fila, celeste muy suave.
 - **Datos secretos en `.env`** (junto a `manage.py`, NO va a GitHub; modelo en `.env.example`, lo lee
@@ -257,13 +259,28 @@
 - Compartir: `Producto/Tienda.get_absolute_url()` y `enlace_publico()` (SITIO_URL); mensaje de WhatsApp con el
   enlace al final; etiquetas Open Graph en `base.html` (bloques `descripcion` y `vista_previa`), producto y
   tienda; botón `templates/_compartir.html` + `static/js/compartir.js` (táctil → menú del teléfono; PC → copia).
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **648 pruebas, OK**.
+- **CSP** (`SECURE_CSP` en settings, middleware de Django 6): todo `<script>` en plantilla lleva `{% csp_nonce_attr %}`;
+  prohibido `onclick=`/`onchange=` (usar `data-imprimir`, `data-enviar-al-cambiar` o addEventListener). Comentarios
+  `{# #}` solo de UNA línea (si no, el texto sale en la página; hay prueba).
+- **Aviso de errores**: `administracion/registro_errores.py` (handler en LOGGING de `django.request`) guarda cada 500
+  en `ErrorRegistrado` (agrupados por firma, máx. 300); consola Control → Errores, globo y tarea en el Resumen;
+  correo a `ADMINS` (`CORREO_ADMIN` del .env) cuando haya SMTP.
+- **Privacidad Ley 29733**: `cuentas/privacidad.py` (`VERSION_POLITICA` = 2026-11-11, plazos 8/20/10 días hábiles),
+  modelos `ConsentimientoPrivacidad` y `SolicitudDerecho` (migración cuentas 0006), casilla `acepto_privacidad` en
+  ambos registros, `PrivacidadMiddleware` (aceptar al entrar; admin exento; las pruebas lo apagan con
+  `config/pruebas.py`), `/privacidad/aceptar/`, `/privacidad/solicitud/`, `/mi-cuenta/mis-datos/` (JSON), consola
+  Control → Privacidad (responder envía correo y queda en el historial). Datos del responsable en el .env
+  (`PRIVACIDAD_*`); mientras falten: «por completar» en la política y tarea en el Resumen.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **698 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 
 - Publicar la página: hosting para Django (cotizado PythonAnywhere, plan Developer) y dominio .pe.
   Al publicar: **https obligatorio** (sin él no funciona «Usar mi ubicación»), `.env` de producción
-  (`python config/crear_env.py --produccion`), Force HTTPS en PythonAnywhere, correo SMTP real. Si los mapas tuvieran mucho tráfico, cambiar el proveedor de
+  (`python config/crear_env.py --produccion`), Force HTTPS en PythonAnywhere, correo SMTP real,
+  `collectstatic` y mapeo /static/ y /media/ en la pestaña Web. Trámites del usuario: inscribir el banco de datos
+  en el Registro Nacional de Protección de Datos Personales (gratis) y declarar el flujo transfronterizo si el
+  servidor está fuera del Perú. Si los mapas tuvieran mucho tráfico, cambiar el proveedor de
   cuadros de OpenStreetMap (una línea en `mapas.js`).
 - El correo de soporte `soporte@nexalys.pe` es de demostración (`cuentas/views.py`, `CORREO_SOPORTE`).
 - Los manuales del Entregable 8 se hicieron antes de: la galería única de fotos, el stock bloqueado al editar,

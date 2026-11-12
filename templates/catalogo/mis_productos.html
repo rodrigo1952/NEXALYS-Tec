@@ -26,7 +26,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
   <input id="buscar-mis-productos" type="search" name="q" value="{{ q }}" class="form-control flex-grow-1" style="flex-basis: 16rem; width: auto" placeholder="Buscar por nombre">
   {% if marcas %}
     <label for="filtro-marca" class="visually-hidden">Marca</label>
-    <select id="filtro-marca" name="marca" class="form-select" style="width: auto" onchange="this.form.submit()">
+    <select id="filtro-marca" name="marca" class="form-select" style="width: auto" data-enviar-al-cambiar>
       <option value="">Todas las marcas</option>
       {% for m in marcas %}
         <option value="{{ m.marca_id }}"{% if m.marca_id == marca_id %} selected{% endif %}>{{ m.marca__nombre }} ({{ m.cantidad }})</option>

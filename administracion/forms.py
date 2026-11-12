@@ -78,3 +78,16 @@ class RestablecerClaveForm(EstiloBootstrapMixin, forms.Form):
         motivo = dict(self.MOTIVOS)[self.cleaned_data["motivo"]]
         detalle = (self.cleaned_data.get("detalle") or "").strip()
         return f"{motivo}. {detalle}" if detalle else motivo
+
+
+class RespuestaSolicitudForm(EstiloBootstrapMixin, forms.Form):
+    """Respuesta a una solicitud de derechos: se envía por correo a quien la pidió y queda guardada."""
+
+    respuesta = forms.CharField(
+        label="Respuesta",
+        min_length=10,
+        max_length=3000,
+        widget=forms.Textarea(attrs={"rows": 6, "placeholder": "Ej.: Corregimos tu correo. Desde hoy tu cuenta usa ana.quispe@correo.com."}),
+        help_text="Se envía al correo de la persona y queda en el historial. Antes de entregar o borrar datos, confirma que es la dueña de la cuenta.",
+    )
+

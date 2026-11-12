@@ -184,6 +184,14 @@ Con `DEBUG=False` las cookies viajan solo por HTTPS y el navegador recuerda usar
 
 Antes de publicar, revisar con: `python manage.py check --deploy` (en el servidor).
 
+### Archivos estáticos y fotos en el servidor
+
+Con `DEBUG=False`, Django no entrega el CSS, el JavaScript ni las fotos: lo hace el hosting.
+
+1. En el servidor, cada vez que cambie algo de `static/`: `python manage.py collectstatic --noinput` (los junta en `staticfiles/` y les pone una huella al nombre, p. ej. `marca.3f2a9c1b7d4e.css`; así los navegadores bajan siempre la versión nueva y ya no se sube `?v=` a mano).
+2. En PythonAnywhere, pestaña *Web* → *Static files*: URL `/static/` → carpeta `.../nexalys/staticfiles` y URL `/media/` → carpeta `.../nexalys/media`.
+3. Las versiones de las librerías están fijas en `requirements.txt` (las mismas de la PC de desarrollo).
+
 ### Seguridad del inicio de sesión
 
 - 5 contraseñas equivocadas para un usuario desde la misma conexión → 15 minutos de espera; 20 desde una misma conexión con cualquier usuario → 15 minutos.
@@ -195,3 +203,24 @@ Antes de publicar, revisar con: `python manage.py check --deploy` (en el servido
 - Las tarjetas usan **miniaturas** (600 px; 160 px en las miniaturas pequeñas) en `media/miniaturas/`. Se crean solas la primera vez y se borran junto con la foto original. Para crearlas todas de una vez: `python manage.py crear_miniaturas`.
 - El mensaje de WhatsApp lleva el enlace del producto al final; WhatsApp muestra una vista previa con foto, nombre y precio (solo con la página publicada en internet).
 - Botón **Compartir** en el detalle del producto y en la página de la tienda: en el celular abre el menú de compartir; en la PC copia el enlace.
+
+### Cabecera de seguridad (CSP)
+
+El navegador solo ejecuta los scripts de la propia página, los de Bootstrap, Chart.js y Leaflet (con su versión exacta) y los `<script>` en línea que llevan `{% csp_nonce_attr %}`. Reglas al programar:
+
+- Todo `<script>` escrito en una plantilla lleva `{% csp_nonce_attr %}`: `<script {% csp_nonce_attr %}>`.
+- Nada de `onclick="…"` ni `onchange="…"`: se usa `data-imprimir`, `data-enviar-al-cambiar` o un `addEventListener` en el JavaScript.
+- Si se agrega una librería de otro sitio, se suma a `SECURE_CSP` en `config/settings.py`.
+
+### Aviso de errores
+
+Cuando una página falla (error 500), el error queda en la consola del administrador (**Control → Errores**) y en «Tareas pendientes» del Resumen; los errores iguales se juntan y se cuentan. Con el correo real configurado y `CORREO_ADMIN` en el `.env`, también llega por correo.
+
+### Privacidad (Ley N.° 29733)
+
+- Política en `/privacidad/` con lo que pide el reglamento (D.S. 016-2024-JUS). Los datos del responsable van en el `.env` (`PRIVACIDAD_*`); mientras falten, la política dice «por completar» y la consola lo avisa.
+- Casilla obligatoria (sin marcar) al registrarse como cliente o tienda; se guarda la prueba: versión, fecha, conexión y formulario.
+- Las cuentas que ya existían, o todas cuando cambia la política (`VERSION_POLITICA` en `cuentas/privacidad.py`), la aceptan al volver a entrar. El administrador no la acepta.
+- **Descargar mis datos** (Mi perfil) y **formulario de derechos** (`/privacidad/solicitud/`): las solicitudes llegan a **Control → Privacidad** con la fecha límite (8, 20 o 10 días hábiles); la respuesta se envía por correo y queda en el historial.
+- Las pruebas apagan «aceptar al entrar» (`config/pruebas.py`); las de privacidad la encienden.
+

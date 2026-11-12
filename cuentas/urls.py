@@ -16,5 +16,8 @@ urlpatterns = [
     path("mi-cuenta/nueva-clave/", views.clave_temporal, name="clave_temporal"),
     path("ayuda/", views.ayuda, name="ayuda"),
     path("privacidad/", views.privacidad, name="privacidad"),
+    path("privacidad/aceptar/", views.privacidad_aceptar, name="privacidad_aceptar"),
+    path("privacidad/solicitud/", views.privacidad_solicitud, name="privacidad_solicitud"),
+    path("mi-cuenta/mis-datos/", views.mis_datos, name="mis_datos"),
     path("panel/admin/", resumen, name="panel_admin"),  # portada del panel de administración
 ]

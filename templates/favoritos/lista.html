@@ -174,8 +174,8 @@ avisos (bajó de precio, volvió a tener stock) y los botones WhatsApp y Quitar 
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/catalogo.js' %}?v=1"></script>
-<script>
+<script src="{% static 'js/catalogo.js' %}"></script>
+<script {% csp_nonce_attr %}>
   // «Quitar» pide confirmación: el formulario de la tarjeta se envía recién al tocar «Sí, quitar».
   (function () {
     var modal = document.getElementById("modal-quitar-favorito");

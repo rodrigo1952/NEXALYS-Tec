@@ -60,7 +60,7 @@
   {% endif %}
 </form>
 
-<script>
+<script {% csp_nonce_attr %}>
 (function () {
   const entradas = document.querySelectorAll("#form-conteo input[data-sistema]");
   const resumen = document.getElementById("resumen-conteo");

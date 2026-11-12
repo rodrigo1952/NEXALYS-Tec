@@ -21,6 +21,7 @@ class RolesTests(TestCase):
             "email": "ana@ejemplo.com",
             "password1": "ClaveSegura#2026",
             "password2": "ClaveSegura#2026",
+            "acepto_privacidad": "on",
         })
         usuario = User.objects.get(username="cliente1")
         self.assertTrue(usuario.groups.filter(name="Cliente").exists())

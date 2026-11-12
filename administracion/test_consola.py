@@ -4,7 +4,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -83,6 +83,10 @@ class ResumenTests(TestCase):
         self.assertContains(respuesta, "Últimas acciones")
         self.assertContains(respuesta, "Producto «X»")
 
+    @override_settings(
+        PRIVACIDAD_TITULAR="Rodrigo", PRIVACIDAD_DOCUMENTO="12345678", PRIVACIDAD_DIRECCION="Quillabamba",
+        PRIVACIDAD_CORREO="datos@ejemplo.com", PRIVACIDAD_BANCO_DATOS="Usuarios", PRIVACIDAD_SERVIDOR="Perú",
+    )
     def test_todo_al_dia(self):
         self.assertContains(self.client.get(reverse("panel_admin")), "Todo al día")
 

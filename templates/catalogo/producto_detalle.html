@@ -118,7 +118,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script {% csp_nonce_attr %}>
   // Galería del producto: resalta la miniatura de la foto que se ve y avanza sola cada 5 segundos
   // (no avanza si el sistema tiene activado «reducir movimiento»).
   (function () {

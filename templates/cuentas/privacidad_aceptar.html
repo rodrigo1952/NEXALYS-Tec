@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% comment %}
+Aceptar la política de privacidad al entrar (Ley 29733): cuentas anteriores a la casilla del registro,
+o cuando la política cambia (VERSION_POLITICA en cuentas/privacidad.py). Sin aceptar se puede leer
+la política, pedir derechos, descargar los datos, eliminar la cuenta (clientes) o cerrar sesión.
+{% endcomment %}
+{% block titulo %}Política de privacidad | NEXALYS Tec{% endblock %}
+{% block contenido %}
+<div class="aceptar-politica">
+  <div class="card shadow-sm"><div class="card-body p-4">
+    <h1 class="h4 mb-2">{% if es_actualizacion %}Actualizamos nuestra política de privacidad{% else %}Acepta nuestra política de privacidad{% endif %}</h1>
+    <p class="text-muted mb-0">Antes de seguir, lee cómo cuidamos tus datos. {% if es_actualizacion %}Hay una versión nueva ({{ version }}).{% else %}Es lo que pide la Ley N.° 29733 de Protección de Datos Personales.{% endif %}</p>
+    <ul class="aceptar-politica__resumen">
+      <li><i class="bi bi-database" aria-hidden="true"></i><span>Usamos tus datos solo para tu cuenta y para que la página funcione (favoritos, tu tienda, recuperar tu contraseña).</span></li>
+      <li><i class="bi bi-shield-check" aria-hidden="true"></i><span>No los vendemos. Las tiendas nunca ven quién guardó sus productos.</span></li>
+      <li><i class="bi bi-person-check" aria-hidden="true"></i><span>Puedes descargarlos, corregirlos o pedir que los borremos cuando quieras.</span></li>
+    </ul>
+    <p><a href="{% url 'privacidad' %}" target="_blank" rel="noopener">Leer la política completa <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a></p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="form-check mb-1">
+        {{ form.acepto }}
+        <label class="form-check-label" for="{{ form.acepto.id_for_label }}">{{ form.acepto.label }}</label>
+      </div>
+      {% for error in form.acepto.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      <button type="submit" class="btn btn-primary w-100 mt-3">Aceptar y continuar</button>
+    </form>
+    <hr class="my-4">
+    <p class="small text-muted mb-2"><strong>¿No estás de acuerdo?</strong> No podrás usar tu cuenta, pero puedes:</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'mis_datos' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download" aria-hidden="true"></i> Descargar mis datos</a>
+      <a href="{% url 'privacidad_solicitud' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-send" aria-hidden="true"></i> Hacer una solicitud</a>
+      {% if puede_eliminar %}<a href="{% url 'eliminar_cuenta' %}" class="btn btn-sm btn-outline-danger">Eliminar mi cuenta</a>{% endif %}
+      <form method="post" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary">Cerrar sesión</button></form>
+    </div>
+  </div></div>
+</div>
+{% endblock %}

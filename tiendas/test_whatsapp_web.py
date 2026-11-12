@@ -16,7 +16,7 @@ def whatsapp_js():
 class WhatsAppEnLaComputadoraTests(TestCase):
     def test_el_script_se_carga_en_todas_las_paginas(self):
         for url in (reverse("inicio"), reverse("catalogo:catalogo"), reverse("tiendas:cercanas")):
-            self.assertContains(self.client.get(url), "js/whatsapp.js?v=2")
+            self.assertContains(self.client.get(url), "js/whatsapp.js")
 
     def test_menu_con_whatsapp_web_y_la_app(self):
         codigo = whatsapp_js()

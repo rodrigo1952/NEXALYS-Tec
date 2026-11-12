@@ -1,0 +1,46 @@
+{% extends "cuentas/_centro.html" %}
+{% comment %}
+Solicitud de derechos sobre los datos personales (Ley 29733). Llega a la consola del administrador
+(Control → Privacidad) con la fecha límite para responder. Máximo 3 por hora (cuentas/limites.py).
+{% endcomment %}
+{% block titulo %}Mis derechos sobre mis datos | NEXALYS Tec{% endblock %}
+{% block centro %}
+<div class="seccion-cuenta__cabecera">
+  <h1 class="h3 mb-1">Mis derechos sobre mis datos</h1>
+  <p class="text-muted mb-0">Pide información, una copia, una corrección o que borremos tus datos. Es gratis.</p>
+</div>
+
+<div class="tarjeta-cuenta">
+  {% if user.is_authenticated %}
+    <p class="small mb-3"><i class="bi bi-lightbulb" aria-hidden="true"></i> Algunas cosas las puedes hacer tú mismo al instante:
+      <a href="{% url 'mis_datos' %}">descargar tus datos</a> o <a href="{% url 'editar_datos' %}">corregir tu nombre o correo</a>.</p>
+  {% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for error in form.non_field_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
+    <fieldset class="mb-3">
+      <legend class="form-label fs-6">¿Qué necesitas? <span class="text-danger">*</span></legend>
+      <div class="opciones-derecho">
+        {% for opcion in form.tipo %}
+          <div class="form-check">
+            {{ opcion.tag }}
+            <label class="form-check-label" for="{{ opcion.id_for_label }}">{{ opcion.choice_label }}</label>
+          </div>
+        {% endfor %}
+      </div>
+      {% for error in form.tipo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      <div class="form-text">Respondemos la información en máximo {{ plazos.informacion }} días hábiles, el acceso en {{ plazos.acceso }} y lo demás en {{ plazos.rectificacion }}.</div>
+    </fieldset>
+    {% for campo in form %}{% if campo.name != "tipo" %}
+      <div class="mb-3">
+        <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label|capfirst }} <span class="text-danger">*</span></label>
+        {{ campo }}
+        {% if campo.help_text %}<div class="form-text">{{ campo.help_text }}</div>{% endif %}
+        {% for error in campo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+    {% endif %}{% endfor %}
+    <p class="small text-muted">Usaremos tu nombre y correo solo para responder esta solicitud. Podemos pedirte que confirmes que eres el dueño de los datos.</p>
+    <button type="submit" class="btn btn-primary"><i class="bi bi-send" aria-hidden="true"></i> Enviar solicitud</button>
+  </form>
+</div>
+{% endblock %}

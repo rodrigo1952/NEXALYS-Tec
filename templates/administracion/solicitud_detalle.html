@@ -1,0 +1,42 @@
+{% extends "administracion/_consola.html" %}
+{% block titulo %}Solicitud de datos personales | Administración | NEXALYS Tec{% endblock %}
+{% block consola %}
+<a href="{% url 'administracion:solicitudes' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a las solicitudes</a>
+<div class="consola-cabecera mt-2">
+  <div>
+    <p class="consola-cabecera__antetitulo">Datos personales · {{ solicitud.nombre_corto_tipo }}</p>
+    <h1 class="h3 mb-0">{{ solicitud.nombre }}</h1>
+  </div>
+  {% if solicitud.estado == "pendiente" %}<span class="badge text-bg-warning fs-6">Sin responder</span>{% else %}<span class="badge text-bg-success fs-6">Respondida</span>{% endif %}
+</div>
+
+<section class="panel-consola">
+  <dl class="datos-cuenta">
+    <div><dt>Pide</dt><dd>{{ solicitud.get_tipo_display }}</dd></div>
+    <div><dt>Correo</dt><dd><a href="mailto:{{ solicitud.correo }}">{{ solicitud.correo }}</a></dd></div>
+    <div><dt>Cuenta</dt><dd>{% if solicitud.usuario %}{{ solicitud.usuario.username }}{% if solicitud.usuario.email|lower != solicitud.correo|lower %} <span class="badge text-bg-warning">el correo no es el de la cuenta</span>{% endif %}{% else %}La envió sin iniciar sesión{% endif %}</dd></div>
+    <div><dt>Recibida</dt><dd>{{ solicitud.creada|date:"d/m/Y H:i" }}</dd></div>
+    <div><dt>Responder hasta</dt><dd>{{ solicitud.vence|date:"d/m/Y" }}{% if solicitud.estado == "pendiente" %} ({% if solicitud.dias_restantes < 0 %}vencida{% else %}quedan {{ solicitud.dias_restantes }} día{{ solicitud.dias_restantes|pluralize }}{% endif %}){% endif %}</dd></div>
+  </dl>
+  <h2 class="h6 mt-3">Detalle</h2>
+  <p class="mb-0">{{ solicitud.detalle|linebreaksbr }}</p>
+</section>
+
+{% if solicitud.estado == "pendiente" %}
+  <section class="panel-consola mt-3" aria-labelledby="titulo-responder">
+    <h2 class="h6" id="titulo-responder">Responder</h2>
+    <p class="small text-muted">Haz primero el cambio que pide (p. ej. corregir el dato en Usuarios o eliminar la cuenta) y luego cuéntale aquí qué se hizo. Si no se puede, explica por qué.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "_campos_formulario.html" %}
+      <button type="submit" class="btn btn-primary"><i class="bi bi-send" aria-hidden="true"></i> Guardar y enviar respuesta</button>
+    </form>
+  </section>
+{% else %}
+  <section class="panel-consola mt-3">
+    <h2 class="h6">Respuesta</h2>
+    <p class="small text-muted">Respondida el {{ solicitud.atendida_en|date:"d/m/Y H:i" }} por {{ solicitud.atendida_por }}.</p>
+    <p class="mb-0">{{ solicitud.respuesta|linebreaksbr }}</p>
+  </section>
+{% endif %}
+{% endblock %}

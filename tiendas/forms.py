@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 
 from cuentas.estilos import EstiloBootstrapMixin
+from cuentas.forms import AceptarPrivacidadMixin
 from cuentas.reautenticacion import ConfirmarClaveMixin
 
 from .models import HorarioDia, Tienda, hora_12, validar_whatsapp
@@ -22,7 +23,7 @@ def normalizar_whatsapp(valor):
     return numero
 
 
-class RegistroTiendaForm(EstiloBootstrapMixin, UserCreationForm):
+class RegistroTiendaForm(AceptarPrivacidadMixin, EstiloBootstrapMixin, UserCreationForm):
     """CU-01 Registrar tienda: crea el usuario y su tienda en un solo paso."""
 
     nombre_tienda = forms.CharField(label="Nombre de la tienda", max_length=100)

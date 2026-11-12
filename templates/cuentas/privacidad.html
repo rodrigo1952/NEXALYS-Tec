@@ -1,47 +1,124 @@
 {% extends "cuentas/_centro.html" %}
+{% comment %}
+Política de privacidad (Ley N.° 29733 y su reglamento, D.S. 016-2024-JUS) y reglas de uso.
+Los datos del responsable vienen del .env (PRIVACIDAD_*); mientras falten se ve «por completar».
+Si cambias este texto, cambia VERSION_POLITICA en cuentas/privacidad.py: todos la aceptarán de nuevo.
+{% endcomment %}
 {% block titulo %}Privacidad y términos | NEXALYS Tec{% endblock %}
+{% block descripcion %}Política de privacidad de NEXALYS Tec: qué datos guardamos, para qué, con quién se comparten y cómo ejercer tus derechos (Ley N.° 29733).{% endblock %}
 {% block centro %}
 <div class="seccion-cuenta__cabecera">
   <h1 class="h3 mb-1">Privacidad y términos</h1>
-  <p class="text-muted mb-0">Proyecto académico del IV ciclo · IESTP Urusayhua · Quillabamba. Última actualización: octubre de 2026.</p>
+  <p class="text-muted mb-0">Proyecto académico del IV ciclo · IESTP Urusayhua · Quillabamba. Versión vigente: {{ version }}.</p>
 </div>
 
 {# Índice: lleva a cada parte de la página. #}
 <nav class="indice-legal" aria-label="Contenido">
-  <a href="#datos"><span>1</span>Qué datos guardamos</a>
-  <a href="#derechos"><span>2</span>Tus derechos</a>
-  <a href="#plazos"><span>3</span>Cuánto tiempo</a>
-  <a href="#reglas"><span>4</span>Reglas de uso</a>
+  <a href="#responsable"><span>1</span>Responsable</a>
+  <a href="#datos"><span>2</span>Qué datos y para qué</a>
+  <a href="#obligatorios"><span>3</span>Datos obligatorios</a>
+  <a href="#compartir"><span>4</span>Con quién se comparten</a>
+  <a href="#plazos"><span>5</span>Cuánto tiempo</a>
+  <a href="#derechos"><span>6</span>Tus derechos</a>
+  <a href="#cookies"><span>7</span>Cookies</a>
+  <a href="#seguridad"><span>8</span>Seguridad y cambios</a>
+  <a href="#reglas"><span>9</span>Reglas de uso</a>
 </nav>
 
+<section class="tarjeta-cuenta mt-3" id="responsable" aria-labelledby="titulo-responsable">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-responsable"><i class="bi bi-person-badge" aria-hidden="true"></i> 1. Quién es responsable de tus datos</h2></div>
+  <dl class="datos-cuenta">
+    <div><dt>Responsable</dt><dd>{{ titular.PRIVACIDAD_TITULAR|default:'<span class="dato-pendiente">por completar</span>' }}</dd></div>
+    <div><dt>DNI o RUC</dt><dd>{{ titular.PRIVACIDAD_DOCUMENTO|default:'<span class="dato-pendiente">por completar</span>' }}</dd></div>
+    <div><dt>Domicilio</dt><dd>{{ titular.PRIVACIDAD_DIRECCION|default:'<span class="dato-pendiente">por completar</span>' }}</dd></div>
+    <div><dt>Correo para tus derechos</dt><dd>{% if titular.PRIVACIDAD_CORREO %}<a href="mailto:{{ titular.PRIVACIDAD_CORREO }}">{{ titular.PRIVACIDAD_CORREO }}</a>{% else %}<span class="dato-pendiente">por completar</span>{% endif %}</dd></div>
+    <div><dt>Banco de datos</dt><dd>{{ titular.PRIVACIDAD_BANCO_DATOS|default:'<span class="dato-pendiente">por completar</span>' }}</dd></div>
+  </dl>
+</section>
+
 <section class="tarjeta-cuenta mt-3" id="datos" aria-labelledby="titulo-datos">
-  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-datos"><i class="bi bi-database" aria-hidden="true"></i> 1. Qué datos guardamos y para qué</h2></div>
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-datos"><i class="bi bi-database" aria-hidden="true"></i> 2. Qué datos guardamos y para qué</h2></div>
   <ul class="lista-legal">
-    <li><strong>Cuenta:</strong> usuario, nombre, correo y contraseña (guardada cifrada; nadie puede leerla). Sirven para iniciar sesión y recuperar el acceso.</li>
-    <li><strong>Clientes:</strong> sus favoritos, para avisarles cambios de precio o stock. Las tiendas solo ven cuántas personas guardaron un producto, nunca quiénes.</li>
-    <li><strong>Tiendas:</strong> nombre, dirección, WhatsApp, logo, horario y productos (públicos en el catálogo); y sus ventas, inventario, costos, proveedores y clientes, que son <strong>privados</strong> de cada tienda.</li>
-    <li><strong>Administrador:</strong> solo ve totales de ventas por tienda y mes; nunca costos, ganancias, proveedores ni clientes.</li>
+    <li><strong>Cuenta:</strong> usuario, nombres, apellidos, correo y contraseña (guardada cifrada; nadie puede leerla). Sirven para iniciar sesión, confirmar tu correo y recuperar el acceso.</li>
+    <li><strong>Clientes:</strong> sus favoritos, para avisarles dentro de la página si bajó el precio o se agotó. Las tiendas solo ven cuántas personas guardaron un producto, nunca quiénes.</li>
+    <li><strong>Tiendas:</strong> nombre, dirección, WhatsApp, descripción, logo, horario, ubicación en el mapa y productos, que son <strong>públicos</strong> en el catálogo para que los clientes las encuentren. Sus ventas, inventario, costos y proveedores son <strong>privados</strong> de cada tienda.</li>
+    <li><strong>Clientes de las tiendas:</strong> una tienda puede anotar en sus ventas el nombre y el DNI o RUC de su cliente. Esos datos son de la tienda: NEXALYS Tec solo los guarda por encargo de ella y nadie más los ve, ni el administrador.</li>
+    <li><strong>Visitas:</strong> cada producto cuenta sus visitas una vez por persona al día, solo para ordenar los destacados. No armamos perfiles ni tomamos decisiones automáticas sobre ti.</li>
+    <li><strong>Seguridad:</strong> el usuario escrito y la conexión (IP) de los intentos de ingreso fallidos, para frenar a quien prueba contraseñas; y la página y la cuenta cuando ocurre un error, para corregirlo.</li>
+    <li><strong>Privacidad:</strong> la versión de esta política que aceptaste, la fecha y la conexión (prueba de tu consentimiento); y tus solicitudes de derechos, para responderlas.</li>
+  </ul>
+</section>
+
+<section class="tarjeta-cuenta mt-3" id="obligatorios" aria-labelledby="titulo-obligatorios">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-obligatorios"><i class="bi bi-asterisk" aria-hidden="true"></i> 3. Qué datos son obligatorios</h2></div>
+  <ul class="lista-legal">
+    <li><strong>Clientes:</strong> usuario, nombres, apellidos, correo y contraseña. <strong>Tiendas:</strong> nombre de la tienda, dirección, WhatsApp, usuario, correo y contraseña.</li>
+    <li>Sin ellos no se puede crear la cuenta. Todo lo demás (descripción, logo, horario, ubicación en el mapa) es opcional.</li>
+    <li>Para ver el catálogo y las tiendas no necesitas cuenta.</li>
+  </ul>
+</section>
+
+<section class="tarjeta-cuenta mt-3" id="compartir" aria-labelledby="titulo-compartir">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-compartir"><i class="bi bi-share" aria-hidden="true"></i> 4. Con quién se comparten</h2></div>
+  <ul class="lista-legal">
+    <li><strong>No vendemos ni alquilamos tus datos.</strong> Solo se entregan a una autoridad cuando la ley lo exige.</li>
+    <li><strong>WhatsApp:</strong> al tocar «Consultar por WhatsApp» se abre WhatsApp con un mensaje para la tienda. Esa conversación es entre tú y la tienda: NEXALYS Tec no la recibe ni la guarda.</li>
+    <li><strong>Servidor de la página:</strong> {{ titular.PRIVACIDAD_SERVIDOR|default:'<span class="dato-pendiente">por completar</span>' }}. Si el servidor está fuera del Perú, tus datos viajan a ese país (flujo transfronterizo) y el proveedor solo los guarda por nuestro encargo.</li>
+    <li><strong>Servicio de correo:</strong> envía los correos de tu cuenta (confirmación y recuperar contraseña).</li>
+    <li><strong>Archivos y mapas:</strong> la página usa estilos y letras de jsDelivr, cdnjs (Cloudflare) y Google Fonts, y los mapas de OpenStreetMap. Tu navegador les pide esos archivos directamente, así que ven tu conexión (IP), pero no tus datos de la cuenta.</li>
+  </ul>
+</section>
+
+<section class="tarjeta-cuenta mt-3" id="plazos" aria-labelledby="titulo-plazos">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-plazos"><i class="bi bi-hourglass-split" aria-hidden="true"></i> 5. Cuánto tiempo los guardamos</h2></div>
+  <ul class="lista-legal">
+    <li>Tu cuenta y sus datos, mientras la tengas. Al eliminar una cuenta de cliente se borran también sus favoritos.</li>
+    <li>Las cuentas que no confirman su correo se eliminan a los <strong>7 días</strong>.</li>
+    <li>Las tiendas suspendidas que no se reactivan se eliminan a los <strong>90 días</strong>; sus ventas quedan solo como totales anónimos.</li>
+    <li>Los intentos de ingreso fallidos se borran al <strong>día siguiente</strong>. De los errores de la página se guardan solo los 300 más recientes.</li>
+    <li>La prueba de tu consentimiento se guarda mientras exista tu cuenta. Tus solicitudes de derechos se guardan como constancia de que las respondimos.</li>
   </ul>
 </section>
 
 <section class="tarjeta-cuenta mt-3" id="derechos" aria-labelledby="titulo-derechos">
-  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-derechos"><i class="bi bi-person-check" aria-hidden="true"></i> 2. Tus derechos (Ley N.° 29733, Protección de Datos Personales)</h2></div>
-  <p class="mb-2">Puedes <strong>acceder</strong> a tus datos y <strong>corregirlos</strong> desde Mi perfil, y <strong>eliminar</strong> tu cuenta de cliente cuando quieras.
-    Para cualquier otra solicitud, escribe a <a href="mailto:{{ correo_soporte }}">{{ correo_soporte }}</a>.</p>
-  <p class="mb-0 small text-muted">No vendemos ni compartimos tus datos con terceros.</p>
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-derechos"><i class="bi bi-person-check" aria-hidden="true"></i> 6. Tus derechos (Ley N.° 29733)</h2></div>
+  <p class="mb-2">Puedes pedir, gratis, en cualquier momento:</p>
+  <ul class="lista-legal">
+    <li><strong>Información</strong> sobre qué datos tratamos y para qué: respuesta en máximo {{ plazos.informacion }} días hábiles.</li>
+    <li><strong>Acceso</strong> a una copia de tus datos: máximo {{ plazos.acceso }} días hábiles. Con cuenta, también puedes descargarlos al instante.</li>
+    <li><strong>Rectificación</strong> (corregir), <strong>cancelación</strong> (borrar) u <strong>oposición</strong> (que dejemos de usarlos para algo): máximo {{ plazos.rectificacion }} días hábiles.</li>
+  </ul>
+  <div class="d-flex flex-wrap gap-2 my-3">
+    <a href="{% url 'privacidad_solicitud' %}" class="btn btn-primary"><i class="bi bi-send" aria-hidden="true"></i> Hacer una solicitud</a>
+    {% if user.is_authenticated %}
+      <a href="{% url 'mis_datos' %}" class="btn btn-outline-primary"><i class="bi bi-download" aria-hidden="true"></i> Descargar mis datos</a>
+      <a href="{% url 'editar_datos' %}" class="btn btn-outline-primary"><i class="bi bi-pencil" aria-hidden="true"></i> Corregir mis datos</a>
+    {% endif %}
+  </div>
+  <p class="small text-muted mb-0">También puedes escribir a {% if titular.PRIVACIDAD_CORREO %}<a href="mailto:{{ titular.PRIVACIDAD_CORREO }}">{{ titular.PRIVACIDAD_CORREO }}</a>{% else %}<span class="dato-pendiente">correo por completar</span>{% endif %}.
+    Para protegerte, podemos pedirte que confirmes que eres el dueño de los datos. Si no estás conforme con la respuesta, puedes reclamar ante la Autoridad Nacional de Protección de Datos Personales.</p>
 </section>
 
-<section class="tarjeta-cuenta mt-3" id="plazos" aria-labelledby="titulo-plazos">
-  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-plazos"><i class="bi bi-hourglass-split" aria-hidden="true"></i> 3. Cuánto tiempo los guardamos</h2></div>
+<section class="tarjeta-cuenta mt-3" id="cookies" aria-labelledby="titulo-cookies">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-cookies"><i class="bi bi-cookie" aria-hidden="true"></i> 7. Cookies y datos en tu navegador</h2></div>
   <ul class="lista-legal">
-    <li>Las cuentas que no confirman su correo se eliminan a los <strong>7 días</strong>.</li>
-    <li>Las tiendas suspendidas que no se reactivan se eliminan a los <strong>90 días</strong>; sus ventas quedan solo como totales anónimos.</li>
-    <li>Al eliminar una cuenta de cliente se borran también sus favoritos.</li>
+    <li>Solo usamos las cookies necesarias para que la página funcione: la de tu <strong>sesión</strong> (dura hasta {{ dias_sesion }} días o hasta que cierres sesión) y la de <strong>seguridad de los formularios</strong>.</li>
+    <li>Tu navegador recuerda si prefieres abrir WhatsApp en la app o en la web y cómo ves el catálogo. Eso queda en tu equipo; no nos llega.</li>
+    <li>«Usar mi ubicación» en Tiendas cercanas se calcula en tu navegador: tu ubicación no se envía ni se guarda.</li>
+    <li>No usamos cookies de publicidad ni de estadísticas.</li>
+  </ul>
+</section>
+
+<section class="tarjeta-cuenta mt-3" id="seguridad" aria-labelledby="titulo-seguridad">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-seguridad"><i class="bi bi-shield-lock" aria-hidden="true"></i> 8. Seguridad y cambios en esta política</h2></div>
+  <ul class="lista-legal">
+    <li>Las contraseñas se guardan cifradas, la página va con conexión segura (https) y bloquea por unos minutos a quien se equivoca muchas veces de contraseña.</li>
+    <li>Si cambiamos esta política, te pediremos aceptarla de nuevo al iniciar sesión. La versión vigente es la del {{ version }}.</li>
   </ul>
 </section>
 
 <section class="tarjeta-cuenta mt-3" id="reglas" aria-labelledby="titulo-reglas">
-  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-reglas"><i class="bi bi-journal-check" aria-hidden="true"></i> 4. Reglas de uso del marketplace</h2></div>
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="titulo-reglas"><i class="bi bi-journal-check" aria-hidden="true"></i> 9. Reglas de uso del marketplace</h2></div>
   <ul class="lista-legal">
     <li>NEXALYS Tec muestra productos de tiendas de la ciudad; <strong>la compra se coordina directamente con la tienda</strong> por WhatsApp. No cobramos ni intervenimos en pagos ni entregas.</li>
     <li>Cada tienda es responsable de que sus precios, stock y fotos sean reales.</li>

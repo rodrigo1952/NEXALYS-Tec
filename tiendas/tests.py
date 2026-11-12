@@ -23,6 +23,7 @@ DATOS_VALIDOS = {
     "email": "tecnoq@ejemplo.com",
     "password1": "ClaveSegura#2026",
     "password2": "ClaveSegura#2026",
+    "acepto_privacidad": "on",
 }
 
 

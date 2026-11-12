@@ -36,6 +36,18 @@
       </a>
     </div>
   {% endif %}
+  <div class="col-md-6">
+    <a href="{% url 'mis_datos' %}" class="acceso-cuenta">
+      <i class="bi bi-download" aria-hidden="true"></i>
+      <span><strong>Descargar mis datos</strong><span>Todo lo que la página guarda de tu cuenta</span></span>
+    </a>
+  </div>
+  <div class="col-md-6">
+    <a href="{% url 'privacidad_solicitud' %}" class="acceso-cuenta">
+      <i class="bi bi-file-earmark-lock" aria-hidden="true"></i>
+      <span><strong>Mis derechos sobre mis datos</strong><span>Pide corregirlos, borrarlos o más información</span></span>
+    </a>
+  </div>
   {% if tienda_actual %}
     <div class="col-md-6">
       <a href="{% url 'tiendas:panel' %}" class="acceso-cuenta">

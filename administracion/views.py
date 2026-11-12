@@ -24,13 +24,17 @@ from django.views.decorators.http import require_POST
 
 from catalogo.models import Categoria, Marca, Producto, borrar_archivo_al_confirmar
 from cuentas import clave_temporal
+from cuentas.models import SolicitudDerecho
+from cuentas.privacidad import datos_faltantes
 from cuentas.views import rol_requerido
 from inventario.models import Venta
 from tiendas.models import DIAS_PARA_ELIMINAR_SUSPENDIDA, Tienda
 
 from . import acciones, limpieza
-from .forms import EliminarUsuarioForm, FiltroHistorialForm, MotivoForm, MotivoOpcionalForm, RestablecerClaveForm
-from .models import AccionAdmin
+from .forms import (
+    EliminarUsuarioForm, FiltroHistorialForm, MotivoForm, MotivoOpcionalForm, RespuestaSolicitudForm, RestablecerClaveForm,
+)
+from .models import AccionAdmin, ErrorRegistrado
 
 solo_admin = rol_requerido("Administrador")
 
@@ -128,6 +132,9 @@ def resumen(request):
     por_verificar = list(Tienda.objects.filter(estado=Tienda.Estado.PENDIENTE).select_related("usuario").order_by("creada_en")[:5])
     por_eliminarse = list(limpieza.por_eliminarse_pronto()[:5])
     etiquetas = [f"{NOMBRES_MES[m.month - 1]} {m:%y}" for m in meses]
+    errores_sin_revisar = ErrorRegistrado.objects.filter(revisado=False).count()
+    solicitudes_pendientes = list(SolicitudDerecho.objects.filter(estado=SolicitudDerecho.Estado.PENDIENTE)[:5])
+    faltantes = datos_faltantes()
     return render(request, "cuentas/panel_admin.html", {
         "tiendas_activas": estados.get(Tienda.Estado.ACTIVA, 0),
         "tiendas_pendientes": estados.get(Tienda.Estado.PENDIENTE, 0),
@@ -143,12 +150,17 @@ def resumen(request):
         "marcas": Marca.objects.count(),
         "por_verificar": por_verificar,
         "por_eliminarse": por_eliminarse,
-        "num_pendientes": len(por_verificar) + len(por_eliminarse),
         "grafico_meses": etiquetas,
         "grafico_filas": list(zip(etiquetas, montos)),
         "grafico_montos": [float(m) for m in montos],
         "total_seis_meses": sum(montos),
         "ultimas_acciones": AccionAdmin.objects.all()[:5],
+        "errores_sin_revisar": errores_sin_revisar,
+        "solicitudes_pendientes": solicitudes_pendientes,
+        "datos_privacidad_faltantes": faltantes,
+        "num_pendientes": (
+            len(por_verificar) + len(por_eliminarse) + errores_sin_revisar + len(solicitudes_pendientes) + bool(faltantes)
+        ),
     })
 
 
@@ -649,3 +661,90 @@ def usuario_clave(request, pk):
         "horas": clave_temporal.HORAS_CLAVE_TEMPORAL,
         "anterior": clave_temporal.vigente(usuario),
     }, status=400 if request.method == "POST" else 200)
+
+
+# ---------------------------------------------------------------------------
+# Errores de la página (aviso de errores, ver registro_errores.py)
+# ---------------------------------------------------------------------------
+
+@solo_admin
+def errores(request):
+    ver = request.GET.get("ver", "pendientes")
+    lista = ErrorRegistrado.objects.all()
+    if ver != "todos":
+        lista = lista.filter(revisado=False)
+    pagina = Paginator(lista, 20).get_page(request.GET.get("page"))
+    return render(request, "administracion/errores.html", {
+        "pagina": pagina, "ver": ver,
+        "sin_revisar": ErrorRegistrado.objects.filter(revisado=False).count(),
+    })
+
+
+@require_POST
+@solo_admin
+def errores_revisado(request):
+    """Marca como revisado un error (pk) o todos los pendientes. Si vuelve a pasar, aparece de nuevo."""
+    pendientes = ErrorRegistrado.objects.filter(revisado=False)
+    if request.POST.get("pk"):
+        pendientes = pendientes.filter(pk=request.POST["pk"])
+    cantidad = pendientes.update(revisado=True)
+    if cantidad:
+        messages.success(request, f"{cantidad} error{'es' if cantidad != 1 else ''} marcado{'s' if cantidad != 1 else ''} como revisado{'s' if cantidad != 1 else ''}.")
+    return redirect("administracion:errores")
+
+
+# ---------------------------------------------------------------------------
+# Privacidad: solicitudes de derechos sobre los datos personales (Ley 29733)
+# ---------------------------------------------------------------------------
+
+@solo_admin
+def solicitudes(request):
+    ver = request.GET.get("ver", "pendientes")
+    lista = SolicitudDerecho.objects.select_related("usuario")
+    if ver != "todas":
+        lista = lista.filter(estado=SolicitudDerecho.Estado.PENDIENTE)
+    pagina = Paginator(lista, 20).get_page(request.GET.get("page"))
+    return render(request, "administracion/solicitudes.html", {
+        "pagina": pagina, "ver": ver,
+        "pendientes": SolicitudDerecho.objects.filter(estado=SolicitudDerecho.Estado.PENDIENTE).count(),
+        "faltantes": datos_faltantes(),
+    })
+
+
+@solo_admin
+def solicitud_detalle(request, pk):
+    """Ver una solicitud y responderla: la respuesta se envía por correo y queda en el historial."""
+    from django.core.mail import send_mail
+
+    solicitud = get_object_or_404(SolicitudDerecho.objects.select_related("usuario"), pk=pk)
+    form = RespuestaSolicitudForm(request.POST or None)
+    if request.method == "POST" and solicitud.estado == SolicitudDerecho.Estado.PENDIENTE and form.is_valid():
+        respondida = False
+        with transaction.atomic():
+            solicitud = SolicitudDerecho.objects.select_for_update().get(pk=pk)
+            if solicitud.estado == SolicitudDerecho.Estado.PENDIENTE:  # otro administrador pudo responderla antes
+                solicitud.estado = SolicitudDerecho.Estado.ATENDIDA
+                solicitud.respuesta = form.cleaned_data["respuesta"]
+                solicitud.atendida_en = timezone.now()
+                solicitud.atendida_por = request.user.get_username()
+                solicitud.save()
+                respondida = True
+                acciones.registrar(
+                    request.user, AccionAdmin.Tipo.RESPONDER_SOLICITUD,
+                    f"{solicitud.nombre_corto_tipo} de {solicitud.nombre}", solicitud.respuesta, usuario=solicitud.usuario,
+                )
+        if not respondida:
+            messages.info(request, "Otro administrador ya respondió esta solicitud.")
+            return redirect("administracion:solicitud_detalle", pk=pk)
+        try:
+            send_mail(
+                f"Respuesta a tu solicitud de {solicitud.nombre_corto_tipo.lower()} | NEXALYS Tec",
+                f"Hola, {solicitud.nombre}:\n\n{solicitud.respuesta}\n\nNEXALYS Tec",
+                None, [solicitud.correo],
+            )
+            messages.success(request, f"Respuesta guardada y enviada a {solicitud.correo}.")
+        except Exception:
+            messages.warning(request, f"Respuesta guardada, pero el correo no salió. Escríbele a {solicitud.correo}.")
+        return redirect("administracion:solicitud_detalle", pk=pk)
+    return render(request, "administracion/solicitud_detalle.html", {"solicitud": solicitud, "form": form})
+

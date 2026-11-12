@@ -16,7 +16,7 @@ from .models import CorreoPendiente
 CLAVE = "ClaveSegura#2026"
 DATOS = {
     "username": "cliente1", "first_name": "Ana", "last_name": "Quispe",
-    "email": "ana@ejemplo.com", "password1": CLAVE, "password2": CLAVE,
+    "email": "ana@ejemplo.com", "password1": CLAVE, "password2": CLAVE, "acepto_privacidad": "on",
 }
 
 
