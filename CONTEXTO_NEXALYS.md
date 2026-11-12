@@ -54,7 +54,8 @@
   - resumen con gráficos y descarga en Excel.
 - **Administrador**: suspende/reactiva tiendas, gestiona categorías y marcas, usuarios, y ve solo el
   **total vendido por tienda y mes**.
-- El módulo "Pedidos" se retiró (sus pedidos se convirtieron en ventas). La app `pedidos` queda vacía.
+- El módulo "Pedidos" se retiró (sus pedidos se convirtieron en ventas) y la app `pedidos` se quitó del proyecto.
+  La migración inventario 0004 quedó vacía (solo mantiene el orden) y la 0005 borra sus restos en la base de datos.
 
 ## 4. Reglas que NO se deben romper
 
@@ -286,7 +287,11 @@
   la tienda. `Tienda.ruc` (opcional, migración tiendas 0008).
 - **QR de la tienda**: `tiendas/qr.py` (segno, corrección Q), `/tiendas/panel/qr/` cartel para imprimir y
   `/tiendas/panel/qr.png|svg`. Solo tiendas activas.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **731 pruebas, OK**.
+- **Duplicar producto**: `catalogo:crear?copiar=<pk>` abre el formulario lleno (`_datos_para_duplicar` en
+  catalogo/views.py): todo menos stock (0), fotos y código interno; sin publicar ni destacar; la oferta solo si
+  sigue vigente y la categoría/marca solo si siguen activas. Solo productos de la misma tienda (404 si no).
+  Enlace en «Más» de Mis productos y botón «Duplicar» al editar.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **739 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

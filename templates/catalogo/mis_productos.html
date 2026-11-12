@@ -112,6 +112,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{% url 'inventario:kardex' producto.pk %}">Kardex (historia del stock)</a></li>
                 <li><a class="dropdown-item" href="{% url 'inventario:ajuste_nuevo' %}?producto={{ producto.pk }}">Ajustar stock (daño, pérdida, devolución)</a></li>
+                <li><a class="dropdown-item" href="{% url 'catalogo:crear' %}?copiar={{ producto.pk }}">Duplicar (crear uno parecido)</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-danger" href="{% url 'catalogo:eliminar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}">Eliminar</a></li>
               </ul>

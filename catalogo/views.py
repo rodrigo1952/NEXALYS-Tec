@@ -9,6 +9,7 @@ from django.http import QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from inventario.models import FichaInventario
 from tiendas.decorators import tienda_requerida
 
 from .forms import BusquedaForm, ProductoForm
@@ -300,22 +301,60 @@ def _url_lista(lista, producto=None):
     return url + (f"#producto-{producto.pk}" if producto else "")
 
 
+SUFIJO_COPIA = " (copia)"
+
+
+def _datos_para_duplicar(original):
+    """
+    «Duplicar»: el formulario de un producto nuevo ya lleno con los datos de otro de la tienda.
+    Se copia todo menos el stock (empieza en 0), las fotos y el código interno (cada producto
+    tiene el suyo). Queda sin publicar y sin destacar hasta que la tienda lo revise.
+    La oferta solo se copia si sigue vigente; la categoría y la marca, si siguen activas.
+    """
+    ficha = FichaInventario.objects.filter(producto=original).first()
+    vigente = original.en_oferta  # propiedad del modelo
+    largo = Producto._meta.get_field("nombre").max_length - len(SUFIJO_COPIA)
+    return {
+        "nombre": original.nombre[:largo].rstrip() + SUFIJO_COPIA,
+        "categoria": original.categoria_id if original.categoria.activa else None,
+        "marca": original.marca_id if original.marca.activa else None,
+        "precio": original.precio,
+        "precio_oferta": original.precio_oferta if vigente else None,
+        "oferta_hasta": original.oferta_hasta if vigente else None,
+        "descripcion": original.descripcion,
+        "precio_compra": ficha.costo if ficha else None,
+        "stock_minimo": ficha.stock_minimo if ficha else 0,
+        "stock": 0,
+        "activo": False,
+        "destacado": False,
+    }
+
+
 @tienda_requerida()
 def producto_crear(request):
     volver = request.GET.get("volver") if request.GET.get("volver") in VOLVER_A else ""
+    original = None
+    if _entero(request.GET.get("copiar")):
+        # Solo productos de la misma tienda (si no, 404).
+        original = get_object_or_404(
+            Producto.objects.select_related("categoria", "marca"), pk=_entero(request.GET["copiar"]), tienda=request.tienda
+        )
     if request.method == "POST":
         form = ProductoForm(request.POST, request.FILES, tienda=request.tienda)
         if form.is_valid():
             form.instance._usuario_cambio = request.user  # autor del "inventario inicial" en el kardex
             producto = form.save()
             messages.success(request, f"Producto \"{producto.nombre}\" registrado correctamente.")
+            if original and not producto.activo:
+                messages.info(request, "La copia está sin publicar: agrégale sus fotos y márcala como «Publicado» cuando esté lista.")
             if volver:
                 return redirect(f"{reverse(VOLVER_A[volver])}?producto={producto.pk}")
             return redirect("catalogo:mis_productos")
     else:
-        form = ProductoForm(tienda=request.tienda)
+        form = ProductoForm(tienda=request.tienda, initial=_datos_para_duplicar(original) if original else None)
     return render(request, "catalogo/producto_form.html", {
-        "form": form, "titulo": "Agregar producto", "volver": volver,
+        "form": form, "titulo": "Duplicar producto" if original else "Agregar producto", "volver": volver,
+        "original": original,
         "url_cancelar": reverse(VOLVER_A[volver]) if volver else reverse("catalogo:mis_productos"),
     })
 

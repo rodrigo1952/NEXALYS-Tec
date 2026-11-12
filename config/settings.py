@@ -85,7 +85,6 @@ INSTALLED_APPS = [
     'cuentas',
     'tiendas',
     'catalogo',
-    'pedidos',
     'favoritos',
     'administracion',
     'inventario',
