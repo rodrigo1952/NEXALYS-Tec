@@ -3,7 +3,8 @@ Lee los datos secretos y los ajustes del servidor desde el archivo .env (junto a
 
 El archivo .env NO se sube a GitHub (está en .gitignore): cada PC y el servidor tienen el suyo.
 Formato: una línea por dato, NOMBRE=valor. Las líneas que empiezan con # son comentarios.
-Si un dato ya existe como variable de entorno del sistema, gana el del sistema.
+Lo que diga el .env manda: si VS Code (o el sistema) ya puso un valor viejo en la terminal, el .env lo reemplaza.
+Así, al cambiar el .env basta con reiniciar runserver. Un dato que NO está en el .env se toma del sistema.
 
 Para crear un .env nuevo con una clave secreta al azar:  python config/crear_env.py
 Modelo con todos los datos y su explicación: .env.example
@@ -13,7 +14,7 @@ import os
 
 
 def cargar_env(ruta):
-    """Copia los datos del .env a os.environ (sin pisar los que ya existen). Si no hay .env, no hace nada."""
+    """Copia los datos del .env a os.environ (reemplaza los que ya existan). Si no hay .env, no hace nada."""
     try:
         with open(ruta, encoding="utf-8") as archivo:
             lineas = archivo.read().splitlines()
@@ -27,7 +28,7 @@ def cargar_env(ruta):
         nombre, valor = nombre.strip(), valor.strip()
         if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "\"'":
             valor = valor[1:-1]  # NOMBRE="valor" o NOMBRE='valor'
-        os.environ.setdefault(nombre, valor)
+        os.environ[nombre] = valor
 
 
 def texto(nombre, por_defecto=""):

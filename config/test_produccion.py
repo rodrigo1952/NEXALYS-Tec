@@ -8,7 +8,7 @@ from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from . import crear_env, entorno
@@ -29,8 +29,11 @@ class ArchivoEnvTests(SimpleTestCase):
         datos = self.leer('# comentario\n\nDEBUG=True\nSITIO_URL="https://a.com"\nCLAVE=a=b#c\n')
         self.assertEqual(datos, {"DEBUG": "True", "SITIO_URL": "https://a.com", "CLAVE": "a=b#c"})
 
-    def test_no_pisa_las_variables_del_sistema(self):
-        self.assertEqual(self.leer("DEBUG=True\n", {"DEBUG": "False"})["DEBUG"], "False")
+    def test_el_env_manda_sobre_valores_viejos_de_la_terminal(self):
+        # VS Code copia el .env a la terminal al abrirla; si luego cambias el .env, debe valer el nuevo.
+        datos = self.leer("ALLOWED_HOSTS=nuevo.com\n", {"ALLOWED_HOSTS": "viejo.com", "OTRA": "x"})
+        self.assertEqual(datos["ALLOWED_HOSTS"], "nuevo.com")
+        self.assertEqual(datos["OTRA"], "x")  # lo que no está en el .env se toma del sistema
 
     def test_sin_archivo_no_falla(self):
         entorno.cargar_env(Path(tempfile.gettempdir()) / "no-existe" / ".env")
@@ -75,7 +78,7 @@ class CrearEnvTests(SimpleTestCase):
 def correr_como_servidor(*argumentos, **variables):
     """Arranca Django como en el servidor (sin leer tu .env: las variables del sistema ganan)."""
     entorno_servidor = {
-        **os.environ, "DEBUG": "False", "SECRET_KEY": crear_env.clave_secreta(), "ALLOWED_HOSTS": "nexalys.pythonanywhere.com",
+        **os.environ, "NEXALYS_SIN_ENV": "1", "DEBUG": "False", "SECRET_KEY": crear_env.clave_secreta(), "ALLOWED_HOSTS": "nexalys.pythonanywhere.com",
         "SITIO_URL": "https://nexalys.pythonanywhere.com", "DJANGO_ADMIN_URL": "control-prueba/",
         **variables,
     }
@@ -314,3 +317,55 @@ class EstaticosEnTuPCTests(TestCase):
         texto = (RAIZ / "config" / "settings.py").read_text(encoding="utf-8")
         self.assertIn("'config.estaticos.EstaticosConVersion' if DEBUG", texto)
 
+
+
+@override_settings(DEBUG=True, ALLOWED_HOSTS=["localhost", "127.0.0.1", ".trycloudflare.com", "testserver"])
+class DetallesSoloEnTuPCTests(TestCase):
+    """Con DEBUG=True, la página amarilla con detalles solo se ve en tu PC; por el túnel, la página normal."""
+
+    URL = "/esta-direccion-no-existe/"
+
+    def test_en_tu_pc_se_ven_los_detalles(self):
+        respuesta = self.client.get(self.URL, HTTP_HOST="127.0.0.1:8000")
+        self.assertEqual(respuesta.status_code, 404)
+        self.assertIn(b"NONE,NOARCHIVE", respuesta.content)
+
+    def test_por_el_tunel_se_ve_la_pagina_normal(self):
+        respuesta = self.client.get(self.URL, HTTP_HOST="abc-def.trycloudflare.com", HTTP_CF_CONNECTING_IP="190.1.2.3")
+        self.assertEqual(respuesta.status_code, 404)
+        self.assertNotIn(b"NONE,NOARCHIVE", respuesta.content)
+        self.assertNotIn(settings.ADMIN_URL.encode(), respuesta.content)
+        self.assertTemplateUsed(respuesta, "404.html")
+
+    def test_dominio_no_permitido_por_el_tunel_no_muestra_detalles(self):
+        with self.assertLogs("django.security.DisallowedHost", "ERROR"):
+            respuesta = self.client.get("/", HTTP_HOST="otro.ejemplo.com", HTTP_CF_CONNECTING_IP="190.1.2.3")
+        self.assertEqual(respuesta.status_code, 400)
+        self.assertNotIn(b"NONE,NOARCHIVE", respuesta.content)
+        self.assertNotIn(b"ALLOWED_HOSTS", respuesta.content)
+
+    def test_error_del_servidor_por_el_tunel(self):
+        from django.urls import path
+
+        from . import urls as urls_del_sitio
+
+        def falla(request):
+            raise RuntimeError("error de prueba")
+
+        urls_de_prueba = [path("falla/", falla), *urls_del_sitio.urlpatterns]
+        with mock.patch.object(urls_del_sitio, "urlpatterns", urls_de_prueba), \
+                self.settings(ROOT_URLCONF="config.urls"), self.assertLogs("django.request", "ERROR"):
+            from django.urls import clear_url_caches
+
+            clear_url_caches()
+            self.client.raise_request_exception = False
+            respuesta = self.client.get("/falla/", HTTP_HOST="abc.trycloudflare.com", HTTP_CF_CONNECTING_IP="190.1.2.3")
+        clear_url_caches()
+        self.assertEqual(respuesta.status_code, 500)
+        self.assertNotIn(b"error de prueba", respuesta.content)
+        self.assertIn("Error del servidor".encode(), respuesta.content)
+
+    def test_sin_debug_no_hace_nada(self):
+        with self.settings(DEBUG=False):
+            respuesta = self.client.get(self.URL, HTTP_HOST="abc.trycloudflare.com")
+        self.assertEqual(respuesta.status_code, 404)

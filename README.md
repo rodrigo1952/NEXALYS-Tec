@@ -253,6 +253,16 @@ Gmail permite unos 500 correos al día. En PythonAnywhere gratis, Gmail es el ú
 - Si es contra una tienda, ella la responde desde **Datos de mi tienda → Libro de Reclamaciones**; el administrador las supervisa en **Control → Libro de Reclamaciones** y responde las dirigidas a NEXALYS Tec. Las hojas no se borran (se conservan al menos 2 años).
 - La tienda puede registrar su **RUC** en «Editar datos» para que aparezca en sus hojas.
 
+### Mostrar la página a alguien sin publicarla (túnel)
+
+1. Instala una sola vez: `winget install Cloudflare.cloudflared`.
+2. Terminal 1: `python manage.py runserver`. Terminal 2: `cloudflared tunnel --url http://localhost:8000` y copia el enlace `https://….trycloudflare.com` que aparece.
+3. En el `.env`: `ALLOWED_HOSTS=localhost,127.0.0.1,.trycloudflare.com` y `SITIO_URL=` ese enlace. Guarda y reinicia la terminal 1.
+4. Envía el enlace. Funciona mientras las dos terminales estén abiertas; cada túnel nuevo tiene otro enlace. Usa solo datos de prueba.
+5. Al terminar: Ctrl+C en las dos terminales y `SITIO_URL=http://127.0.0.1:8000` en el `.env`.
+
+Quien entra por el túnel nunca ve la página amarilla de errores con detalles (solo tú, en `127.0.0.1`).
+
 ### Compartir
 
 El botón **Compartir** (producto y tienda) abre una ventanita con WhatsApp, Facebook, X, Telegram, Correo y Copiar enlace. En el celular sale desde abajo y, si el teléfono lo permite, trae «Más opciones» (el menú del teléfono, donde aparecen TikTok o Instagram si están instalados; esas dos redes no tienen un enlace web para compartir).

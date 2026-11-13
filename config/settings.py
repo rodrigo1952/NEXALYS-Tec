@@ -24,7 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Datos secretos y ajustes del servidor: se leen del archivo .env (ver config/entorno.py y .env.example).
 # Si no tienes .env:  python config/crear_env.py
-cargar_env(BASE_DIR / ".env")
+# (NEXALYS_SIN_ENV=1 hace que no se lea: lo usan las pruebas que arrancan Django «como en el servidor».)
+if not entorno.si_o_no("NEXALYS_SIN_ENV"):
+    cargar_env(BASE_DIR / ".env")
 
 # Con DEBUG=True Django muestra los errores con todos sus detalles: SOLO en tu PC.
 # Si falta en el .env, se asume False (lo seguro).
@@ -92,6 +94,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'config.middleware.OcultarDetallesFueraDeTuPC',  # con DEBUG=True, nadie fuera de tu PC ve los errores con detalles
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

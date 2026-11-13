@@ -303,7 +303,13 @@
 - **Login**: desde el 1.er error dice cuántos intentos quedan (`limites.intentos_restantes`, la regla más cercana) y
   enlaza «¿Olvidaste tu contraseña?». Avisos (`.alert`) en todo el sitio: tarjeta blanca, borde izquierdo de color,
   ícono en círculo (`--alerta-color`, `--alerta-fondo`) y texto azul marino.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **753 pruebas, OK**.
+- **El .env manda** (`config/entorno.py` reemplaza valores ya puestos: VS Code copia el .env a la terminal al abrirla).
+  `NEXALYS_SIN_ENV=1` evita leerlo (pruebas que arrancan Django como en el servidor).
+- **Detalles de errores solo en tu PC** (`config/middleware.py`, primero en MIDDLEWARE): con DEBUG=True, si la visita
+  no es de localhost/127.0.0.1 (túnel de Cloudflare, celular por Wi-Fi), la página amarilla se cambia por 404/403/500.
+- **Mostrar la página sin publicarla**: túnel de Cloudflare (`cloudflared tunnel --url http://localhost:8000`, enlace
+  `https://…trycloudflare.com` que cambia cada vez; en el .env `ALLOWED_HOSTS` con `.trycloudflare.com` y `SITIO_URL` = el enlace).
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **758 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 
