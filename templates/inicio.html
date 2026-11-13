@@ -1,16 +1,17 @@
 {% extends "base.html" %}
 {% block contenido %}
-<section class="portada-marca mb-5">
+<section class="portada-marca mb-4 mb-md-5">
   <div class="portada-marca__texto">
     <span class="portada-marca__etiqueta">Tiendas tecnológicas de Quillabamba</span>
     <h1>Bienvenido a NEXALYS Tec</h1>
     <p>Encuentra productos tecnológicos de las tiendas de tu ciudad y contáctalas directamente por WhatsApp.</p>
-    <form method="get" action="{% url 'catalogo:catalogo' %}" class="d-flex flex-wrap gap-2" role="search" style="max-width: 34rem">
+    {# En el celular no hace falta: el buscador de la cabecera queda justo arriba. #}
+    <form method="get" action="{% url 'catalogo:catalogo' %}" class="d-none d-md-flex flex-wrap gap-2" role="search" style="max-width: 34rem">
       <label for="buscar-portada" class="visually-hidden">Buscar productos</label>
       <input id="buscar-portada" type="search" name="q" class="form-control form-control-lg flex-grow-1" style="min-width: 0; flex-basis: 14rem" placeholder="¿Qué estás buscando? Ej.: laptop, audífonos">
       <button type="submit" class="btn btn-acento btn-lg">Buscar</button>
     </form>
-    <div class="d-flex flex-wrap gap-2">
+    <div class="d-flex flex-wrap gap-2 portada-marca__botones">
       <a href="{% url 'catalogo:catalogo' %}" class="btn btn-outline-light">Ver catálogo</a>
       <a href="{% url 'tiendas:cercanas' %}" class="btn btn-outline-light"><i class="bi bi-geo-alt" aria-hidden="true"></i> Tiendas cercanas</a>
       {% if user.is_authenticated %}
@@ -27,12 +28,27 @@
   </div>
 </section>
 
+{# Categorías con íconos: en el celular se deslizan de lado. #}
+{% if menu_categorias.todas %}
+  <nav class="categorias-inicio mb-4 mb-md-5" aria-label="Categorías">
+    <h2 class="h5 mb-3">Categorías</h2>
+    <ul class="categorias-inicio__lista">
+      {% for categoria in menu_categorias.todas %}
+        <li><a href="{% url 'catalogo:catalogo' %}?categoria={{ categoria.pk }}" class="categorias-inicio__enlace">
+          <span class="categorias-inicio__icono"><i class="bi bi-{{ categoria.icono }}" aria-hidden="true"></i></span>
+          <span class="categorias-inicio__nombre">{{ categoria.nombre }}</span>
+        </a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+{% endif %}
+
 {% if destacados %}
   <div class="d-flex justify-content-between align-items-baseline mb-3">
     <h2 class="h5 mb-0"><i class="bi bi-star" aria-hidden="true"></i> Productos destacados</h2>
     {% if total_destacados > destacados|length %}<a href="{% url 'catalogo:catalogo' %}?destacados=on" class="enlace-accion">Ver todos los destacados ({{ total_destacados }})</a>{% endif %}
   </div>
-  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mb-5">
+  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 mb-5">
     {% for producto in destacados %}
       <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
     {% endfor %}
@@ -44,7 +60,7 @@
     <h2 class="h5 mb-0"><i class="bi bi-tag" aria-hidden="true"></i> Ofertas</h2>
     <a href="{% url 'catalogo:catalogo' %}?solo_ofertas=on" class="enlace-accion">Ver todas las ofertas</a>
   </div>
-  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3 mb-5">
+  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 mb-5">
     {% for producto in ofertas %}
       <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
     {% endfor %}
@@ -53,7 +69,7 @@
 
 {% if recientes %}
   <h2 class="h5 mb-3">Productos recientes</h2>
-  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3">
     {% for producto in recientes %}
       <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
     {% endfor %}

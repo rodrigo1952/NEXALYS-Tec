@@ -1639,3 +1639,188 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 .ganancia-linea--perdida .ganancia-linea__caja { background: #FCE8E6; border-left-color: #D93025; }
 .ganancia-linea--perdida .ganancia-linea__texto .fw-semibold { color: #8E1F17; }
 .ganancia-linea__precio { flex: 0 0 13rem; max-width: 100%; }
+
+/* =====================================================================
+   Celular (nov 2026): menú lateral, cabecera compacta, inicio, catálogo y Mis productos.
+   En computadora casi nada cambia: casi todo va dentro de @media para pantallas angostas.
+   ===================================================================== */
+
+/* --- Rangos rápidos de precio del catálogo (celular y computadora) --- */
+.rangos-precio { display: flex; align-items: center; gap: .6rem; margin: -.25rem 0 1rem; min-width: 0; }
+.rangos-precio__titulo { flex: 0 0 auto; font-size: .85rem; font-weight: 600; color: var(--nx-texto-suave); }
+.rangos-precio ul {
+  display: flex; gap: .4rem; margin: 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; min-width: 0;
+}
+.rangos-precio ul::-webkit-scrollbar { display: none; }
+.chip-rango {
+  display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; padding: .35rem .75rem;
+  border: 1px solid var(--nx-borde); border-radius: 999px; background: var(--nx-blanco);
+  color: var(--nx-texto); font-size: .85rem; text-decoration: none;
+}
+.chip-rango:hover { border-color: var(--nx-oscuro); color: var(--nx-texto); }
+.chip-rango__cantidad { font-size: .75rem; color: var(--nx-texto-suave); }
+.chip-rango.activo { background: var(--nx-oscuro); border-color: var(--nx-oscuro); color: var(--nx-blanco); }
+.chip-rango.activo .chip-rango__cantidad { color: rgba(255, 255, 255, .75); }
+
+/* --- Categorías con íconos en el inicio --- */
+.categorias-inicio__lista {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: .6rem;
+  margin: 0; padding: 0; list-style: none;
+}
+.categorias-inicio__enlace {
+  display: flex; flex-direction: column; align-items: center; gap: .45rem; height: 100%; padding: .85rem .5rem;
+  background: var(--nx-blanco); border: 1px solid var(--nx-borde-suave); border-radius: var(--nx-radio);
+  color: var(--nx-texto); text-decoration: none; text-align: center; font-size: .85rem; font-weight: 500; line-height: 1.2;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.categorias-inicio__enlace:hover, .categorias-inicio__enlace:focus-visible { border-color: var(--nx-acento); color: var(--nx-texto); transform: translateY(-2px); }
+.categorias-inicio__icono {
+  width: 3rem; height: 3rem; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(var(--nx-acento-rgb), .14); color: var(--nx-acento-texto); font-size: 1.35rem;
+}
+
+/* --- Menú lateral del celular (_menu_movil.html) --- */
+.menu-movil { --bs-offcanvas-width: min(340px, 88vw); background: var(--nx-blanco); }
+.menu-movil__cabecera { background: var(--nx-oscuro); padding: .9rem 1rem; }
+.menu-movil__cabecera .navbar-brand { padding: 0; margin: 0; }
+.menu-movil__cuerpo { padding: 0 0 1.25rem; }
+.menu-movil__cuenta { background: var(--nx-oscuro); color: var(--nx-blanco); padding: .25rem 1rem 1.1rem; display: grid; gap: .55rem; }
+.menu-movil__saludo { margin: 0 0 .2rem; color: var(--nx-menu-texto); font-size: .92rem; }
+.menu-movil__boton { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; font-weight: 600; }
+.menu-movil__cuenta .btn-outline-light { border-color: #3E5A86; }
+.menu-movil__usuario { display: flex; align-items: center; gap: .75rem; }
+.menu-movil__usuario .avatar-menu { width: 46px; height: 46px; font-size: 1.15rem; flex: 0 0 46px; }
+.menu-movil__correo { color: var(--nx-menu-texto); }
+.menu-movil__rol { background: rgba(var(--nx-acento-rgb), .18); color: #8BE3F4; margin-top: .3rem; }
+.menu-movil__titulo {
+  margin: 1.1rem 1rem .35rem; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--nx-texto-suave);
+}
+.menu-movil__lista { margin: 0; padding: 0 .5rem; list-style: none; }
+.menu-movil__lista:first-child { margin-top: .6rem; }
+.menu-movil__enlace {
+  display: flex; align-items: center; gap: .85rem; min-height: 46px; padding: .5rem .75rem; border-radius: .65rem;
+  color: var(--nx-texto); text-decoration: none; font-weight: 500;
+}
+.menu-movil__enlace > .bi { width: 1.35rem; font-size: 1.15rem; text-align: center; color: var(--nx-acento-texto); }
+.menu-movil__enlace:hover, .menu-movil__enlace:focus-visible { background: var(--nx-fondo); color: var(--nx-texto); }
+.menu-movil__enlace.activo { background: rgba(var(--nx-acento-rgb), .14); color: var(--nx-oscuro); font-weight: 700; box-shadow: inset 3px 0 0 var(--nx-acento); }
+.menu-movil__cantidad { margin-left: auto; font-size: .75rem; color: var(--nx-texto-suave); background: var(--nx-fondo); border-radius: 999px; padding: .1rem .5rem; }
+.menu-movil__categorias summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+.menu-movil__categorias summary::-webkit-details-marker { display: none; }
+.menu-movil__categorias summary::after { content: "\f282"; font-family: "bootstrap-icons"; font-size: .8rem; transition: transform .2s ease; }
+.menu-movil__categorias[open] summary::after { transform: rotate(180deg); }
+.menu-movil__salir { margin: 1.25rem 1rem 0; width: calc(100% - 2rem) !important; min-height: 44px; }
+
+/* Botón de la cuenta (a la derecha en el celular) */
+.cuenta-movil {
+  margin-left: auto; display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .5rem; min-height: 40px;
+  background: none; border: 0; border-radius: 999px; color: var(--nx-blanco); text-decoration: none; font-weight: 600; font-size: .9rem;
+}
+.cuenta-movil .bi { font-size: 1.5rem; color: var(--nx-acento); }
+.cuenta-movil:hover, .cuenta-movil:focus-visible { color: var(--nx-blanco); background: rgba(255, 255, 255, .08); }
+
+@media (max-width: 991.98px) {
+  /* Cabecera más baja: ☰ · logo · cuenta en una fila y el buscador debajo */
+  .navbar-marca { min-height: 0; padding-top: .4rem; padding-bottom: .1rem; }
+  .navbar-marca .container { align-items: center; }
+  .navbar-marca .navbar-toggler { border: 0; min-width: 40px; min-height: 40px; padding: .25rem; margin-right: .35rem; box-shadow: none; }
+  .navbar-marca .navbar-brand { margin-right: 0; padding: 0; }
+  .navbar-marca .logo-marca__texto { font-size: 1.2rem; }
+  .navbar-marca .logo-marca svg { width: 30px; height: 30px; }
+  .buscador-menu { margin: .45rem 0 .5rem; }
+  .buscador-menu .form-control { min-height: 40px; font-size: .95rem; }
+  .buscador-menu .btn { min-height: 40px; min-width: 44px; }
+  .barra-categorias__fila { min-height: 42px; }
+
+  /* Catálogo: «Filtrar | Ordenar» en dos mitades, fijo debajo de la cabecera al bajar */
+  .barra-catalogo {
+    position: sticky; top: var(--cabecera-visible, 0px); z-index: 1020; transition: top .25s ease;
+    display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; padding: .5rem; box-shadow: var(--nx-sombra);
+  }
+  .barra-catalogo__filtrar { min-height: 40px; font-weight: 600; }
+  .barra-catalogo__orden { position: relative; margin: 0; }
+  .barra-catalogo__orden > .bi { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--nx-oscuro); }
+  .barra-catalogo__orden .form-select {
+    min-width: 0; width: 100%; min-height: 40px; padding-left: 2.1rem; font-weight: 600; color: var(--nx-oscuro);
+    border-color: var(--nx-oscuro); border-radius: var(--bs-border-radius-sm);
+  }
+}
+@media (max-width: 991.98px) and (prefers-reduced-motion: reduce) { .barra-catalogo { transition: none; } }
+
+@media (max-width: 767.98px) {
+  /* Inicio: portada más corta y categorías en una fila que se desliza */
+  .portada-marca { padding: 1.5rem 1.25rem; border-radius: 1.1rem; gap: 1rem; }
+  .portada-marca__texto { gap: .7rem; }
+  .portada-marca h1 { font-size: 1.55rem; }
+  .portada-marca p { font-size: .95rem; }
+  .portada-marca__etiqueta { font-size: .78rem; }
+  .portada-marca__botones .btn { font-size: .88rem; padding: .4rem .8rem; }
+  .categorias-inicio__lista {
+    display: flex; overflow-x: auto; scrollbar-width: none; gap: .6rem; padding-bottom: .25rem;
+    margin-right: calc(var(--bs-gutter-x) * -.5); padding-right: calc(var(--bs-gutter-x) * .5);
+  }
+  .categorias-inicio__lista::-webkit-scrollbar { display: none; }
+  .categorias-inicio__lista li { flex: 0 0 88px; }
+  .categorias-inicio__enlace { padding: .7rem .35rem; font-size: .78rem; }
+  .categorias-inicio__icono { width: 2.6rem; height: 2.6rem; font-size: 1.2rem; }
+
+  /* Mis productos: filtros y categorías en una sola fila que se desliza */
+  .fila-deslizable { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: .15rem; }
+  .fila-deslizable::-webkit-scrollbar { display: none; }
+  .fila-deslizable > * { flex: 0 0 auto; white-space: nowrap; }
+  .filtros-rapidos .enlace-accion { margin-left: .5rem !important; }
+  .busqueda-mis-productos > input[type=search] { flex-basis: 100% !important; }
+  .busqueda-mis-productos > select { flex: 1 1 auto; }
+  .boton-agregar-producto { width: 100%; }
+
+}
+
+/* Mis productos: en el celular y la tableta, la tabla se ve como tarjetas (2 por fila en la tableta) */
+@media (max-width: 991.98px) {
+  .contenedor-tabla-productos { overflow: visible; background: transparent !important; box-shadow: none !important; }
+  .tabla-productos, .tabla-productos tbody { display: block; }
+  .tabla-productos thead { display: none; }
+  .tabla-productos tr.fila-producto {
+    display: grid; grid-template-columns: 1fr auto; grid-template-areas: "producto producto" "precio stock" "estado favoritos" "acciones acciones";
+    gap: .35rem .75rem; margin-bottom: .75rem; padding: .85rem; background: var(--nx-blanco);
+    border: 1px solid var(--nx-borde-suave); border-radius: var(--nx-radio); box-shadow: var(--nx-sombra);
+  }
+  .tabla-productos tr.fila-producto > td { display: block; padding: 0; border: 0; background: none; box-shadow: none; }
+  .tabla-productos td:first-child { grid-area: producto; font-weight: 600; }
+  .tabla-productos .celda-precio { grid-area: precio; text-align: left !important; white-space: normal !important; }
+  .tabla-productos .celda-stock { grid-area: stock; }
+  .tabla-productos .celda-estado { grid-area: estado; }
+  .tabla-productos .celda-favoritos { grid-area: favoritos; align-self: center; font-size: .85rem; color: var(--nx-texto-suave); }
+  .tabla-productos .celda-favoritos::before { content: "\f417"; font-family: "bootstrap-icons"; margin-right: .3rem; vertical-align: -.1em; }
+  .tabla-productos .celda-acciones { grid-area: acciones; display: flex !important; gap: .5rem; padding-top: .5rem !important; border-top: 1px solid var(--nx-borde-suave) !important; }
+  .tabla-productos .celda-acciones > .btn { flex: 1 1 auto; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: .3rem; }
+  .tabla-productos .celda-acciones .btn-group .btn { min-height: 40px; }
+  .tabla-productos .celda-precio::before, .tabla-productos .celda-stock::before {
+    content: attr(data-etiqueta); display: block; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--nx-texto-suave);
+  }
+  .tabla-productos .celda-precio br { display: none; }
+  .tabla-productos .celda-precio small, .tabla-productos .celda-precio .badge { margin-left: .35rem; }
+  .tabla-productos .celda-producto .small { font-weight: 400; }
+}
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .tabla-productos tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+  .tabla-productos tr.fila-producto { margin-bottom: 0; }
+}
+
+@media (max-width: 575.98px) {
+  /* Tarjetas de producto más compactas (2 por fila) */
+  .tarjeta-producto .foto-producto, .tarjeta-producto .foto-vacia { height: 132px; }
+  .tarjeta-producto .card-body { padding: .6rem .7rem .7rem; }
+  .tarjeta-producto .card-body > small { font-size: .72rem; }
+  .tarjeta-producto .card-title { font-size: .86rem; line-height: 1.25; margin-bottom: .35rem;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .tarjeta-producto .fs-5 { font-size: 1.02rem !important; line-height: 1.3; }
+  .tarjeta-producto .fs-5 small { display: inline-block; font-size: .75rem; }
+  .tarjeta-producto .fs-5 .badge { font-size: .68rem; }
+  .tarjeta-producto .boton-favorito, .tarjeta-producto .boton-corazon { transform: scale(.85); transform-origin: top right; }
+  .tarjeta-producto__tienda { font-size: .72rem; }
+}
+/* Siempre 2 por fila en el celular, también en pantallas de 360 px */
+@media (max-width: 399.98px) { .catalogo-grilla { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; } }
+@media (max-width: 575.98px) { .catalogo-grilla { gap: .6rem; } }

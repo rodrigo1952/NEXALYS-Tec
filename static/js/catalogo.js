@@ -9,6 +9,13 @@
  */
 (function () {
   "use strict";
+  // Rangos rápidos de precio: si hay uno elegido, la fila se desliza hasta mostrarlo.
+  var rangoActivo = document.querySelector(".rangos-precio .chip-rango.activo");
+  if (rangoActivo) {
+    var fila = rangoActivo.closest("ul");
+    fila.scrollLeft = rangoActivo.offsetLeft - fila.offsetLeft - 16;
+  }
+
   var form = document.getElementById("filtros-catalogo");
   if (!form) return;
   var escritorio = window.matchMedia("(min-width: 992px)");

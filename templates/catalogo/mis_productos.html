@@ -3,6 +3,8 @@
 {% block titulo %}Mis productos | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% comment %}
+En el celular (menos de 768 px) la tabla se ve como tarjetas: foto, nombre, precio, stock, estado
+y los botones Editar/Más a la vista, sin deslizar de lado (CSS: .tabla-productos en marca.css).
 "Mis productos" reúne el catálogo (lo que ven los clientes) y el inventario (lo interno de la tienda).
 Pestañas: Productos (esta página), Ventas, Ingresos, Ajustes y conteo, y Proveedores.
 Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página es solo suya).
@@ -10,7 +12,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
 {% include "inventario/_menu.html" %}
 
 {# Filtros rápidos: los números completos (valor del inventario, ganancia, etc.) están en la pestaña Resumen. #}
-<nav class="filtros-rapidos d-flex flex-wrap align-items-center gap-2 mb-3" aria-label="Filtros rápidos">
+<nav class="filtros-rapidos d-flex flex-wrap align-items-center gap-2 mb-3 fila-deslizable" aria-label="Filtros rápidos">
   <a href="{% querystring ver=None alerta=None sin_costo=None page=None %}" class="filtro-rapido{% if not ver %} activo{% endif %}"{% if not ver %} aria-current="true"{% endif %}>Todos <span class="contador">{{ resumen.productos }}</span></a>
   <a href="{% querystring ver='bajo' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--aviso{% if ver == 'bajo' %} activo{% endif %}"{% if ver == 'bajo' %} aria-current="true"{% endif %}>Stock bajo <span class="contador">{{ resumen.stock_bajo }}</span></a>
   <a href="{% querystring ver='agotados' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--peligro{% if ver == 'agotados' %} activo{% endif %}"{% if ver == 'agotados' %} aria-current="true"{% endif %}>Agotados <span class="contador">{{ resumen.agotados }}</span></a>
@@ -19,7 +21,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
   <a href="{% url 'inventario:resumen' %}" class="enlace-accion ms-auto">Ver números en Resumen</a>
 </nav>
 
-<form method="get" class="d-flex flex-wrap gap-2 mb-3">
+<form method="get" class="d-flex flex-wrap gap-2 mb-3 busqueda-mis-productos">
   {% if categoria_id %}<input type="hidden" name="categoria" value="{{ categoria_id }}">{% endif %}
   {% if ver %}<input type="hidden" name="ver" value="{{ ver }}">{% endif %}
   <label for="buscar-mis-productos" class="visually-hidden">Buscar por nombre</label>
@@ -34,12 +36,12 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
     </select>
   {% endif %}
   <button type="submit" class="btn btn-outline-secondary">Buscar</button>
-  <a href="{% url 'catalogo:crear' %}" class="btn btn-primary">+ Agregar producto</a>
+  <a href="{% url 'catalogo:crear' %}" class="btn btn-primary boton-agregar-producto">+ Agregar producto</a>
 </form>
 
 {% if categorias %}
   {# Cantidad de productos por categoría; al tocar una, la tabla se filtra. #}
-  <nav class="filtro-categorias d-flex flex-wrap gap-2 mb-3" aria-label="Filtrar por categoría">
+  <nav class="filtro-categorias d-flex flex-wrap gap-2 mb-3 fila-deslizable" aria-label="Filtrar por categoría">
     <a href="{% querystring categoria=None marca=None page=None %}" class="btn btn-sm {% if not categoria_id %}btn-primary{% else %}btn-outline-secondary{% endif %}"{% if not categoria_id %} aria-current="true"{% endif %}>Todas ({{ total_productos }})</a>
     {% for c in categorias %}
       <a href="{% querystring categoria=c.categoria_id marca=None page=None %}" class="btn btn-sm {% if c.categoria_id == categoria_id %}btn-primary{% else %}btn-outline-secondary{% endif %}"{% if c.categoria_id == categoria_id %} aria-current="true"{% endif %}>{{ c.categoria__nombre }} ({{ c.cantidad }})</a>
@@ -50,7 +52,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
 {% if ver == 'ocultos' %}<p class="small text-muted">Estos productos no se ven en el catálogo. Para volver a mostrar uno, entra a «Editar» y marca «Publicado» (si lo ocultó el administrador, verás su motivo).</p>{% endif %}
 {% if ver == 'sin_costo' %}<p class="small text-muted">Agrega el precio de compra con «Editar» para que estos productos cuenten en tu ganancia y en el valor del inventario.</p>{% endif %}
 
-<div class="table-responsive bg-white rounded shadow-sm">
+<div class="table-responsive bg-white rounded shadow-sm contenedor-tabla-productos">
   <table class="table table-hover align-middle mb-0 tabla-productos">
     <thead class="table-light">
       <tr>
@@ -79,7 +81,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
           </div></td>
           <td class="d-none d-lg-table-cell">{{ producto.categoria }}</td>
           <td class="d-none d-lg-table-cell">{{ producto.marca }}</td>
-          <td class="text-end text-nowrap">
+          <td class="text-end text-nowrap celda-precio" data-etiqueta="Precio">
             {% if producto.en_oferta %}
               <span class="text-danger fw-semibold">{{ producto.precio_oferta|soles }}</span><br>
               <small class="text-muted text-decoration-line-through">{{ producto.precio|soles }}</small><br>
@@ -88,14 +90,14 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
               {{ producto.precio|soles }}
             {% endif %}
           </td>
-          <td class="text-end text-nowrap">
+          <td class="text-end text-nowrap celda-stock" data-etiqueta="Stock">
             {% if producto.agotado %}<span class="badge text-bg-secondary"><i class="bi bi-x-circle" aria-hidden="true"></i> Agotado</span>
             {% else %}<span class="fw-semibold">{{ producto.stock }}</span>
               {% if producto.stock_minimo and producto.stock <= producto.stock_minimo %}<br><span class="badge text-bg-warning" title="Mínimo: {{ producto.stock_minimo }}"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> Stock bajo</span>{% endif %}
             {% endif %}
           </td>
           <td class="d-none d-xl-table-cell text-end text-nowrap">{% if producto.costo is not None %}{{ producto.costo|soles }}{% else %}<span class="text-warning-emphasis small">Falta</span>{% endif %}</td>
-          <td class="d-none d-md-table-cell"><div class="estados-producto">
+          <td class="celda-estado"><div class="estados-producto">
             {% if producto.activo %}<span class="badge text-bg-success"><i class="bi bi-eye" aria-hidden="true"></i> Publicado</span>{% else %}<span class="badge text-bg-light border"><i class="bi bi-eye-slash" aria-hidden="true"></i> Oculto</span>{% endif %}
             {% if producto.destacado %}<span class="badge text-bg-warning"><i class="bi bi-star-fill" aria-hidden="true"></i> Destacado</span>{% endif %}
             </div>
@@ -103,8 +105,8 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
               <span class="badge text-bg-danger" title="{{ producto.motivo_ocultamiento }}"><i class="bi bi-shield-exclamation" aria-hidden="true"></i> Oculto por el administrador</span>
               {% if producto.motivo_ocultamiento %}<div class="small text-danger">{{ producto.motivo_ocultamiento }}</div>{% endif %}
             {% endif %}</td>
-          <td class="d-none d-md-table-cell text-end">{{ producto.num_favoritos }}</td>
-          <td class="text-end text-nowrap">
+          <td class="text-end celda-favoritos" title="Clientes que lo guardaron en favoritos">{{ producto.num_favoritos }}</td>
+          <td class="text-end text-nowrap celda-acciones">
             <a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil" aria-hidden="true"></i> Editar</a>
             {# strategy fixed: el menú se dibuja sobre la página y la tabla (que tiene desplazamiento propio) no lo recorta. #}
             <div class="btn-group">

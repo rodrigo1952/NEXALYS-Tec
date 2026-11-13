@@ -68,9 +68,15 @@
       {% include "_menu_usuario.html" %}
     </ul>
 
-    <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#menu" aria-controls="menu" aria-expanded="false" aria-label="Abrir menú">
+    {# Celular: ☰ a la izquierda (abre el menú lateral, _menu_movil.html) y la cuenta a la derecha. #}
+    <button class="navbar-toggler order-first" type="button" data-bs-toggle="offcanvas" data-bs-target="#menu-movil" aria-controls="menu-movil" aria-label="Abrir menú">
       <span class="navbar-toggler-icon"></span>
     </button>
+    {% if user.is_authenticated %}
+      <button type="button" class="cuenta-movil d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#menu-movil" aria-label="Menú de la cuenta de {{ user.username }}">{% include "_avatar.html" %}</button>
+    {% elif vista != 'login' %}
+      <a class="cuenta-movil d-lg-none" href="{% url 'login' %}"><i class="bi bi-person-circle" aria-hidden="true"></i><span>Entrar</span></a>
+    {% endif %}
 
     {# Segunda fila: las secciones según el tipo de usuario. En el celular se abren con ☰. #}
     <div class="collapse navbar-collapse menu-fila order-3 order-lg-0" id="menu">
@@ -105,9 +111,6 @@
             <a class="nav-link nav-link--propio" href="{% url 'panel_admin' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Administración</a>
           </li>
         {% endif %}
-      </ul>
-      <ul class="navbar-nav d-lg-none border-top pt-2 mt-1">
-        {% include "_menu_usuario.html" %}
       </ul>
     </div>
   </div>
@@ -147,6 +150,7 @@
 </nav>
 {% endif %}
 </header>
+{% include "_menu_movil.html" %}
 {% endblock %}
 {% endwith %}
 
@@ -357,7 +361,7 @@
     function revisar() {
       pendiente = false;
       var y = window.scrollY, diferencia = y - ultima;
-      var menuAbierto = document.querySelector("#menu.show, #menu.collapsing");
+      var menuAbierto = document.querySelector("#menu-movil.show, #menu-movil.showing");
       var escribiendo = cabecera.contains(document.activeElement) && document.activeElement.tagName === "INPUT";
       if (y <= cabecera.offsetHeight || menuAbierto || escribiendo || diferencia < -MARGEN) {
         cabecera.classList.remove("cabecera-oculta");
@@ -365,13 +369,35 @@
         cabecera.classList.add("cabecera-oculta");
       }
       if (Math.abs(diferencia) > MARGEN || y <= cabecera.offsetHeight) ultima = y;
+      avisarAlto();
     }
+    // Lo que mide la cabecera a la vista (0 si está oculta): la barra «Filtrar | Ordenar» del catálogo
+    // queda fija justo debajo (CSS: var(--cabecera-visible)).
+    function avisarAlto() {
+      var alto = cabecera.classList.contains("cabecera-oculta") ? 0 : cabecera.offsetHeight;
+      document.documentElement.style.setProperty("--cabecera-visible", alto + "px");
+    }
+    avisarAlto();
+    window.addEventListener("resize", avisarAlto);
     window.addEventListener("scroll", function () {
       if (!pendiente) { pendiente = true; window.requestAnimationFrame(revisar); }
     }, { passive: true });
     // Si alguien navega con el teclado (Tab) hasta el menú, se muestra.
-    cabecera.addEventListener("focusin", function () { cabecera.classList.remove("cabecera-oculta"); });
+    cabecera.addEventListener("focusin", function () { cabecera.classList.remove("cabecera-oculta"); avisarAlto(); });
   })();
+
+  {% if user.is_authenticated %}
+  // Menú del celular: «Cerrar sesión» cierra primero el menú lateral y luego pide confirmar.
+  document.addEventListener("click", function (evento) {
+    if (!evento.target.closest("[data-menu-cerrar-sesion]")) return;
+    var lateral = document.getElementById("menu-movil"), modal = document.getElementById("modal-cerrar-sesion");
+    if (!lateral || !modal) return;
+    lateral.addEventListener("hidden.bs.offcanvas", function () {
+      bootstrap.Modal.getOrCreateInstance(modal).show();
+    }, { once: true });
+    bootstrap.Offcanvas.getOrCreateInstance(lateral).hide();
+  });
+  {% endif %}
 
   // Los mensajes de éxito e información desaparecen solos a los 6 segundos.
   setTimeout(function () {

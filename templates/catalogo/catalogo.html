@@ -48,22 +48,6 @@
           {% endif %}
 
           <details class="filtro" open>
-            <summary>Disponibilidad</summary>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="en_stock" value="on" id="filtro-stock"{% if form.cleaned_data.en_stock %} checked{% endif %}>
-              <label class="form-check-label filtro__opcion" for="filtro-stock">En stock <span class="filtro__cantidad">{{ disponibilidad.en_stock }}</span></label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="solo_ofertas" value="on" id="filtro-ofertas"{% if form.cleaned_data.solo_ofertas %} checked{% endif %}>
-              <label class="form-check-label filtro__opcion" for="filtro-ofertas"><span><i class="bi bi-tag" aria-hidden="true"></i> En oferta</span> <span class="filtro__cantidad">{{ disponibilidad.ofertas }}</span></label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="destacados" value="on" id="filtro-destacados"{% if form.cleaned_data.destacados %} checked{% endif %}>
-              <label class="form-check-label filtro__opcion" for="filtro-destacados"><span><i class="bi bi-star" aria-hidden="true"></i> Destacados</span> <span class="filtro__cantidad">{{ disponibilidad.destacados }}</span></label>
-            </div>
-          </details>
-
-          <details class="filtro" open>
             <summary>Precio</summary>
             {% if precio.maximo > precio.minimo %}
               <p class="small text-muted mb-2">El precio más alto es S/ {{ precio.maximo }}.</p>
@@ -89,6 +73,22 @@
             </div>
             {% for e in form.precio_min.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
             {% for e in form.precio_max.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </details>
+
+          <details class="filtro" open>
+            <summary>Disponibilidad</summary>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="en_stock" value="on" id="filtro-stock"{% if form.cleaned_data.en_stock %} checked{% endif %}>
+              <label class="form-check-label filtro__opcion" for="filtro-stock">En stock <span class="filtro__cantidad">{{ disponibilidad.en_stock }}</span></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="solo_ofertas" value="on" id="filtro-ofertas"{% if form.cleaned_data.solo_ofertas %} checked{% endif %}>
+              <label class="form-check-label filtro__opcion" for="filtro-ofertas"><span><i class="bi bi-tag" aria-hidden="true"></i> En oferta</span> <span class="filtro__cantidad">{{ disponibilidad.ofertas }}</span></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="destacados" value="on" id="filtro-destacados"{% if form.cleaned_data.destacados %} checked{% endif %}>
+              <label class="form-check-label filtro__opcion" for="filtro-destacados"><span><i class="bi bi-star" aria-hidden="true"></i> Destacados</span> <span class="filtro__cantidad">{{ disponibilidad.destacados }}</span></label>
+            </div>
           </details>
 
           {% if marcas %}
@@ -129,12 +129,14 @@
 
   {# ---------- Productos ---------- #}
   <div class="col-lg-9">
+    {# En el celular esta barra queda fija arriba al bajar: «Filtrar» y «Ordenar» siempre a mano. #}
     <div class="barra-catalogo">
-      <button type="button" class="btn btn-outline-primary btn-sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#panel-filtros" aria-controls="panel-filtros">
+      <button type="button" class="btn btn-outline-primary btn-sm d-lg-none barra-catalogo__filtrar" data-bs-toggle="offcanvas" data-bs-target="#panel-filtros" aria-controls="panel-filtros">
         <i class="bi bi-sliders" aria-hidden="true"></i> Filtrar{% if chips %} <span class="badge rounded-pill text-bg-primary">{{ chips|length }}</span>{% endif %}
       </button>
       <div class="barra-catalogo__orden">
-        <label for="{{ form.orden.id_for_label }}" class="small text-muted text-nowrap mb-0">Ordenar por</label>
+        <i class="bi bi-arrow-down-up d-lg-none" aria-hidden="true"></i>
+        <label for="{{ form.orden.id_for_label }}" class="small text-muted text-nowrap mb-0"><span class="d-none d-lg-inline">Ordenar por</span><span class="visually-hidden d-lg-none">Ordenar por</span></label>
         <select name="orden" id="{{ form.orden.id_for_label }}" class="form-select form-select-sm" form="filtros-catalogo" data-orden>
           {% for valor, texto in form.fields.orden.choices %}
             <option value="{{ valor }}"{% if form.orden.value == valor or not form.orden.value and not valor %} selected{% endif %}>{{ texto }}</option>
@@ -147,6 +149,18 @@
         <button type="button" class="vista-boton" data-vista-boton="lista" aria-label="Lista" title="Lista"><i class="bi bi-view-list" aria-hidden="true"></i></button>
       </div>
     </div>
+
+    {# Rangos rápidos de precio: tocar uno lo aplica; tocar el elegido lo quita. #}
+    {% if rangos_precio %}
+      <nav class="rangos-precio" aria-label="Filtrar por precio">
+        <span class="rangos-precio__titulo"><i class="bi bi-cash-coin" aria-hidden="true"></i> Precio</span>
+        <ul>
+          {% for rango in rangos_precio %}
+            <li><a href="{{ rango.url }}" class="chip-rango{% if rango.activo %} activo{% endif %}"{% if rango.activo %} aria-current="true" aria-label="Quitar filtro {{ rango.texto }}"{% endif %}>{{ rango.texto }} <span class="chip-rango__cantidad">{{ rango.cantidad }}</span>{% if rango.activo %} <i class="bi bi-x-lg" aria-hidden="true"></i>{% endif %}</a></li>
+          {% endfor %}
+        </ul>
+      </nav>
+    {% endif %}
 
     {% if pagina.object_list %}
       <div class="catalogo-grilla" data-vista="3" id="grilla-catalogo">

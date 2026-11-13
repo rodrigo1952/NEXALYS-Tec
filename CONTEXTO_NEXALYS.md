@@ -309,7 +309,13 @@
   no es de localhost/127.0.0.1 (túnel de Cloudflare, celular por Wi-Fi), la página amarilla se cambia por 404/403/500.
 - **Mostrar la página sin publicarla**: túnel de Cloudflare (`cloudflared tunnel --url http://localhost:8000`, enlace
   `https://…trycloudflare.com` que cambia cada vez; en el .env `ALLOWED_HOSTS` con `.trycloudflare.com` y `SITIO_URL` = el enlace).
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **758 pruebas, OK**.
+- **Celular (nov 2026)**: menú lateral `templates/_menu_movil.html` (offcanvas `#menu-movil`, ☰ a la izquierda; cuenta
+  arriba con «Iniciar sesión»/«Crear cuenta» o el usuario; secciones con íconos, categorías, ayuda, «Cerrar sesión»).
+  Cabecera más baja en < 992 px. Inicio: fila de categorías con íconos y 2 productos por fila. Catálogo: barra
+  «Filtrar | Ordenar» fija (`top: var(--cabecera-visible)`, la pone el script de la cabecera), rangos rápidos de
+  precio (`RANGOS_PRECIO` y `_rangos_precio` en catalogo/views.py) y «Precio» primero en Filtrar. Mis productos:
+  en < 992 px la tabla se ve como tarjetas (solo CSS; 2 por fila en tableta). La computadora casi no cambia.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **767 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

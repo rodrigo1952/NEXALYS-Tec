@@ -263,6 +263,13 @@ Gmail permite unos 500 correos al día. En PythonAnywhere gratis, Gmail es el ú
 
 Quien entra por el túnel nunca ve la página amarilla de errores con detalles (solo tú, en `127.0.0.1`).
 
+### En el celular
+
+- **Menú ☰** (a la izquierda): sale desde el lado, con la cuenta arriba (botones «Iniciar sesión» y «Crear cuenta», o tu nombre si ya entraste), las secciones con íconos, las categorías y la ayuda.
+- **Catálogo**: barra «Filtrar | Ordenar» que queda fija al bajar y rangos rápidos de precio («Hasta S/ 100», «S/ 500 a 1,500»…). Tocar el rango elegido lo quita.
+- **Inicio**: categorías con íconos que se deslizan y 2 productos por fila.
+- **Mis productos**: cada producto es una tarjeta con precio, stock, estado y los botones Editar y Más (en la tableta, 2 por fila).
+
 ### Compartir
 
 El botón **Compartir** (producto y tienda) abre una ventanita con WhatsApp, Facebook, X, Telegram, Correo y Copiar enlace. En el celular sale desde abajo y, si el teléfono lo permite, trae «Más opciones» (el menú del teléfono, donde aparecen TikTok o Instagram si están instalados; esas dos redes no tienen un enlace web para compartir).

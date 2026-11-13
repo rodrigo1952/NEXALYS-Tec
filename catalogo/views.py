@@ -39,6 +39,14 @@ def _entero(valor):
 
 FILTROS = ("q", "categoria", "marca", "tienda", "precio_min", "precio_max", "solo_ofertas", "en_stock", "destacados")
 MARCAS_VISIBLES = 8  # las demás marcas se muestran con «Ver todas»
+# Rangos rápidos de precio arriba de los productos: (desde, hasta, texto). None = sin límite.
+RANGOS_PRECIO = [
+    (None, 100, "Hasta S/ 100"),
+    (100, 500, "S/ 100 a 500"),
+    (500, 1500, "S/ 500 a 1,500"),
+    (1500, 3000, "S/ 1,500 a 3,000"),
+    (3000, None, "Más de S/ 3,000"),
+]
 
 
 def _filtrar(productos, datos, excepto=()):
@@ -93,6 +101,43 @@ def _opciones(productos, campo, nombre, elegidos):
     return lista
 
 
+def _rangos_precio(request, productos, datos):
+    """
+    Rangos rápidos de precio con cuántos productos tiene cada uno (con los demás filtros aplicados).
+    Tocar uno lo aplica; tocar el que está elegido lo quita. Los que no tienen productos no se muestran.
+    """
+    def condicion(desde, hasta):
+        q = Q()
+        if desde is not None:
+            q &= Q(precio_actual__gte=desde)
+        if hasta is not None:
+            q &= Q(precio_actual__lte=hasta)
+        return q
+
+    cuentas = productos.aggregate(**{
+        f"r{i}": Count("id", filter=condicion(desde, hasta)) for i, (desde, hasta, _) in enumerate(RANGOS_PRECIO)
+    })
+    elegido_min, elegido_max = datos.get("precio_min"), datos.get("precio_max")
+    rangos = []
+    for i, (desde, hasta, texto) in enumerate(RANGOS_PRECIO):
+        activo = elegido_min == desde and elegido_max == hasta if (elegido_min, elegido_max) != (None, None) else False
+        if not cuentas[f"r{i}"] and not activo:
+            continue
+        if activo:
+            url = _sin(request, "precio_min")
+        else:
+            consulta = request.GET.copy()
+            consulta.pop("page", None)
+            for clave, valor in (("precio_min", desde), ("precio_max", hasta)):
+                if valor is None:
+                    consulta.pop(clave, None)
+                else:
+                    consulta[clave] = str(valor)
+            url = f"{request.path}?{consulta.urlencode()}"
+        rangos.append({"texto": texto, "cantidad": cuentas[f"r{i}"], "activo": activo, "url": url})
+    return rangos
+
+
 def catalogo(request):
     """
     CU-04 y CU-05. Filtros a la izquierda (disponibilidad, precio, marca y tienda, con cuántos
@@ -116,6 +161,7 @@ def catalogo(request):
         "minimo": int(floor(rango["minimo"])) if rango["minimo"] is not None else 0,
         "maximo": int(ceil(rango["maximo"])) if rango["maximo"] is not None else 0,
     }
+    rangos_precio = _rangos_precio(request, _filtrar(base, datos, {"precio"}), datos)
     disponibilidad = {
         "en_stock": _filtrar(base, datos, {"en_stock"}).filter(stock__gt=0).count(),
         "ofertas": _filtrar(base, datos, {"solo_ofertas"}).en_oferta().count(),
@@ -155,7 +201,7 @@ def catalogo(request):
     return render(request, "catalogo/catalogo.html", {
         "form": form, "pagina": pagina, "titulo": titulo, "chips": chips,
         "marcas": marcas, "marcas_visibles": MARCAS_VISIBLES, "tiendas": tiendas,
-        "precio": precio, "disponibilidad": disponibilidad,
+        "precio": precio, "disponibilidad": disponibilidad, "rangos_precio": rangos_precio,
         "precio_min": datos.get("precio_min"), "precio_max": datos.get("precio_max"),
     })
 

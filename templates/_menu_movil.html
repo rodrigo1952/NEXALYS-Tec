@@ -1,0 +1,95 @@
+{% load formato inventario_tags %}
+{% comment %}
+Menú del celular (botón ☰): sale desde la izquierda. Arriba, la cuenta: «Iniciar sesión» y «Crear cuenta»
+como botones grandes (o tu nombre si ya entraste). Debajo, las secciones con íconos, las categorías
+y la ayuda. En computadora no se usa: ahí el menú va en la cabecera.
+{% endcomment %}
+<div class="offcanvas offcanvas-start menu-movil d-lg-none" tabindex="-1" id="menu-movil" aria-labelledby="menu-movil-titulo">
+  <div class="offcanvas-header menu-movil__cabecera">
+    <a class="navbar-brand" href="{% url 'inicio' %}" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" %}</a>
+    <h2 class="visually-hidden" id="menu-movil-titulo">Menú</h2>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar menú"></button>
+  </div>
+
+  <div class="offcanvas-body menu-movil__cuerpo">
+    {# ---------- Cuenta ---------- #}
+    <section class="menu-movil__cuenta" aria-label="Tu cuenta">
+      {% if user.is_authenticated %}
+        <div class="menu-movil__usuario">
+          {% include "_avatar.html" %}
+          <div class="min-w-0">
+            <div class="fw-semibold text-truncate">{{ user.get_full_name|default:user.username }}</div>
+            <div class="small text-truncate menu-movil__correo">{{ user.email|correo_oculto }}</div>
+            <span class="badge rounded-pill menu-movil__rol">{% if es_admin %}Administrador{% elif tienda_actual %}Tienda{% else %}Cliente{% endif %}</span>
+            {% if tienda_actual %}
+              {% if tienda_actual.estado == "activa" %}<span class="badge rounded-pill text-bg-success">Activa</span>
+              {% elif tienda_actual.estado == "pendiente" %}<span class="badge rounded-pill text-bg-warning">Pendiente</span>
+              {% else %}<span class="badge rounded-pill text-bg-danger">Suspendida</span>{% endif %}
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <p class="menu-movil__saludo">¡Hola! Entra para guardar favoritos y escribir a las tiendas.</p>
+        {% if vista != 'login' %}
+          <a href="{% url 'login' %}" class="btn btn-acento w-100 menu-movil__boton"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Iniciar sesión</a>
+        {% endif %}
+        <a href="{% url 'registro' %}" class="btn btn-outline-light w-100 menu-movil__boton"><i class="bi bi-person-plus" aria-hidden="true"></i> Crear cuenta</a>
+      {% endif %}
+    </section>
+
+    {# ---------- Secciones ---------- #}
+    <nav aria-label="Secciones">
+      <ul class="menu-movil__lista">
+        <li><a class="menu-movil__enlace{% if not ns and vista == 'inicio' %} activo" aria-current="page{% endif %}" href="{% url 'inicio' %}"><i class="bi bi-house" aria-hidden="true"></i>Inicio</a></li>
+        <li><a class="menu-movil__enlace{% if ns == 'catalogo' and vista == 'catalogo' and not request.GET.solo_ofertas %} activo" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}"><i class="bi bi-grid" aria-hidden="true"></i>Catálogo</a></li>
+        <li><a class="menu-movil__enlace{% if ns == 'catalogo' and vista == 'catalogo' and request.GET.solo_ofertas %} activo" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}?solo_ofertas=on"><i class="bi bi-tag" aria-hidden="true"></i>Ofertas</a></li>
+        <li><a class="menu-movil__enlace{% if ns == 'tiendas' and vista == 'cercanas' %} activo" aria-current="page{% endif %}" href="{% url 'tiendas:cercanas' %}"><i class="bi bi-geo-alt" aria-hidden="true"></i>Tiendas cercanas</a></li>
+      </ul>
+
+      {% if es_tienda or es_cliente or es_admin %}
+        <h3 class="menu-movil__titulo">{% if es_tienda %}Mi tienda{% elif es_admin %}Administración{% else %}Lo mío{% endif %}</h3>
+        <ul class="menu-movil__lista">
+          {% if es_tienda %}
+            <li><a class="menu-movil__enlace{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} activo" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i>Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %}<span class="badge rounded-pill text-bg-warning ms-auto" title="Productos agotados o con stock bajo">{{ num_alertas }}</span>{% endif %}</a></li>
+            {% if tienda_actual.estado == "activa" %}
+              <li><a class="menu-movil__enlace" href="{% url 'tiendas:perfil' tienda_actual.pk %}"><i class="bi bi-shop" aria-hidden="true"></i>Ver mi tienda</a></li>
+            {% endif %}
+            <li><a class="menu-movil__enlace{% if ns == 'tiendas' and vista in 'panel editar' %} activo" aria-current="page{% endif %}" href="{% url 'tiendas:panel' %}"><i class="bi bi-sliders" aria-hidden="true"></i>Datos de mi tienda</a></li>
+          {% endif %}
+          {% if es_cliente %}
+            <li><a class="menu-movil__enlace{% if ns == 'favoritos' %} activo" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}"><i class="bi bi-heart" aria-hidden="true"></i>Mis favoritos{% if avisos_favoritos %}<span class="badge rounded-pill text-bg-danger ms-auto">{{ avisos_favoritos }}</span>{% endif %}</a></li>
+          {% endif %}
+          {% if es_admin %}
+            <li><a class="menu-movil__enlace" href="{% url 'panel_admin' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i>Consola de administración</a></li>
+          {% endif %}
+          <li><a class="menu-movil__enlace{% if not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta password_change' %} activo" aria-current="page{% endif %}" href="{% url 'mi_cuenta' %}"><i class="bi bi-gear" aria-hidden="true"></i>Mi cuenta</a></li>
+        </ul>
+      {% endif %}
+
+      {% if menu_categorias.todas %}
+        <details class="menu-movil__categorias">
+          <summary class="menu-movil__titulo">Categorías</summary>
+          <ul class="menu-movil__lista">
+            {% for categoria in menu_categorias.todas %}
+              <li><a class="menu-movil__enlace" href="{% url 'catalogo:catalogo' %}?categoria={{ categoria.pk }}"><i class="bi bi-{{ categoria.icono }}" aria-hidden="true"></i>{{ categoria.nombre }}<span class="menu-movil__cantidad">{{ categoria.cantidad }}</span></a></li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endif %}
+
+      <h3 class="menu-movil__titulo">Ayuda</h3>
+      <ul class="menu-movil__lista">
+        {% if not user.is_authenticated %}
+          <li><a class="menu-movil__enlace" href="{% url 'tiendas:registro' %}"><i class="bi bi-shop-window" aria-hidden="true"></i>Registrar mi tienda</a></li>
+        {% endif %}
+        <li><a class="menu-movil__enlace" href="{% url 'ayuda' %}"><i class="bi bi-question-circle" aria-hidden="true"></i>Ayuda y soporte</a></li>
+        <li><a class="menu-movil__enlace" href="{% url 'privacidad' %}"><i class="bi bi-shield-lock" aria-hidden="true"></i>Privacidad y términos</a></li>
+        <li><a class="menu-movil__enlace" href="{% url 'reclamos:libro' %}"><i class="bi bi-journal-text" aria-hidden="true"></i>Libro de Reclamaciones</a></li>
+      </ul>
+    </nav>
+
+    {% if user.is_authenticated %}
+      <button type="button" class="btn btn-outline-danger w-100 menu-movil__salir" data-menu-cerrar-sesion><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Cerrar sesión</button>
+    {% endif %}
+  </div>
+</div>
