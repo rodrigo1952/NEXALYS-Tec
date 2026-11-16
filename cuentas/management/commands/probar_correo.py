@@ -9,8 +9,9 @@ import smtplib
 import socket
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.core.management.base import BaseCommand, CommandError
+
+from config import correos
 
 
 class Command(BaseCommand):
@@ -25,11 +26,9 @@ class Command(BaseCommand):
                 "No hay CORREO_SERVIDOR en el .env: el correo se mostrará aquí abajo, no se envía de verdad."
             ))
         try:
-            send_mail(
-                "Prueba de correo | NEXALYS Tec",
-                "Si lees esto, el correo de NEXALYS Tec funciona.",
-                None,
-                [destino],
+            correos.enviar(
+                [destino], "Prueba de correo | NEXALYS Tec", "correos/prueba",
+                vista_previa="Si lees esto, el correo de NEXALYS Tec funciona.",
             )
         except smtplib.SMTPAuthenticationError:
             raise CommandError(

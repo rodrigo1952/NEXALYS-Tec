@@ -240,6 +240,10 @@ Sin `CORREO_SERVIDOR` en el `.env`, los correos se muestran en la terminal. Para
 
 Gmail permite unos 500 correos al día. En PythonAnywhere gratis, Gmail es el único servidor de correo permitido.
 
+Pon también `CORREO_SOPORTE=` con un correo real que revises: se muestra en «Ayuda y soporte» y ahí llegan las respuestas a los correos de la página.
+
+**Cómo se ven los correos** (`config/correos.py`, diseño en `templates/correos/base.html`): encabezado azul marino, botón grande (el enlace no se ve; solo un respaldo pequeño al pie), vencimiento con fecha y hora, y una versión de texto simple. La confirmación de cuenta y la verificación de tienda traen además un **código de 6 dígitos** que se puede escribir en la página (en «Revisa tu correo» o en el panel de la tienda). Al confirmar llega un correo de **bienvenida**. Los enlaces usan `SITIO_URL`.
+
 ### Copias de seguridad
 
 - `python manage.py copia_seguridad`: guarda la base de datos y las fotos en `copias/` (fuera de git) y borra las de más de 14 días. En PythonAnywhere se programa una vez al día en la pestaña *Tasks*.

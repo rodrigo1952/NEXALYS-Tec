@@ -1,12 +1,13 @@
-{% autoescape off %}Hola,
+{% autoescape off %}Hola:
 
-Registraste la tienda "{{ tienda.nombre }}" en NEXALYS Tec.
+Registraste "{{ tienda.nombre }}" en NEXALYS Tec. Para activarla y publicar tus productos, confirma que este correo es tuyo.
 
-Para verificar tu correo y activar tu tienda, abre este enlace:
-
+Verificar mi tienda:
 {{ enlace }}
 
-El enlace vence en {{ horas }} horas. Si no registraste esta tienda, ignora este mensaje.
+O escribe este código en tu panel: {{ codigo|slice:":3" }} {{ codigo|slice:"3:" }}
 
-Equipo NEXALYS Tec
-{% endautoescape %}
+El enlace y el código funcionan hasta {{ vence }}
+Si no registraste esta tienda, ignora este correo.
+
+{% include "correos/_pie.txt" %}{% endautoescape %}

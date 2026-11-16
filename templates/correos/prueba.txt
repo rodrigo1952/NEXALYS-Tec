@@ -1,0 +1,5 @@
+{% autoescape off %}El correo funciona
+
+Si lees este mensaje, NEXALYS Tec ya puede enviar correos reales: confirmación de cuentas, recuperación de contraseñas y constancias del Libro de Reclamaciones.
+
+{% include "correos/_pie.txt" %}{% endautoescape %}

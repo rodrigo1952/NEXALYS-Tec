@@ -6,11 +6,16 @@ el id de la tienda con la SECRET_KEY, así nadie puede fabricar un enlace válid
 El enlace vence a las VERIFICACION_TIENDA_HORAS horas.
 """
 
+import logging
+
 from django.conf import settings
 from django.core import signing
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.urls import reverse
+
+from config import correos
+from cuentas import codigos
+
+logger = logging.getLogger(__name__)
 
 SAL = "tiendas.verificacion-correo"
 
@@ -35,18 +40,25 @@ def leer_token(token):
 
 
 def enviar_correo_verificacion(request, tienda):
-    enlace = request.build_absolute_uri(
-        reverse("tiendas:verificar", args=[generar_token(tienda)])
-    )
-    mensaje = render_to_string(
-        "tiendas/correo_verificacion.txt",
-        {"tienda": tienda, "enlace": enlace, "horas": horas_validez()},
-    )
-    send_mail(
-        subject="Verifica tu tienda en NEXALYS Tec",
-        message=mensaje,
-        from_email=None,  # usa DEFAULT_FROM_EMAIL
-        recipient_list=[tienda.usuario.email],
+    """Correo con el botón «Verificar mi tienda» y un código de 6 dígitos (cuentas/codigos.py)."""
+    enlace = correos.enlace(reverse("tiendas:verificar", args=[generar_token(tienda)]), request)
+    codigo = codigos.nuevo(tienda.usuario)
+    correos.enviar(
+        [tienda.usuario.email], "Verifica tu tienda en NEXALYS Tec", "tiendas/correo_verificacion",
+        {"tienda": tienda, "enlace": enlace, "codigo": codigo, "vence": correos.vence_en_palabras(horas_validez())},
+        vista_previa=f"Activa {tienda.nombre} con un toque o con el código {codigo[:3]} {codigo[3:]}.",
     )
     if settings.DEBUG:
-        print(f"\n[NEXALYS] Enlace de verificación para {tienda.usuario.email}:\n{enlace}\n")
+        print(f"\n[NEXALYS] Enlace de verificación para {tienda.usuario.email}:\n{enlace}\nCódigo: {codigo}\n")
+
+
+def enviar_bienvenida(request, tienda):
+    """Al verificar la tienda: bienvenida con los primeros pasos. Si el correo falla, solo se anota."""
+    try:
+        correos.enviar(
+            [tienda.usuario.email], f"{tienda.nombre} ya está activa en NEXALYS Tec", "tiendas/correo_bienvenida",
+            {"tienda": tienda, "enlace": correos.enlace(reverse("tiendas:panel"), request)},
+            vista_previa="Tu tienda ya está activa. Estos son tus primeros pasos.",
+        )
+    except Exception:
+        logger.exception("No se pudo enviar el correo de bienvenida de la tienda")

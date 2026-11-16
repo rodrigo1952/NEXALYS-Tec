@@ -1,0 +1,9 @@
+{% autoescape off %}Hola, {{ solicitud.nombre }}:
+
+Recibimos tu solicitud de {{ solicitud.nombre_corto_tipo|lower }} sobre tus datos personales el {{ solicitud.creada|date:"d/m/Y" }}.
+Te responderemos a este correo a más tardar el {{ solicitud.vence|date:"d/m/Y" }}.
+
+Tu pedido:
+{{ solicitud.detalle }}
+
+{% include "correos/_pie.txt" %}{% endautoescape %}

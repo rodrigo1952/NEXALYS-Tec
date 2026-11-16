@@ -1,0 +1,12 @@
+{% extends "correos/base.html" %}
+{% block contenido %}
+<h1 style="margin:0 0 14px;font-size:20px;line-height:1.3;color:#0B1B3A;">{{ tienda.nombre }} ya está activa</h1>
+<p style="margin:0 0 16px;">¡Listo! Tu tienda ya aparece en NEXALYS Tec. Estos son tus primeros pasos:</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+  <tr><td style="padding:0 0 12px;"><strong style="color:#0B1B3A;">1. Agrega tus productos.</strong><br>Con fotos claras, precio y stock. Los clientes te escriben directo por WhatsApp.</td></tr>
+  <tr><td style="padding:0 0 12px;"><strong style="color:#0B1B3A;">2. Completa tu horario y ubicación.</strong><br>Así los clientes saben si estás abierto y cómo llegar.</td></tr>
+  <tr><td style="padding:0 0 4px;"><strong style="color:#0B1B3A;">3. Imprime tu código QR.</strong><br>Ponlo en tu local para que te encuentren en la página.</td></tr>
+</table>
+{% include "correos/_boton.html" with texto="Ir a mi panel" url=enlace %}
+{% endblock %}
+{% block motivo %}Recibes este correo porque verificaste tu tienda en NEXALYS Tec.{% endblock %}

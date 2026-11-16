@@ -8,6 +8,7 @@ urlpatterns = [
     path("registro/", views.registro_tienda, name="registro"),
     path("verificar/<str:token>/", views.verificar, name="verificar"),
     path("reenviar-verificacion/", views.reenviar_verificacion, name="reenviar"),
+    path("verificar-codigo/", views.verificar_codigo, name="verificar_codigo"),
     path("panel/", views.panel, name="panel"),
     path("panel/editar/", views.editar, name="editar"),
     path("panel/logo/", views.cambiar_logo, name="logo"),

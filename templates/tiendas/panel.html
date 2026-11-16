@@ -26,10 +26,19 @@
 {% if tienda.estado == "pendiente" %}
   <div class="alert alert-warning mt-3">
     <p class="mb-2"><strong>Verifica tu correo para activar tu tienda.</strong>
-      Te enviamos un enlace a <strong>{{ user.email }}</strong>. Mientras no lo verifiques, no podrás publicar productos.</p>
+      Te enviamos un correo a <strong>{{ user.email }}</strong> con un botón y un código de 6 dígitos. Mientras no lo verifiques, no podrás publicar productos.</p>
+    <form method="post" action="{% url 'tiendas:verificar_codigo' %}" class="d-flex flex-wrap align-items-end gap-2 mb-2" novalidate>
+      {% csrf_token %}
+      <div>
+        <label for="codigo-tienda" class="form-label small fw-semibold mb-1">Código del correo</label>
+        <input id="codigo-tienda" name="codigo" class="form-control campo-codigo" style="width:10rem"
+               inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="000 000" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Verificar</button>
+    </form>
     <form method="post" action="{% url 'tiendas:reenviar' %}">
       {% csrf_token %}
-      <button type="submit" class="btn btn-sm btn-warning">Reenviar correo de verificación</button>
+      <button type="submit" class="btn btn-sm btn-link px-0">¿No te llegó? Reenviar correo de verificación</button>
     </form>
   </div>
 {% elif tienda.estado == "suspendida" %}

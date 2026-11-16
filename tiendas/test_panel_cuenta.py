@@ -2,6 +2,7 @@
 Menú de la cuenta (desplegable), panel de la tienda y Mi cuenta para todos los roles.
 """
 
+from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
@@ -54,7 +55,8 @@ class MenuDeLaCuentaTests(TestCase):
         self.assertNotContains(respuesta, "modal-cerrar-sesion")
 
     def test_ayuda_y_privacidad(self):
-        self.assertContains(self.client.get(reverse("ayuda")), "soporte@nexalys.pe")
+        # El correo de soporte sale del .env (CORREO_SOPORTE); sin él, «soporte@nexalys.pe».
+        self.assertContains(self.client.get(reverse("ayuda")), settings.CORREO_SOPORTE)
         self.assertContains(self.client.get(reverse("ayuda")), "¿Cómo registro una venta?")
         self.assertContains(self.client.get(reverse("privacidad")), "29733")
 

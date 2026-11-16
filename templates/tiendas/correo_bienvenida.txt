@@ -1,0 +1,9 @@
+{% autoescape off %}¡Listo! {{ tienda.nombre }} ya está activa en NEXALYS Tec. Estos son tus primeros pasos:
+
+1. Agrega tus productos: con fotos claras, precio y stock. Los clientes te escriben directo por WhatsApp.
+2. Completa tu horario y ubicación: así los clientes saben si estás abierto y cómo llegar.
+3. Imprime tu código QR: ponlo en tu local para que te encuentren en la página.
+
+Ir a mi panel: {{ enlace }}
+
+{% include "correos/_pie.txt" %}{% endautoescape %}

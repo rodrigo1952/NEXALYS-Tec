@@ -12,7 +12,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from catalogo.models import Producto
-from cuentas import limites
+from cuentas import codigos, limites
 from cuentas.models import ConsentimientoPrivacidad
 from cuentas.privacidad import registrar_aceptacion
 from cuentas.concurrencia import validar_y_guardar
@@ -21,7 +21,7 @@ from cuentas.reautenticacion import confirmada_recientemente, marcar_confirmada
 from .decorators import tienda_requerida
 from .forms import HORAS_SUGERIDAS, EditarTiendaForm, LogoForm, RegistroTiendaForm, horario_formset
 from .models import CENTRO_QUILLABAMBA, Tienda
-from .verificacion import enviar_correo_verificacion, leer_token
+from .verificacion import enviar_bienvenida, enviar_correo_verificacion, horas_validez, leer_token
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ def registro_tienda(request):
             if _enviar_verificacion(request, usuario.tienda):
                 messages.success(
                     request,
-                    f"¡Tienda registrada! Te enviamos un enlace a {usuario.email} "
+                    f"¡Tienda registrada! Te enviamos un correo a {usuario.email} con un botón y un código "
                     "para verificar tu correo y activar tu tienda.",
                 )
             return redirect("tiendas:panel")
@@ -90,6 +90,8 @@ def verificar(request, token):
     if tienda.estado == Tienda.Estado.SUSPENDIDA:
         messages.error(request, "Tu tienda está suspendida. Comunícate con el administrador.")
     elif tienda.marcar_verificada():
+        codigos.borrar(tienda.usuario)
+        enviar_bienvenida(request, tienda)
         messages.success(request, "¡Correo verificado! Tu tienda ya está activa y puede publicar productos.")
     else:
         messages.info(request, "Tu correo ya había sido verificado.")
@@ -97,6 +99,33 @@ def verificar(request, token):
     if request.user.is_authenticated and request.user.pk == tienda.usuario_id:
         return redirect("tiendas:panel")
     return redirect("login")
+
+
+@require_POST
+@tienda_requerida(activa=False)
+def verificar_codigo(request):
+    """
+    Otra forma de verificar: escribir en el panel el código de 6 dígitos del correo.
+    Límite: 5 códigos equivocados cada 15 minutos por tienda.
+    """
+    tienda = request.tienda
+    if tienda.estado != Tienda.Estado.PENDIENTE:
+        messages.info(request, "Tu tienda no necesita verificación.")
+        return redirect("tiendas:panel")
+    clave = f"tienda-{tienda.pk}"
+    espera = limites.segundos_de_espera(limites.CODIGO, request, clave)
+    if espera:
+        messages.error(request, limites.mensaje_de_espera(espera))
+        return redirect("tiendas:panel")
+    if not codigos.es_valido(tienda.usuario, request.POST.get("codigo"), horas_validez()):
+        limites.anotar(limites.CODIGO, request, clave)
+        messages.error(request, "El código no es correcto o ya venció. Revisa el último correo o pide uno nuevo.")
+        return redirect("tiendas:panel")
+    if tienda.marcar_verificada():
+        codigos.borrar(tienda.usuario)
+        enviar_bienvenida(request, tienda)
+        messages.success(request, "¡Correo verificado! Tu tienda ya está activa y puede publicar productos.")
+    return redirect("tiendas:panel")
 
 
 @require_POST
@@ -114,7 +143,7 @@ def reenviar_verificacion(request):
         return redirect("tiendas:panel")
     limites.anotar(limites.CORREO_TIENDA, request, clave)
     if _enviar_verificacion(request, tienda):
-        messages.success(request, f"Te enviamos un nuevo enlace a {request.user.email}.")
+        messages.success(request, f"Te enviamos un correo nuevo a {request.user.email} (el código anterior ya no sirve).")
     return redirect("tiendas:panel")
 
 

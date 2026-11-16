@@ -1,0 +1,7 @@
+{% autoescape off %}Hola, {{ solicitud.nombre }}:
+
+Esta es nuestra respuesta a tu solicitud de {{ solicitud.nombre_corto_tipo|lower }}:
+
+{{ solicitud.respuesta }}
+
+{% include "correos/_pie.txt" %}{% endautoescape %}

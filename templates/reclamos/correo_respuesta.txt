@@ -6,4 +6,4 @@
 
 Si no estás conforme con la respuesta, puedes acudir al INDECOPI.
 
-NEXALYS Tec{% endautoescape %}
+{% include "correos/_pie.txt" %}{% endautoescape %}

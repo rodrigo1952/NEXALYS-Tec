@@ -1,3 +1,5 @@
+import logging
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import (
@@ -10,12 +12,15 @@ from django.contrib.auth.forms import (
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-
 from django.utils.html import format_html
+
+from config import correos
 
 from .estilos import EstiloBootstrapMixin
 from .models import SolicitudDerecho
 from .reautenticacion import ConfirmarClaveMixin
+
+logger = logging.getLogger(__name__)
 
 
 class AceptarPrivacidadMixin:
@@ -242,16 +247,26 @@ class NuevaClaveForm(EstiloBootstrapMixin, SetPasswordForm):
 
 
 class RecuperarClaveForm(EstiloBootstrapMixin, PasswordResetForm):
-    def send_mail(self, subject_template_name, email_template_name, context, *args, **kwargs):
-        super().send_mail(subject_template_name, email_template_name, context, *args, **kwargs)
-        # En desarrollo, el correo de la consola corta los enlaces largos con "=".
-        # Por eso también se imprime el enlace completo, igual que en la verificación de tiendas.
+    def send_mail(self, subject_template_name, email_template_name, context, from_email, to_email,
+                  html_email_template_name=None):
+        """
+        Correo «Recupera tu contraseña» con el diseño de NEXALYS Tec (config/correos.py): botón, vencimiento
+        con fecha y hora y enlace con SITIO_URL. Si el correo falla, se anota y la página sigue igual
+        (no revela si el correo existe).
+        """
+        ruta = reverse("password_reset_confirm", kwargs={"uidb64": context["uid"], "token": context["token"]})
+        enlace = correos.enlace(ruta)
+        if enlace == ruta:  # sin SITIO_URL: la dirección de la visita
+            enlace = f"{context['protocol']}://{context['domain']}{ruta}"
+        try:
+            correos.enviar(
+                [to_email], "Recupera tu contraseña de NEXALYS Tec", "registration/password_reset_email",
+                {"user": context["user"], "enlace": enlace,
+                 "vence": correos.vence_en_palabras(settings.PASSWORD_RESET_TIMEOUT // 3600)},
+                vista_previa="Crea una nueva contraseña con un toque. Si no lo pediste, ignora este correo.",
+            )
+        except Exception:
+            logger.exception("No se pudo enviar el correo para recuperar la contraseña")
+        # En desarrollo también se muestra el enlace en la terminal.
         if settings.DEBUG:
-            ruta = reverse(
-                "password_reset_confirm",
-                kwargs={"uidb64": context["uid"], "token": context["token"]},
-            )
-            print(
-                f"\n[NEXALYS] Enlace para recuperar la contraseña de {context['email']}:\n"
-                f"{context['protocol']}://{context['domain']}{ruta}\n"
-            )
+            print(f"\n[NEXALYS] Enlace para recuperar la contraseña de {to_email}:\n{enlace}\n")

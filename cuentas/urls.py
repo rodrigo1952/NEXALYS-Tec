@@ -9,6 +9,7 @@ urlpatterns = [
     path("registro/", views.registro, name="registro"),
     path("registro/confirma-tu-correo/", views.confirmacion_pendiente, name="confirmacion_pendiente"),
     path("registro/reenviar-enlace/", views.reenviar_confirmacion, name="reenviar_confirmacion"),
+    path("registro/confirmar-codigo/", views.confirmar_codigo, name="confirmar_codigo"),
     path("registro/confirmar/<str:token>/", views.confirmar_correo, name="confirmar_correo"),
     path("mi-cuenta/", views.mi_cuenta, name="mi_cuenta"),
     path("mi-cuenta/editar/", views.editar_datos, name="editar_datos"),

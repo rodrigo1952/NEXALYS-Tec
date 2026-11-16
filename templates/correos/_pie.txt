@@ -1,0 +1,4 @@
+{% autoescape off %}Saludos,
+Equipo de NEXALYS Tec
+{% if correo_soporte %}¿Dudas? Responde este correo o escríbenos a {{ correo_soporte }}.
+{% endif %}NEXALYS Tec · Quillabamba, Cusco, Perú{% endautoescape %}

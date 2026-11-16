@@ -1824,3 +1824,6 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 /* Siempre 2 por fila en el celular, también en pantallas de 360 px */
 @media (max-width: 399.98px) { .catalogo-grilla { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; } }
 @media (max-width: 575.98px) { .catalogo-grilla { gap: .6rem; } }
+
+/* Código de 6 dígitos (confirmar correo, verificar tienda) */
+.campo-codigo { font-family: "Courier New", Courier, monospace; font-size: 1.25rem; font-weight: 700; letter-spacing: .3em; text-align: center; }

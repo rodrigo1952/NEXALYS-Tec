@@ -7,14 +7,14 @@ import logging
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 
 from administracion.acciones import registrar
+from config import correos
 from administracion.models import AccionAdmin
 from cuentas import limites
 from cuentas.privacidad import sumar_dias_habiles
@@ -30,14 +30,10 @@ solo_admin = rol_requerido("Administrador")
 CLAVE_SESION = "hojas_presentadas"
 
 
-def _enviar(asunto, texto, destinos):
-    """Envía un correo; si falla, la hoja igual queda guardada (se anota el error)."""
-    destinos = [d for d in destinos if d]
-    if not destinos:
-        return False
+def _enviar(asunto, plantilla, contexto, destinos, vista_previa=""):
+    """Envía un correo (diseño de config/correos.py); si falla, la hoja igual queda guardada (se anota el error)."""
     try:
-        send_mail(asunto, texto, None, destinos)
-        return True
+        return correos.enviar(destinos, asunto, plantilla, contexto, vista_previa=vista_previa)
     except Exception:
         logger.exception("No se pudo enviar un correo del Libro de Reclamaciones")
         return False
@@ -74,14 +70,16 @@ def libro(request):
             request.session[CLAVE_SESION] = request.session.get(CLAVE_SESION, []) + [reclamo.pk]
             _enviar(
                 f"Constancia de tu hoja de reclamación N.° {reclamo.codigo} | NEXALYS Tec",
-                render_to_string("reclamos/correo_constancia.txt", {"r": reclamo}),
-                [reclamo.correo],
+                "reclamos/correo_constancia", {"r": reclamo}, [reclamo.correo],
+                vista_previa=f"Recibimos tu reclamo. Te responderán a más tardar el {reclamo.vence:%d/%m/%Y}.",
             )
             if tienda is not None:
                 _enviar(
                     f"Tienes una hoja de reclamación nueva (N.° {reclamo.codigo}) | NEXALYS Tec",
-                    render_to_string("reclamos/correo_aviso_tienda.txt", {"r": reclamo}),
+                    "reclamos/correo_aviso_tienda",
+                    {"r": reclamo, "enlace": correos.enlace(reverse("reclamos:tienda_detalle", args=[reclamo.pk]), request)},
                     [tienda.usuario.email],
+                    vista_previa=f"Debes responderla a más tardar el {reclamo.vence:%d/%m/%Y}.",
                 )
             return redirect("reclamos:hoja", pk=reclamo.pk)
     return render(request, "reclamos/libro.html", {"form": form, "plazo": PLAZO_DIAS_HABILES})
@@ -128,8 +126,8 @@ def _responder(request, reclamo, form):
                       reclamo.respuesta)
     enviado = _enviar(
         f"Respuesta a tu hoja de reclamación N.° {reclamo.codigo} | NEXALYS Tec",
-        render_to_string("reclamos/correo_respuesta.txt", {"r": reclamo}),
-        [reclamo.correo],
+        "reclamos/correo_respuesta", {"r": reclamo}, [reclamo.correo],
+        vista_previa=f"{reclamo.proveedor_nombre} respondió tu reclamo.",
     )
     if enviado:
         messages.success(request, f"Respuesta guardada y enviada a {reclamo.correo}.")

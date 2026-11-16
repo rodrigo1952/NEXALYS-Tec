@@ -27,6 +27,29 @@ class CorreoPendiente(models.Model):
         return f"{self.usuario} (sin confirmar)"
 
 
+class CodigoVerificacion(models.Model):
+    """
+    Código de 6 dígitos que va en el correo de confirmación (clientes) y de verificación (tiendas),
+    junto con el botón. Sirve si la persona abre el correo en otro aparato: lo escribe en la página.
+
+    Solo se guarda su huella (cuentas/codigos.py), nunca el código. Cada correo nuevo trae un código
+    nuevo y el anterior deja de servir. Vence igual que el enlace del correo.
+    """
+
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="codigo_verificacion", verbose_name="usuario"
+    )
+    huella = models.CharField("huella del código", max_length=64)
+    creado = models.DateTimeField("creado el")
+
+    class Meta:
+        verbose_name = "código de verificación"
+        verbose_name_plural = "códigos de verificación"
+
+    def __str__(self):
+        return f"Código de {self.usuario}"
+
+
 class ClaveTemporal(models.Model):
     """
     Clave temporal que el administrador generó para alguien que no podía entrar.

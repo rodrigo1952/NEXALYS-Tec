@@ -1,0 +1,11 @@
+{% autoescape off %}Hola, {{ usuario.first_name|default:usuario.username }}:
+
+¡Bienvenido a NEXALYS Tec! Tu cuenta ya está activa. Así aprovechas la página:
+
+1. Busca lo que necesitas: compara precios de las tiendas de Quillabamba en un solo lugar.
+2. Guarda tus favoritos: toca el corazón y, en «Mis favoritos», verás si bajan de precio o vuelven a tener stock.
+3. Escribe a la tienda por WhatsApp: consulta disponibilidad y separa tu producto antes de ir al local.
+
+Explorar el catálogo: {{ enlace }}
+
+{% include "correos/_pie.txt" %}{% endautoescape %}

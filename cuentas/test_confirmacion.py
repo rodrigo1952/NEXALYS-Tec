@@ -25,7 +25,8 @@ class ConfirmacionCorreoClienteTests(TestCase):
         return self.client.post(reverse("registro"), DATOS)
 
     def enlace(self):
-        return re.search(r"http://testserver(/\S+)", mail.outbox[-1].body).group(1)
+        # El enlace se arma con SITIO_URL (config/correos.py): se toma solo la ruta.
+        return re.search(r"https?://[^/\s]+(/registro/confirmar/\S+)", mail.outbox[-1].body).group(1)
 
     def test_registro_envia_correo_y_no_inicia_sesion(self):
         respuesta = self.registrar()
@@ -57,7 +58,7 @@ class ConfirmacionCorreoClienteTests(TestCase):
         respuesta = self.client.get(reverse("confirmar_correo", args=["falso"]))
         self.assertEqual(respuesta.status_code, 400)
         self.assertContains(respuesta, "no es válido o ya venció", status_code=400)
-        self.assertContains(respuesta, "Reenviar enlace", status_code=400)
+        self.assertContains(respuesta, "Reenviar correo", status_code=400)
 
     def test_reenviar_enlace(self):
         self.registrar()

@@ -724,7 +724,7 @@ def solicitudes(request):
 @solo_admin
 def solicitud_detalle(request, pk):
     """Ver una solicitud y responderla: la respuesta se envía por correo y queda en el historial."""
-    from django.core.mail import send_mail
+    from config import correos
 
     solicitud = get_object_or_404(SolicitudDerecho.objects.select_related("usuario"), pk=pk)
     form = RespuestaSolicitudForm(request.POST or None)
@@ -747,10 +747,10 @@ def solicitud_detalle(request, pk):
             messages.info(request, "Otro administrador ya respondió esta solicitud.")
             return redirect("administracion:solicitud_detalle", pk=pk)
         try:
-            send_mail(
-                f"Respuesta a tu solicitud de {solicitud.nombre_corto_tipo.lower()} | NEXALYS Tec",
-                f"Hola, {solicitud.nombre}:\n\n{solicitud.respuesta}\n\nNEXALYS Tec",
-                None, [solicitud.correo],
+            correos.enviar(
+                [solicitud.correo], f"Respuesta a tu solicitud de {solicitud.nombre_corto_tipo.lower()} | NEXALYS Tec",
+                "cuentas/correo_solicitud_respuesta", {"solicitud": solicitud},
+                vista_previa="Respondimos tu solicitud sobre tus datos personales.",
             )
             messages.success(request, f"Respuesta guardada y enviada a {solicitud.correo}.")
         except Exception:

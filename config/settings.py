@@ -257,6 +257,9 @@ LOGGING = {
 
 # Correo de ayuda que se muestra en «Ayuda y soporte».
 CORREO_SOPORTE = entorno.texto("CORREO_SOPORTE", "soporte@nexalys.pe")
+# Cuando alguien toca «Responder» en un correo de la página, la respuesta llega aquí (solo si pusiste
+# CORREO_SOPORTE en el .env; si no, llega a la cuenta que envía, CORREO_USUARIO).
+CORREO_RESPUESTAS = entorno.texto("CORREO_SOPORTE")
 
 # Datos del responsable de los datos personales (Ley 29733), para la política de privacidad.
 # Mientras falten, la consola del administrador lo avisa en «Tareas pendientes» (ver .env.example).

@@ -10,6 +10,7 @@ Reglas (REGLAS, abajo):
     3 por hora para el mismo correo o la misma tienda, y 10 por hora desde una misma conexión.
   - Solicitudes de derechos sobre los datos personales y hojas del Libro de Reclamaciones:
     igual que los correos (3 por hora).
+  - Código de 6 dígitos equivocado (confirmar correo o verificar tienda): 5 cada 15 minutos.
 
 Desde la primera contraseña equivocada, la página avisa cuántos intentos le quedan (intentos_restantes).
 
@@ -33,6 +34,7 @@ CORREO_TIENDA = "verificacion"
 CORREO_CLAVE = "recuperar"
 SOLICITUD_DERECHO = "derechos"
 RECLAMO = "reclamo"
+CODIGO = "codigo"
 
 _LOGIN = [(("clave", "ip"), 5, timedelta(minutes=15)), (("ip",), 20, timedelta(minutes=15))]
 _CORREO = [(("clave",), 3, timedelta(hours=1)), (("ip",), 10, timedelta(hours=1))]
@@ -45,6 +47,8 @@ REGLAS = {
     CORREO_CLAVE: _CORREO,
     SOLICITUD_DERECHO: _CORREO,
     RECLAMO: _CORREO,
+    # Código de 6 dígitos equivocado: 5 por correo (o tienda) y 20 por conexión, cada 15 minutos.
+    CODIGO: [(("clave",), 5, timedelta(minutes=15)), (("ip",), 20, timedelta(minutes=15))],
 }
 
 

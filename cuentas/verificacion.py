@@ -5,11 +5,18 @@ El enlace va firmado con la SECRET_KEY (nadie puede fabricarlo) y vence a las
 VERIFICACION_CORREO_HORAS horas. Si vence, el cliente pide uno nuevo.
 """
 
+import logging
+
 from django.conf import settings
 from django.core import signing
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.urls import reverse
+
+from config import correos
+
+from . import codigos
+from .models import DIAS_PARA_CONFIRMAR_CORREO
+
+logger = logging.getLogger(__name__)
 
 SAL = "cuentas.confirmar-correo"
 
@@ -34,16 +41,26 @@ def leer_token(token):
 
 
 def enviar_correo_confirmacion(request, usuario):
-    enlace = request.build_absolute_uri(reverse("confirmar_correo", args=[generar_token(usuario)]))
-    mensaje = render_to_string(
-        "cuentas/correo_confirmacion.txt",
-        {"usuario": usuario, "enlace": enlace, "horas": horas_validez()},
-    )
-    send_mail(
-        subject="Confirma tu correo en NEXALYS Tec",
-        message=mensaje,
-        from_email=None,
-        recipient_list=[usuario.email],
+    """Correo con el botón «Confirmar mi correo» y un código de 6 dígitos (cuentas/codigos.py)."""
+    enlace = correos.enlace(reverse("confirmar_correo", args=[generar_token(usuario)]), request)
+    codigo = codigos.nuevo(usuario)
+    correos.enviar(
+        [usuario.email], "Confirma tu correo en NEXALYS Tec", "cuentas/correo_confirmacion",
+        {"usuario": usuario, "enlace": enlace, "codigo": codigo, "vence": correos.vence_en_palabras(horas_validez()),
+         "dias": DIAS_PARA_CONFIRMAR_CORREO},
+        vista_previa=f"Activa tu cuenta con un toque o con el código {codigo[:3]} {codigo[3:]}.",
     )
     if settings.DEBUG:
-        print(f"\n[NEXALYS] Enlace para confirmar el correo de {usuario.email}:\n{enlace}\n")
+        print(f"\n[NEXALYS] Enlace para confirmar el correo de {usuario.email}:\n{enlace}\nCódigo: {codigo}\n")
+
+
+def enviar_bienvenida(request, usuario):
+    """Al confirmar el correo: bienvenida con 3 consejos. Si el correo falla, no pasa nada (solo se anota)."""
+    try:
+        correos.enviar(
+            [usuario.email], "Bienvenido a NEXALYS Tec", "cuentas/correo_bienvenida",
+            {"usuario": usuario, "enlace": correos.enlace(reverse("catalogo:catalogo"), request)},
+            vista_previa="Tu cuenta ya está activa. Así aprovechas NEXALYS Tec.",
+        )
+    except Exception:
+        logger.exception("No se pudo enviar el correo de bienvenida")

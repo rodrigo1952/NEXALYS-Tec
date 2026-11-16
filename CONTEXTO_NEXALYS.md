@@ -315,7 +315,15 @@
   «Filtrar | Ordenar» fija (`top: var(--cabecera-visible)`, la pone el script de la cabecera), rangos rápidos de
   precio (`RANGOS_PRECIO` y `_rangos_precio` en catalogo/views.py) y «Precio» primero en Filtrar. Mis productos:
   en < 992 px la tabla se ve como tarjetas (solo CSS; 2 por fila en tableta). La computadora casi no cambia.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **767 pruebas, OK**.
+- **Correos** (`config/correos.py`): `enviar(destinos, asunto, "app/plantilla", contexto, vista_previa=…)` usa
+  `plantilla.html` (extiende `correos/base.html`, estilos en línea, Arial) + `plantilla.txt`; `reply_to` =
+  `CORREO_RESPUESTAS` (= CORREO_SOPORTE solo si está en el .env). `enlace(ruta)` arma con SITIO_URL;
+  `vence_en_palabras(horas)` → «el lunes 16 de noviembre a las 5:24 p. m.». Todos los correos lo usan
+  (confirmación, bienvenida cliente/tienda, verificación tienda, recuperar contraseña, Libro, solicitudes, prueba).
+- **Código de 6 dígitos** (`cuentas/codigos.py`, modelo `CodigoVerificacion`, migración cuentas 0007): solo la
+  huella HMAC; uno nuevo reemplaza al anterior; vence como el enlace. Vistas `confirmar_codigo` (cliente) y
+  `tiendas:verificar_codigo` (panel). Límite `limites.CODIGO`: 5 equivocados cada 15 min.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **782 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

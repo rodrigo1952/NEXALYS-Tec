@@ -18,13 +18,13 @@ from catalogo.destacados import destacados_en_turnos
 from catalogo.models import Producto
 from favoritos.permisos import es_cliente
 
-from . import limites
+from . import codigos, limites
 from .clave_temporal import CLAVE_SESION
 from .concurrencia import validar_y_guardar
 from .forms import EliminarCuentaForm, IngresoForm, NuevaClaveForm, PerfilForm, RecuperarClaveForm, RegistroForm
 from .models import DIAS_PARA_CONFIRMAR_CORREO, ClaveTemporal, CorreoPendiente
 from .reautenticacion import confirmada_recientemente, marcar_confirmada
-from .verificacion import enviar_correo_confirmacion, horas_validez, leer_token
+from .verificacion import enviar_bienvenida, enviar_correo_confirmacion, horas_validez, leer_token
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ def _enviar_confirmacion(request, usuario):
         return True
     except Exception:  # p. ej. el servidor de correo no responde
         logger.exception("No se pudo enviar el correo de confirmación")
-        messages.error(request, "No pudimos enviar el correo. Inténtalo de nuevo con el botón \"Reenviar enlace\".")
+        messages.error(request, "No pudimos enviar el correo. Inténtalo de nuevo con el botón \"Reenviar correo\".")
         return False
 
 
@@ -135,6 +135,19 @@ def reenviar_confirmacion(request):
     return redirect("confirmacion_pendiente")
 
 
+def _activar_cliente(request, usuario, pendiente):
+    """Activa la cuenta, inicia sesión y envía la bienvenida (con el enlace o con el código)."""
+    usuario.is_active = True
+    usuario.save(update_fields=["is_active"])
+    pendiente.delete()
+    codigos.borrar(usuario)
+    request.session.pop("correo_por_confirmar", None)
+    login(request, usuario, backend="django.contrib.auth.backends.ModelBackend")
+    enviar_bienvenida(request, usuario)
+    messages.success(request, "¡Correo confirmado! Bienvenido a NEXALYS Tec.")
+    return redirect("inicio")
+
+
 def confirmar_correo(request, token):
     """El cliente abre el enlace del correo: su cuenta se activa y entra directamente."""
     usuario_id = leer_token(token)
@@ -145,13 +158,30 @@ def confirmar_correo(request, token):
     if pendiente is None:
         messages.info(request, "Tu correo ya estaba confirmado. Inicia sesión.")
         return redirect("login")
-    usuario.is_active = True
-    usuario.save(update_fields=["is_active"])
-    pendiente.delete()
-    request.session.pop("correo_por_confirmar", None)
-    login(request, usuario, backend="django.contrib.auth.backends.ModelBackend")
-    messages.success(request, "¡Correo confirmado! Bienvenido a NEXALYS Tec.")
-    return redirect("inicio")
+    return _activar_cliente(request, usuario, pendiente)
+
+
+@require_POST
+def confirmar_codigo(request):
+    """
+    Otra forma de confirmar: escribir el código de 6 dígitos del correo (sirve si el correo se abrió
+    en otro aparato). Límite: 5 códigos equivocados cada 15 minutos por correo.
+    """
+    correo = request.POST.get("email", "").strip()
+    request.session["correo_por_confirmar"] = correo
+    espera = limites.segundos_de_espera(limites.CODIGO, request, correo)
+    if espera:
+        messages.error(request, limites.mensaje_de_espera(espera))
+        return redirect("confirmacion_pendiente")
+    usuario = (
+        User.objects.filter(email__iexact=correo, is_active=False, correo_pendiente__isnull=False).first()
+        if correo else None
+    )
+    if usuario is None or not codigos.es_valido(usuario, request.POST.get("codigo"), horas_validez()):
+        limites.anotar(limites.CODIGO, request, correo)
+        messages.error(request, "El código no es correcto o ya venció. Revisa el último correo que te enviamos o pide uno nuevo.")
+        return redirect("confirmacion_pendiente")
+    return _activar_cliente(request, usuario, usuario.correo_pendiente)
 
 
 @login_required
@@ -277,17 +307,13 @@ def privacidad_solicitud(request):
 
 def _avisar_solicitud_recibida(solicitud):
     """Constancia por correo para quien pidió (si el correo no sale, la solicitud igual queda guardada)."""
-    from django.core.mail import send_mail
+    from config import correos
 
     try:
-        send_mail(
-            "Recibimos tu solicitud sobre tus datos personales | NEXALYS Tec",
-            f"Hola, {solicitud.nombre}:\n\n"
-            f"Recibimos tu solicitud de {solicitud.nombre_corto_tipo.lower()} el {solicitud.creada:%d/%m/%Y}.\n"
-            f"Te responderemos a este correo a más tardar el {solicitud.vence:%d/%m/%Y}.\n\n"
-            f"Tu pedido:\n{solicitud.detalle}\n\nNEXALYS Tec",
-            None,
-            [solicitud.correo],
+        correos.enviar(
+            [solicitud.correo], "Recibimos tu solicitud sobre tus datos personales | NEXALYS Tec",
+            "cuentas/correo_solicitud_recibida", {"solicitud": solicitud},
+            vista_previa=f"Te responderemos a más tardar el {solicitud.vence:%d/%m/%Y}.",
         )
     except Exception:
         logger.exception("No se pudo enviar la constancia de la solicitud de derechos")
