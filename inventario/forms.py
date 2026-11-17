@@ -145,8 +145,17 @@ class BaseLineas(forms.BaseFormSet):
     def clean(self):
         if any(self.errors):
             return
-        if not any(f.cleaned_data.get("producto") for f in self.forms if f.cleaned_data):
+        productos = [f.cleaned_data["producto"] for f in self.forms if f.cleaned_data.get("producto")]
+        if not productos:
             raise forms.ValidationError(self.mensaje_vacio)
+        # El mismo producto en dos filas: el costo promedio y el precio nuevo quedarían confusos.
+        vistos = set()
+        for producto in productos:
+            if producto.pk in vistos:
+                raise forms.ValidationError(
+                    f"«{producto.nombre}» está en dos filas. Déjalo en una sola fila con la cantidad total."
+                )
+            vistos.add(producto.pk)
 
 
 class BaseLineasVenta(BaseLineas):

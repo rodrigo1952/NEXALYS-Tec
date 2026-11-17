@@ -9,7 +9,7 @@
     <div class="card shadow-sm"><div class="card-body p-4">
       <h3 class="h5">Nuevo ajuste de stock</h3>
       <p class="text-muted small">Para productos dañados, perdidos o devueltos. Cada motivo indica si suma o resta. El ajuste queda en el kardex del producto.</p>
-      <form method="post" novalidate>
+      <form method="post" novalidate data-avisar-salida data-borrador="ajuste-u{{ user.pk }}" data-borrador-titulo="ajuste de stock">
         {% csrf_token %}
         {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
         {% for campo in form %}

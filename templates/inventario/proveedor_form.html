@@ -7,7 +7,7 @@
     <a href="{% url 'inventario:proveedores' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a proveedores</a>
     <div class="card shadow-sm mt-2"><div class="card-body p-4">
       <h3 class="h5 mb-3">{{ titulo }}</h3>
-      <form method="post" novalidate>
+      <form method="post" novalidate data-avisar-salida>
         {% csrf_token %}
         {% include "_campos_formulario.html" %}
         <div class="d-flex gap-2">

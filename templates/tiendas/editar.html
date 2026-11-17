@@ -5,7 +5,7 @@
 <a href="{% url 'tiendas:panel' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a datos de mi tienda</a>
 <h1 class="h3 mt-2 mb-3">Editar datos de mi tienda</h1>
 
-<form method="post" enctype="multipart/form-data" novalidate>
+<form method="post" enctype="multipart/form-data" novalidate data-avisar-salida>
   {% csrf_token %}
   <div class="row g-4">
     <div class="col-xl-9">

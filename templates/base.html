@@ -271,6 +271,7 @@
   // muestran "Procesando…". Así no se registra dos veces el mismo pedido o producto.
   document.addEventListener("submit", function (evento) {
     var form = evento.target;
+    if (evento.defaultPrevented) return;  // lo envía su propio script (p. ej. la ventanita «Nuevo proveedor»)
     if (form.hasAttribute("data-favorito")) return;  // el corazón se maneja más abajo
     if ((form.getAttribute("method") || "get").toLowerCase() !== "post") return;
     if (form.dataset.enviando === "1") { evento.preventDefault(); return; }
@@ -407,5 +408,7 @@
   }, 6000);
 </script>
 {% block scripts %}{% endblock %}
+{# Al final: avisa antes de salir de un formulario con cambios y guarda borradores (data-avisar-salida, data-borrador). #}
+<script src="{% static 'js/no_perder.js' %}"></script>
 </body>
 </html>

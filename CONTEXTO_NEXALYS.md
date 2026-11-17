@@ -355,7 +355,17 @@
 - **Código de 6 dígitos** (`cuentas/codigos.py`, modelo `CodigoVerificacion`, migración cuentas 0007): solo la
   huella HMAC; uno nuevo reemplaza al anterior; vence como el enlace. Vistas `confirmar_codigo` (cliente) y
   `tiendas:verificar_codigo` (panel). Límite `limites.CODIGO`: 5 equivocados cada 15 min.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **823 pruebas, OK**.
+- **No perder lo escrito** (nov 2026): `static/js/no_perder.js` (cargado en `base.html`, al final):
+  `<form data-avisar-salida>` pregunta antes de salir si hubo cambios (producto, editar tienda, ingreso, venta,
+  ajuste, conteo, proveedor, hoja y respuestas de reclamos); `data-borrador="<nombre>-u<id>"` guarda un borrador
+  en localStorage (3 días) con aviso «Recuperar / Descartar» (ingreso, venta, ajuste y conteo; el conteo usa
+  `data-borrador-mezclar` para no borrar lo contado en otras categorías); `<a data-guardar-borrador>` («+ Crear
+  producto») guarda y al volver recupera sin preguntar. `static/js/lineas_productos.js` (`data-lineas`/`data-linea`):
+  si se elige un producto repetido suma la cantidad en su fila; al volver con `?producto=ID` lo pone en la primera
+  fila libre. El servidor rechaza el mismo producto en dos filas (`inventario/forms.py`, `BaseLineas.clean`).
+  «+ Nuevo proveedor» en el ingreso abre una ventanita que llama a `inventario:proveedor_rapido` (POST, JSON,
+  prefijo `proveedor-`) y deja al proveedor elegido.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **832 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

@@ -60,6 +60,10 @@
 
     const textoElegido = () => (select.value ? select.selectedOptions[0].text : "");
     entrada.value = textoElegido();
+    // Si otro script cambia la lista (recuperar un borrador, unir un producto repetido), la caja lo muestra.
+    select.addEventListener("change", () => {
+      if (lista.classList.contains("d-none")) entrada.value = textoElegido();
+    });
 
     function elegir(opcion) {
       select.value = opcion ? opcion.value : "";

@@ -15,7 +15,7 @@ o a una tienda; la tienda la responde desde su panel en máximo {{ plazo }} día
     </div>
   </div>
 
-  <form method="post" novalidate class="card shadow-sm"><div class="card-body p-4">
+  <form method="post" novalidate class="card shadow-sm" data-avisar-salida><div class="card-body p-4">
     {% csrf_token %}
     {% for error in form.non_field_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
 

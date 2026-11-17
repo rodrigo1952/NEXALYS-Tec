@@ -1512,6 +1512,16 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 .aviso-whatsapp > .bi-whatsapp { color: #198754; font-size: 1.1rem; }
 .aviso-whatsapp .btn-link { font-weight: 600; }
 /* «El chat se abre en WhatsApp Web · Cambiar» bajo el botón de WhatsApp (solo en computadora) */
+/* Para no perder lo escrito (static/js/no_perder.js y lineas_productos.js) */
+.aviso-borrador {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; margin-bottom: 1rem; padding: .75rem 1rem;
+  background: rgba(var(--nx-acento-rgb), .1); border: 1px solid rgba(var(--nx-acento-rgb), .45); border-radius: var(--nx-radio);
+  font-size: .9rem;
+}
+.aviso-borrador > .bi { color: var(--nx-acento-texto); font-size: 1.1rem; }
+.aviso-borrador > span { flex: 1 1 260px; }
+.aviso-repetido { margin-top: .35rem; padding: .35rem .6rem; border-radius: .5rem; background: rgba(var(--nx-acento-rgb), .12); color: var(--nx-oscuro); font-size: .82rem; }
+.aviso-repetido .bi { color: var(--nx-acento-texto); }
 .modo-whatsapp { margin: .5rem 0 0; font-size: .82rem; color: var(--nx-texto-suave); }
 .modo-whatsapp .bi-whatsapp { color: #198754; }
 .modo-whatsapp .bi-check-circle { color: #198754; }

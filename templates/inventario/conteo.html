@@ -18,7 +18,7 @@
 </form>
 {% if total > limite %}<div class="alert alert-warning small">Se muestran los primeros {{ limite }} de {{ total }} productos. Filtra por categoría para contar el resto.</div>{% endif %}
 
-<form method="post" novalidate id="form-conteo">
+<form method="post" novalidate id="form-conteo" data-avisar-salida data-borrador="conteo-u{{ user.pk }}" data-borrador-titulo="conteo físico" data-borrador-mezclar>
   {% csrf_token %}
   <div class="table-responsive bg-white rounded shadow-sm">
     <table class="table align-middle mb-0">

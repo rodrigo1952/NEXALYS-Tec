@@ -7,7 +7,7 @@
 <h3 class="h5 my-2">Nueva venta</h3>
 <p class="text-muted small">Elige los productos vendidos. El precio se sugiere solo; cámbialo si hiciste un descuento. Al guardar, el stock se descuenta.</p>
 
-<form method="post" novalidate id="form-venta">
+<form method="post" novalidate id="form-venta" data-lineas data-avisar-salida data-borrador="venta-u{{ user.pk }}" data-borrador-titulo="venta">
   {% csrf_token %}
   {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
   {% for e in lineas.non_form_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
@@ -16,14 +16,14 @@
   <div class="card shadow-sm mb-3"><div class="card-body">
     <h4 class="h6">Productos</h4>
     <div class="atajo mb-2">
-      <p class="atajo__texto"><strong>¿Vas a vender un producto nuevo?</strong> Regístralo y volverás aquí con él ya elegido.</p>
-      <a href="{% url 'catalogo:crear' %}?volver=venta" class="btn btn-sm btn-primary">+ Crear producto</a>
+      <p class="atajo__texto"><strong>¿Vas a vender un producto nuevo?</strong> Regístralo y volverás aquí con él ya elegido (lo que ya escribiste se guarda).</p>
+      <a href="{% url 'catalogo:crear' %}?volver=venta" class="btn btn-sm btn-primary" data-guardar-borrador>+ Crear producto</a>
     </div>
     <div class="row g-2 small text-muted d-none d-md-flex">
       <div class="col-md-6">Producto</div><div class="col-md-2">Cantidad</div><div class="col-md-2">Precio unit. (S/)</div><div class="col-md-2 text-end">Subtotal</div>
     </div>
     {% for f in lineas %}
-      <div class="row g-2 align-items-start py-2 border-bottom linea-venta{% if forloop.counter > visibles and not f.producto.value %} d-none{% endif %}">
+      <div data-linea class="row g-2 align-items-start py-2 border-bottom linea-venta{% if forloop.counter > visibles and not f.producto.value %} d-none{% endif %}">
         <div class="col-12 col-md-6">
           <label class="visually-hidden" for="{{ f.producto.id_for_label }}">Producto {{ forloop.counter }}</label>
           {{ f.producto }}
@@ -116,8 +116,11 @@
     if (oculta) { oculta.classList.remove("d-none"); oculta.querySelector("select").focus(); }
     actualizarBoton();
   });
+  // Al recuperar el borrador aparecen filas que estaban ocultas.
+  document.getElementById("form-venta").addEventListener("borrador:restaurado", () => setTimeout(actualizarBoton));
   actualizarBoton();
   calcular();
 })();
 </script>
+<script src="{% static 'js/lineas_productos.js' %}"></script>
 {% endblock %}

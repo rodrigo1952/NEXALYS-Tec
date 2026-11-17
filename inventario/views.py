@@ -8,13 +8,14 @@ de otra (responde 404). Los costos y proveedores son privados de cada tienda.
 from datetime import timedelta
 
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Count, F, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.views.decorators.http import require_POST
 
 from catalogo.models import Categoria, Producto
 from catalogo.templatetags.formato import soles
@@ -89,6 +90,20 @@ def proveedor_crear(request):
         messages.success(request, f"Proveedor \"{proveedor}\" registrado.")
         return redirect("inventario:proveedores")
     return render(request, "inventario/proveedor_form.html", {"form": form, "titulo": "Nuevo proveedor"})
+
+
+@require_POST
+@tienda_requerida()
+def proveedor_rapido(request):
+    """
+    «+ Nuevo proveedor» desde Nuevo ingreso: la ventanita lo registra sin salir de la página (JSON).
+    Devuelve {"id", "nombre"} o {"errores": {campo: [mensajes]}}.
+    """
+    form = ProveedorForm(request.POST, tienda=request.tienda, prefix="proveedor")
+    if not form.is_valid():
+        return JsonResponse({"errores": {campo: list(lista) for campo, lista in form.errors.items()}}, status=400)
+    proveedor = form.save()
+    return JsonResponse({"id": proveedor.pk, "nombre": str(proveedor)}, status=201)
 
 
 @tienda_requerida()
@@ -280,7 +295,11 @@ def ingreso_nuevo(request):
                 messages.warning(request, f"«{producto.nombre}» se vende a {soles(precio)} y ahora te cuesta {soles(costo)} "
                                           "en promedio: no te deja ganancia. Revisa su precio de venta o su oferta.")
             return redirect("inventario:ingreso_detalle", pk=ingreso.pk)
-    return render(request, "inventario/ingreso_form.html", {"form": form, "lineas": lineas, "visibles": 3})
+    return render(request, "inventario/ingreso_form.html", {
+        "form": form, "lineas": lineas, "visibles": 3,
+        # Ventanita «+ Nuevo proveedor» (se registra sin salir del ingreso).
+        "form_proveedor": ProveedorForm(tienda=request.tienda, prefix="proveedor"),
+    })
 
 
 def _ingreso_propio(request, pk):

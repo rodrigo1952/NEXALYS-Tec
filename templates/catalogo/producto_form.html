@@ -24,7 +24,7 @@
           <div class="small mt-1">Puedes corregir los datos; cuando lo hagas, comunícate con el administrador para que lo vuelva a mostrar.</div>
         </div>
       {% endif %}
-      <form method="post" enctype="multipart/form-data" novalidate>
+      <form method="post" enctype="multipart/form-data" novalidate data-avisar-salida>
         {% csrf_token %}
         {% if lista %}<input type="hidden" name="lista" value="{{ lista }}">{% endif %}
         {# Fotos arriba de todo, al agregar y al editar (los cambios se aplican al guardar). #}

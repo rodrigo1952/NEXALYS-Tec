@@ -7,7 +7,7 @@
 <h3 class="h5 my-2">Nuevo ingreso de mercadería</h3>
 <p class="text-muted small">Registra lo que recibiste y cuánto pagaste por unidad. Al guardar, el stock sube y el costo de la ficha se actualiza con el promedio. Debajo de cada producto verás el costo nuevo y cuánto ganas; si hace falta, cambia ahí mismo su precio de venta.</p>
 
-<form method="post" novalidate id="form-ingreso">
+<form method="post" novalidate id="form-ingreso" data-lineas data-avisar-salida data-borrador="ingreso-u{{ user.pk }}" data-borrador-titulo="ingreso de mercadería">
   {% csrf_token %}
   {% for e in form.non_field_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
   {% for e in lineas.non_form_errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
@@ -16,14 +16,14 @@
   <div class="card shadow-sm mb-3"><div class="card-body">
     <h4 class="h6">Productos recibidos</h4>
     <div class="atajo mb-2">
-      <p class="atajo__texto"><strong>¿Llegó un producto nuevo?</strong> Regístralo y volverás aquí con él ya elegido.</p>
-      <a href="{% url 'catalogo:crear' %}?volver=ingreso" class="btn btn-sm btn-primary">+ Crear producto</a>
+      <p class="atajo__texto"><strong>¿Llegó un producto nuevo?</strong> Regístralo y volverás aquí con él ya elegido (lo que ya escribiste se guarda).</p>
+      <a href="{% url 'catalogo:crear' %}?volver=ingreso" class="btn btn-sm btn-primary" data-guardar-borrador>+ Crear producto</a>
     </div>
     <div class="row g-2 small text-muted d-none d-md-flex">
       <div class="col-md-6">Producto</div><div class="col-md-2">Cantidad</div><div class="col-md-2">Costo unit. (S/)</div><div class="col-md-2 text-end">Subtotal</div>
     </div>
     {% for f in lineas %}
-      <div class="row g-2 align-items-start py-2 border-bottom linea{% if forloop.counter > visibles and not f.producto.value %} d-none{% endif %}">
+      <div data-linea class="row g-2 align-items-start py-2 border-bottom linea{% if forloop.counter > visibles and not f.producto.value %} d-none{% endif %}">
         <div class="col-12 col-md-6">
           <label class="visually-hidden" for="{{ f.producto.id_for_label }}">Producto {{ forloop.counter }}</label>
           {{ f.producto }}
@@ -67,7 +67,8 @@
         <div class="{% if campo.name == 'nota' %}col-12{% else %}col-md-6{% endif %}">
           <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
           {% if campo.name == 'proveedor' %}
-            <div class="input-group">{{ campo }}<a href="{% url 'inventario:proveedor_crear' %}" class="btn btn-outline-primary">+ Nuevo proveedor</a></div>
+            <div class="input-group">{{ campo }}<a href="{% url 'inventario:proveedor_crear' %}" class="btn btn-outline-primary" data-proveedor-rapido>+ Nuevo proveedor</a></div>
+            <div class="form-text text-success fw-semibold" data-proveedor-listo aria-live="polite"></div>
           {% else %}{{ campo }}{% endif %}
           {% for e in campo.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
@@ -80,6 +81,36 @@
     <a href="{% url 'inventario:ingresos' %}" class="btn btn-outline-secondary">Cancelar</a>
   </div>
 </form>
+
+{# Ventanita «Nuevo proveedor»: es un formulario aparte (no se puede poner un formulario dentro de otro). #}
+<div class="modal fade" id="modal-proveedor" tabindex="-1" aria-labelledby="titulo-modal-proveedor" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content modal-marca" id="form-proveedor-rapido" method="post" action="{% url 'inventario:proveedor_rapido' %}" novalidate>
+      {% csrf_token %}
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="titulo-modal-proveedor">Nuevo proveedor</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">Se guarda en tu lista de proveedores y queda elegido en este ingreso. Lo que ya escribiste en el ingreso no se pierde.</p>
+        <div class="text-danger small mb-2" data-error-general aria-live="polite"></div>
+        <div class="row g-3">
+          {% for campo in form_proveedor %}
+            <div class="{% if campo.name == 'nombre' or campo.name == 'notas' %}col-12{% else %}col-sm-6{% endif %}">
+              <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}{% if campo.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+              {{ campo }}
+              <div class="invalid-feedback d-block" data-error-de="{{ campo.name }}"></div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar proveedor</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <script src="{% static 'js/buscador_productos.js' %}"></script>
 <script {% csp_nonce_attr %}>
@@ -175,8 +206,61 @@
     const opcion = select.selectedOptions[0];
     if (select.value && opcion && opcion.dataset.costo && costo.value === "") costo.value = opcion.dataset.costo;
   });
+  document.getElementById("form-ingreso").addEventListener("borrador:restaurado", () => setTimeout(actualizarBoton));
   actualizarBoton();
   calcular();
+})();
+</script>
+<script src="{% static 'js/lineas_productos.js' %}"></script>
+<script {% csp_nonce_attr %}>
+// «+ Nuevo proveedor»: ventanita que lo registra sin salir del ingreso; al guardar queda elegido.
+(function () {
+  const enlace = document.querySelector("[data-proveedor-rapido]");
+  const modal = document.getElementById("modal-proveedor");
+  const form = document.getElementById("form-proveedor-rapido");
+  const lista = document.querySelector("#form-ingreso select[name='proveedor']");
+  if (!enlace || !modal || !form || !lista) return;
+  const errorGeneral = form.querySelector("[data-error-general]");
+
+  enlace.addEventListener("click", (evento) => {
+    evento.preventDefault();
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+  });
+  modal.addEventListener("shown.bs.modal", () => form.querySelector("input[name='proveedor-nombre']").focus());
+
+  function limpiarErrores() {
+    errorGeneral.textContent = "";
+    form.querySelectorAll(".is-invalid").forEach((c) => c.classList.remove("is-invalid"));
+    form.querySelectorAll("[data-error-de]").forEach((e) => { e.textContent = ""; });
+  }
+
+  form.addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    limpiarErrores();
+    const boton = form.querySelector("[type=submit]");
+    boton.disabled = true;
+    fetch(form.action, { method: "POST", body: new FormData(form), headers: { "X-Requested-With": "XMLHttpRequest" } })
+      .then((r) => r.json().then((datos) => ({ ok: r.ok, datos })))
+      .then(({ ok, datos }) => {
+        if (!ok) {
+          Object.entries(datos.errores || {}).forEach(([campo, mensajes]) => {
+            const entrada = form.querySelector(`[name='proveedor-${campo}']`);
+            const caja = form.querySelector(`[data-error-de='${campo}']`);
+            if (entrada) entrada.classList.add("is-invalid");
+            if (caja) caja.textContent = mensajes.join(" "); else errorGeneral.textContent = mensajes.join(" ");
+          });
+          return;
+        }
+        const opcion = new Option(datos.nombre, datos.id, true, true);
+        lista.add(opcion);
+        lista.dispatchEvent(new Event("change", { bubbles: true }));
+        form.reset();
+        bootstrap.Modal.getOrCreateInstance(modal).hide();
+        document.querySelector("[data-proveedor-listo]").textContent = "✓ Proveedor «" + datos.nombre + "» registrado y elegido.";
+      })
+      .catch(() => { errorGeneral.textContent = "No se pudo guardar. Revisa tu conexión e inténtalo otra vez."; })
+      .finally(() => { boton.disabled = false; });
+  });
 })();
 </script>
 {% endblock %}

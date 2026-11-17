@@ -24,6 +24,7 @@ urlpatterns = [
     path("conteo/", views.conteo, name="conteo"),
     path("proveedores/", views.proveedores, name="proveedores"),
     path("proveedores/nuevo/", views.proveedor_crear, name="proveedor_crear"),
+    path("proveedores/nuevo-rapido/", views.proveedor_rapido, name="proveedor_rapido"),
     path("proveedores/<int:pk>/editar/", views.proveedor_editar, name="proveedor_editar"),
     path("proveedores/<int:pk>/eliminar/", views.proveedor_eliminar, name="proveedor_eliminar"),
 ]

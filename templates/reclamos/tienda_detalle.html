@@ -7,7 +7,7 @@
   <div class="tarjeta-cuenta mt-3">
     <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0">Responder</h2></div>
     <p class="small text-muted">Escribe qué hiciste o qué ofreces para resolverlo. Plazo: hasta el <strong>{{ r.vence|date:"d/m/Y" }}</strong>.</p>
-    <form method="post" novalidate>
+    <form method="post" novalidate data-avisar-salida>
       {% csrf_token %}
       {% include "_campos_formulario.html" %}
       <button type="submit" class="btn btn-primary"><i class="bi bi-send" aria-hidden="true"></i> Guardar y enviar respuesta</button>
