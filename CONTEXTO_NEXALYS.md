@@ -18,7 +18,8 @@
 - Python 3.14 (Windows; el venv se crea con `py -3.14 -m venv venv` y VS Code usa ese intérprete), **Django 6.1.1**, SQLite (`transaction_mode` IMMEDIATE), Pillow, openpyxl.
 - Bootstrap 5.3.3, Bootstrap Icons 1.11.3, Chart.js 4.4.1, **Leaflet 1.9.4** y las letras Space Grotesk y Lilita One
   están **dentro del proyecto** en `static/vendor/` (LEEME.md con versiones y licencias; sin `sourceMappingURL`).
-  Ningún CDN: solo los cuadros del mapa vienen de **OpenStreetMap**. Se descargaron con
+  Ningún CDN: solo los cuadros del mapa vienen de **OpenStreetMap** (y, al marcar el local, las fotos satelitales de
+  **Esri** y la búsqueda de calles de **Nominatim**; los tres están permitidos en `SECURE_CSP`). Se descargaron con
   `Claude outputs/descargar_librerias.ps1`. QR con **segno 1.6.6** (en requirements).
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
   **No se escribe `?v=` a mano**: en tu PC (DEBUG=True) `config/estaticos.py` (EstaticosConVersion) agrega solo
@@ -265,6 +266,15 @@
   ubicación van al final. Centro por defecto: Quillabamba (`tiendas.models.CENTRO_QUILLABAMBA`).
 - **Ubicación del local**: campos `Tienda.latitud` / `Tienda.longitud` (migración `tiendas/0007_ubicacion`). La tienda
   pone el pin en «Editar datos de mi tienda» (tocar el mapa, arrastrar el pin o «Usar mi ubicación actual»).
+  Ayudas (nov 2026, `mapas.js`): «Buscar» una calle de Quillabamba (Nominatim: una búsqueda por clic, sin
+  autocompletar, máx. 1 por segundo, dentro de ~9 km), botones «Mapa / Satélite» (Esri World Imagery + calles) y
+  «Ampliar mapa» (pantalla completa dentro de la página; «Reducir mapa» arriba, el botón ⤢/⤡ en la esquina del
+  mapa o Esc lo devuelven). «Buscar» cambia «Jr./Av./Psje./Ca./Prol./Urb.» por la palabra completa, quita el
+  número de puerta y, si no encuentra nada, prueba solo con el nombre de la calle (1,1 s después).
+- **Logo de la tienda** (`templates/tiendas/_campo_logo.html` + `static/js/campo_logo.js`): círculo grande como
+  las fotos de los productos (clic o arrastrar, vista previa, «Quitar logo», «Deshacer»). Se usa en «Editar datos
+  de mi tienda» (el campo `logo` va `aparte`; quitar = casilla `datos-logo-clear`) y en la ventana del círculo del
+  menú de la cuenta (`tiendas:logo`; «Guardar logo» se activa al elegir una imagen).
   `Tienda.tiene_ubicacion`, `enlace_mapa()` y `enlace_como_llegar()`. El perfil público y el detalle del producto
   muestran «Cómo llegar» (y el perfil, un mapa pequeño) si la tienda marcó su local.
 - Mapas: `templates/_leaflet.html` carga Leaflet y `static/js/mapas.js` (modos `data-mapa-tiendas`,
@@ -345,7 +355,7 @@
 - **Código de 6 dígitos** (`cuentas/codigos.py`, modelo `CodigoVerificacion`, migración cuentas 0007): solo la
   huella HMAC; uno nuevo reemplaza al anterior; vence como el enlace. Vistas `confirmar_codigo` (cliente) y
   `tiendas:verificar_codigo` (panel). Límite `limites.CODIGO`: 5 equivocados cada 15 min.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **814 pruebas, OK**.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **823 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

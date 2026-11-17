@@ -6,13 +6,26 @@
  *   [data-mapa-editar]   «Editar datos de mi tienda»: la tienda pone el pin en su local.
  *   [data-mapa-tienda]   Perfil de una tienda: mapa pequeño con su local.
  *
+ * Al marcar el local hay además:
+ *   - «Mapa / Satélite»: fotos satelitales de Esri (World Imagery) con las calles encima.
+ *   - «Buscar»: busca una calle o lugar de Quillabamba en OpenStreetMap (servicio Nominatim). Una búsqueda
+ *     por clic (sin autocompletar), como pide su política de uso; las respuestas se recuerdan en la página.
+ *   - «Ampliar mapa»: el mapa ocupa toda la pantalla; «Reducir mapa» (arriba o en la esquina del mapa, o Esc)
+ *     lo devuelve a su lugar.
+ *   «Buscar» entiende «Jr.», «Av.», «Psje.»… y quita el número de puerta; si no encuentra nada, prueba solo
+ *     con el nombre de la calle.
+ *
  * Privacidad: la ubicación de la persona se usa SOLO aquí, en su navegador, para medir distancias.
- * No se envía al servidor ni se guarda.
+ * No se envía al servidor ni se guarda. Lo que se escribe en «Buscar» va solo a OpenStreetMap.
  */
 (function () {
   "use strict";
   var CUADROS = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
   var ATRIBUCION = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+  var SATELITE = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+  var CALLES = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
+  var ATRIBUCION_SATELITE = "Imágenes &copy; Esri, Maxar, Earthstar Geographics y la comunidad GIS";
+  var BUSCADOR = "https://nominatim.openstreetmap.org/search";
   var MENSAJES = {
     seguro: "Tu navegador solo comparte la ubicación en páginas seguras (https).",
     permiso: "No diste permiso para usar tu ubicación. Puedes activarlo tocando el candado junto a la dirección de la página.",
@@ -27,7 +40,7 @@
 
   function crearMapa(elemento, centro, zoom) {
     var mapa = L.map(elemento, { scrollWheelZoom: false }).setView(centro, zoom);
-    L.tileLayer(CUADROS, {
+    mapa.capaCalles = L.tileLayer(CUADROS, {
       maxZoom: 19,
       attribution: ATRIBUCION,
       // OpenStreetMap pide saber desde qué sitio se usa el mapa (solo el dominio).
@@ -77,6 +90,202 @@
       function (problema) { error(problema.code === 1 ? "permiso" : "falla"); },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
     );
+  }
+
+  // ---------- Mapa / Satélite ----------
+  function botonesCapas(mapa) {
+    var satelite = L.layerGroup([
+      L.tileLayer(SATELITE, { maxZoom: 19, maxNativeZoom: 18, attribution: ATRIBUCION_SATELITE }),
+      L.tileLayer(CALLES, { maxZoom: 19, maxNativeZoom: 18 }),
+    ]);
+    var Control = L.Control.extend({
+      options: { position: "topright" },
+      onAdd: function () {
+        var caja = L.DomUtil.create("div", "capas-mapa leaflet-bar");
+        caja.setAttribute("role", "group");
+        caja.setAttribute("aria-label", "Tipo de mapa");
+        [["calles", "bi-map", "Mapa"], ["satelite", "bi-globe-americas", "Satélite"]].forEach(function (d) {
+          var b = L.DomUtil.create("button", "capas-mapa__boton", caja);
+          b.type = "button";
+          b.dataset.capa = d[0];
+          b.innerHTML = '<i class="bi ' + d[1] + '" aria-hidden="true"></i> ' + d[2];
+          b.setAttribute("aria-pressed", d[0] === "calles" ? "true" : "false");
+        });
+        L.DomEvent.disableClickPropagation(caja);
+        L.DomEvent.on(caja, "click", function (evento) {
+          var boton = evento.target.closest("[data-capa]");
+          if (!boton) return;
+          var verSatelite = boton.dataset.capa === "satelite";
+          if (verSatelite) { mapa.removeLayer(mapa.capaCalles); satelite.addTo(mapa); }
+          else { mapa.removeLayer(satelite); mapa.capaCalles.addTo(mapa); }
+          caja.querySelectorAll("[data-capa]").forEach(function (b) {
+            b.setAttribute("aria-pressed", b === boton ? "true" : "false");
+          });
+        });
+        return caja;
+      },
+    });
+    new Control().addTo(mapa);
+  }
+
+  // ---------- Buscar una calle o lugar (OpenStreetMap / Nominatim) ----------
+  // OpenStreetMap no entiende las abreviaturas de las direcciones peruanas ni los números de puerta:
+  // «Jr. Vilcabamba N° 438» se busca como «jirón vilcabamba».
+  var ABREVIATURAS = [
+    [/\bjr\b\.?/g, "jirón"], [/\bjiron\b/g, "jirón"], [/\bav(da)?\b\.?/g, "avenida"],
+    [/\b(psje|pje|pj|pasj)\b\.?/g, "pasaje"], [/\bca\b\.?/g, "calle"], [/\bclle\b\.?/g, "calle"],
+    [/\bprol\b\.?/g, "prolongación"], [/\burb\b\.?/g, "urbanización"], [/\bcarr\b\.?/g, "carretera"],
+    [/\bmalec\b\.?/g, "malecón"], [/\bpza\b\.?/g, "plaza"],
+  ];
+  var TIPOS_DE_VIA = /^(jirón|avenida|pasaje|calle|prolongación|urbanización|carretera|malecón|plaza)\s+/;
+
+  function textoParaBuscar(texto) {
+    var t = " " + texto.toLowerCase() + " ";
+    // Número de puerta, manzana y lote: «N° 438», «nro. 12», «#5», «Mz. B Lt. 4», «s/n».
+    t = t.replace(/(\b(n[°º]|nro\.?|no\.|num\.?)|#)\s*\d+[a-z]?/g, " ")
+         .replace(/\b(mz|lt|lote|manzana)\b\.?\s*[a-z0-9-]+/g, " ")
+         .replace(/\bs\/n\b/g, " ")
+         .replace(/\s\d+[a-z]?\s*$/, " ");  // número al final («Jr. Espinar 438»); «Av. 25 de Julio» queda igual
+    ABREVIATURAS.forEach(function (par) { t = t.replace(par[0], par[1]); });
+    return t.replace(/[,;]+/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function sinTipoDeVia(texto) {
+    return texto.replace(TIPOS_DE_VIA, "").trim();
+  }
+  function buscadorDeDirecciones(mapa, centro, alElegir) {
+    var campo = document.querySelector("[data-buscar-direccion]");
+    var boton = document.querySelector("[data-buscar-boton]");
+    var caja = document.querySelector("[data-resultados-busqueda]");
+    if (!campo || !boton || !caja) return;
+    var recordadas = {};
+    var esperando = false;
+
+    function avisar(clase, texto) {
+      caja.innerHTML = "";
+      var p = document.createElement("p");
+      p.className = "small mb-2 " + clase;
+      p.textContent = texto;
+      caja.appendChild(p);
+    }
+    function ir(lugar) {
+      var punto = [parseFloat(lugar.lat), parseFloat(lugar.lon)];
+      mapa.setView(punto, lugar.type === "house" || lugar.addresstype === "building" ? 19 : 18);
+      avisar("text-success", "Te llevamos a «" + lugar.name_corto + "». Ahora toca la puerta de tu local en el mapa para poner el pin.");
+      alElegir();
+    }
+    function mostrar(lugares) {
+      if (!lugares.length) {
+        avisar("text-warning-emphasis", "No encontramos ese lugar en Quillabamba. Prueba solo con el nombre de la calle (ej. «Espinar») o mueve el mapa tú mismo.");
+        return;
+      }
+      lugares.forEach(function (l) { l.name_corto = l.name || l.display_name.split(",")[0]; });
+      if (lugares.length === 1) { ir(lugares[0]); return; }
+      caja.innerHTML = '<p class="small mb-1 text-muted">Elige el lugar correcto:</p>';
+      var lista = document.createElement("div");
+      lista.className = "editor-ubicacion__opciones";
+      lugares.forEach(function (lugar) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "btn btn-sm btn-outline-secondary";
+        b.textContent = lugar.display_name.split(",").slice(0, 3).join(",");
+        b.addEventListener("click", function () { ir(lugar); });
+        lista.appendChild(b);
+      });
+      caja.appendChild(lista);
+    }
+    function consultar(texto) {
+      if (recordadas[texto]) return Promise.resolve(recordadas[texto]);
+      var d = 0.08;  // unos 9 km alrededor del centro de Quillabamba
+      var url = BUSCADOR + "?" + new URLSearchParams({
+        q: texto, format: "jsonv2", limit: "5", countrycodes: "pe", "accept-language": "es", bounded: "1",
+        viewbox: [centro[1] - d, centro[0] + d, centro[1] + d, centro[0] - d].join(","),
+      });
+      return fetch(url, { referrerPolicy: "strict-origin-when-cross-origin", headers: { Accept: "application/json" } })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (lugares) { recordadas[texto] = lugares; return lugares; });
+    }
+    function esperar(ms) { return new Promise(function (listo) { setTimeout(listo, ms); }); }
+
+    function buscar() {
+      var escrito = campo.value.trim();
+      if (escrito.length < 3) { avisar("text-muted", "Escribe al menos 3 letras."); return; }
+      if (esperando) return;
+      var arreglado = textoParaBuscar(escrito);
+      var soloNombre = sinTipoDeVia(arreglado);
+      esperando = true;
+      boton.disabled = true;
+      avisar("text-muted", "Buscando…");
+      consultar(arreglado)
+        .then(function (lugares) {
+          // «Jirón Vilcabamba» no aparece, pero «Vilcabamba» sí: se intenta solo con el nombre,
+          // un segundo después (máximo una búsqueda por segundo, política de uso de OpenStreetMap).
+          if (lugares.length || !soloNombre || soloNombre === arreglado || soloNombre.length < 3) return lugares;
+          return (recordadas[soloNombre] ? Promise.resolve() : esperar(1100)).then(function () { return consultar(soloNombre); });
+        })
+        .then(mostrar)
+        .catch(function () { avisar("text-danger", "No se pudo buscar ahora. Revisa tu conexión o mueve el mapa tú mismo."); })
+        .then(function () {
+          setTimeout(function () { esperando = false; boton.disabled = false; }, 1100);
+        });
+    }
+    boton.addEventListener("click", buscar);
+    // Enter busca (y no envía el formulario de la página).
+    campo.addEventListener("keydown", function (evento) {
+      if (evento.key === "Enter") { evento.preventDefault(); buscar(); }
+    });
+  }
+
+  // ---------- «Ampliar mapa» (pantalla completa dentro de la página) ----------
+  function mapaAmpliable(mapa) {
+    var editor = document.querySelector("[data-editor-ubicacion]");
+    var ampliar = document.querySelector("[data-ampliar-mapa]");
+    var cerrar = document.querySelector("[data-cerrar-mapa]");
+    if (!editor || !ampliar || !cerrar) return;
+    // Botón ⤢ / ⤡ en la esquina del mapa, debajo del + y el −, como en Google Maps.
+    var enElMapa = null;
+    var Control = L.Control.extend({
+      options: { position: "topleft" },
+      onAdd: function () {
+        var caja = L.DomUtil.create("div", "leaflet-bar");
+        enElMapa = L.DomUtil.create("a", "boton-ampliar-mapa", caja);
+        enElMapa.href = "#";
+        enElMapa.setAttribute("role", "button");
+        L.DomEvent.disableClickPropagation(caja);
+        L.DomEvent.on(enElMapa, "click", function (evento) {
+          L.DomEvent.preventDefault(evento);
+          cambiar(!editor.classList.contains("editor-ubicacion--ampliado"));
+        });
+        pintarBoton(false);
+        return caja;
+      },
+    });
+    function pintarBoton(abierto) {
+      if (!enElMapa) return;
+      var texto = abierto ? "Reducir mapa" : "Ampliar mapa";
+      enElMapa.innerHTML = '<i class="bi ' + (abierto ? "bi-fullscreen-exit" : "bi-arrows-fullscreen") + '" aria-hidden="true"></i>';
+      enElMapa.title = texto;
+      enElMapa.setAttribute("aria-label", texto);
+    }
+    function cambiar(abrir) {
+      pintarBoton(abrir);
+      editor.classList.toggle("editor-ubicacion--ampliado", abrir);
+      document.body.classList.toggle("mapa-ampliado-abierto", abrir);
+      if (abrir) {
+        editor.setAttribute("role", "dialog");
+        editor.setAttribute("aria-label", "Mapa ampliado para marcar tu local");
+      } else {
+        editor.removeAttribute("role");
+        editor.removeAttribute("aria-label");
+      }
+      setTimeout(function () { mapa.invalidateSize(); }, 50);
+      (abrir ? cerrar : ampliar).focus();
+    }
+    new Control().addTo(mapa);
+    ampliar.addEventListener("click", function () { cambiar(true); });
+    cerrar.addEventListener("click", function () { cambiar(false); });
+    document.addEventListener("keydown", function (evento) {
+      if (evento.key === "Escape" && editor.classList.contains("editor-ubicacion--ampliado")) cambiar(false);
+    });
   }
 
   function centroDe(elemento) {
@@ -224,6 +433,9 @@
     }
     mostrar();
     mapa.on("click", function (evento) { ponerPin(evento.latlng); });
+    botonesCapas(mapa);
+    mapaAmpliable(mapa);
+    buscadorDeDirecciones(mapa, centroDe(elemento), function () { mapa.scrollWheelZoom.enable(); });
 
     botonQuitar.addEventListener("click", function () {
       if (pin) { mapa.removeLayer(pin); pin = null; }

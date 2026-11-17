@@ -108,7 +108,8 @@ class LogoDesdeElMenuTests(TestCase):
         self.assertContains(respuesta, 'id="cambiar-logo"')
         self.assertContains(respuesta, 'id="modal-logo"')
         self.assertContains(respuesta, "Guardar logo")
-        self.assertContains(respuesta, "Elegir otra")
+        self.assertContains(respuesta, "data-campo-logo")  # el mismo campo que en «Editar datos de mi tienda»
+        self.assertContains(respuesta, "Elegir imagen")
         self.assertNotContains(respuesta, "Ver mi tienda pública")
 
     def test_cambiar_y_quitar_el_logo_sin_contrasena(self):

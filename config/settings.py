@@ -303,8 +303,9 @@ SECURE_CSP = {
     'style-src': [CSP.SELF, CSP.UNSAFE_INLINE],
     'font-src': [CSP.SELF],
     # data: = íconos de Bootstrap dentro del CSS; los cuadros del mapa vienen de OpenStreetMap.
-    'img-src': [CSP.SELF, 'data:', 'blob:', 'https://tile.openstreetmap.org'],
-    'connect-src': [CSP.SELF],
+    # Mapas: OpenStreetMap y las fotos satelitales de Esri; «Buscar» en el mapa consulta Nominatim (OpenStreetMap).
+    'img-src': [CSP.SELF, 'data:', 'blob:', 'https://tile.openstreetmap.org', 'https://server.arcgisonline.com'],
+    'connect-src': [CSP.SELF, 'https://nominatim.openstreetmap.org'],
     'object-src': [CSP.NONE],
     'base-uri': [CSP.SELF],
     'form-action': [CSP.SELF],

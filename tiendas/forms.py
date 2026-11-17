@@ -125,6 +125,11 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
             "longitud": forms.HiddenInput(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # El logo se dibuja aparte, como las fotos de los productos (templates/tiendas/_campo_logo.html).
+        self.fields["logo"].aparte = True
+
     def clean(self):
         datos = super().clean()
         if (datos.get("latitud") is None) != (datos.get("longitud") is None):

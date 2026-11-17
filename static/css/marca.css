@@ -435,6 +435,39 @@ h1, h2, h3, h4, h5, h6, .display-6 { font-weight: 700; letter-spacing: -.01em; }
 .galeria-zona small { color: var(--nx-texto-suave); font-size: .82rem; }
 .galeria-zona u { color: var(--nx-acento-texto); font-weight: 700; text-underline-offset: 3px; }
 
+/* Logo de la tienda (templates/tiendas/_campo_logo.html): mismo trato que las fotos de los productos */
+.campo-logo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.25rem; margin-bottom: 1rem; padding: 1rem;
+  border: 1.5px dashed var(--nx-borde); border-radius: 14px; background: #FAFBFD;
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+.campo-logo:hover { border-color: var(--nx-acento); }
+.campo-logo--soltar { border-color: var(--nx-acento); background: rgba(var(--nx-acento-rgb), .08); box-shadow: 0 0 0 3px rgba(var(--nx-acento-rgb), .18); }
+.campo-logo__circulo {
+  position: relative; flex: 0 0 112px; width: 112px; height: 112px; padding: 0; overflow: hidden; cursor: pointer;
+  border: 3px solid var(--nx-blanco); border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px var(--nx-borde), 0 4px 12px rgba(var(--nx-oscuro-rgb), .12);
+}
+.campo-logo__circulo--vacio { background: var(--nx-oscuro); box-shadow: 0 0 0 2px var(--nx-acento); }
+.campo-logo__circulo img { width: 100%; height: 100%; object-fit: cover; }
+.campo-logo__inicial { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #fff; font-size: 2.6rem; font-weight: 800; }
+.campo-logo__velo {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem;
+  background: rgba(var(--nx-oscuro-rgb), .55); color: #fff; font-size: .8rem; font-weight: 700; opacity: 0; transition: opacity .15s ease;
+}
+.campo-logo__velo .bi { font-size: 1.3rem; }
+.campo-logo__circulo:hover .campo-logo__velo, .campo-logo__circulo:focus-visible .campo-logo__velo, .campo-logo--soltar .campo-logo__velo { opacity: 1; }
+.campo-logo__circulo:focus-visible { outline: 3px solid var(--nx-acento); outline-offset: 2px; }
+.campo-logo__textos { flex: 1 1 220px; min-width: 0; }
+.campo-logo__titulo { display: block; font-size: .95rem; color: var(--nx-oscuro); }
+.campo-logo__ayuda { margin: .2rem 0 .35rem; font-size: .82rem; color: var(--nx-texto-suave); }
+.campo-logo__estado { margin: 0 0 .4rem; font-size: .82rem; font-weight: 600; }
+.campo-logo__estado:empty { display: none; }
+.campo-logo__botones { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.modal .campo-logo { flex-direction: column; gap: .75rem; margin: 0; text-align: center; border: 0; padding: 0; background: none; }
+.modal .campo-logo__titulo { display: none; }  /* la ventana ya tiene su título */
+.modal .campo-logo__textos { flex: 0 0 auto; }
+.modal .campo-logo__botones { justify-content: center; }
+
 /* Casilla con foto */
 .tarjeta-foto {
   position: relative; aspect-ratio: 1 / 1; overflow: hidden; cursor: pointer; outline: 0;
@@ -1566,6 +1599,27 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 .mapa { position: relative; z-index: 0; width: 100%; border-radius: var(--nx-radio); border: 1px solid var(--nx-borde); background: #E8EEF3; overflow: hidden; }
 .mapa--grande { height: 520px; }
 .mapa--editar { height: 340px; cursor: crosshair; }
+/* Editor de la ubicación del local: barra (buscar, ampliar), Mapa/Satélite y pantalla completa */
+.editor-ubicacion__barra { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+.editor-ubicacion__titulo { display: none; margin: 0 auto 0 0; font-weight: 700; color: var(--nx-oscuro); }
+.editor-ubicacion__buscar { flex: 1 1 280px; max-width: 460px; }
+.editor-ubicacion [data-cerrar-mapa] { display: none; }
+.editor-ubicacion__opciones { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .5rem; }
+.editor-ubicacion--ampliado {
+  position: fixed; inset: 0; z-index: 1085; display: flex; flex-direction: column; padding: .75rem 1rem 1rem;
+  background: var(--nx-blanco);
+}
+.editor-ubicacion--ampliado .editor-ubicacion__titulo { display: block; }
+.editor-ubicacion--ampliado [data-ampliar-mapa] { display: none; }
+.editor-ubicacion--ampliado [data-cerrar-mapa] { display: inline-flex; align-items: center; gap: .3rem; }
+.editor-ubicacion--ampliado .mapa--editar { flex: 1 1 auto; height: auto; min-height: 240px; }
+body.mapa-ampliado-abierto { overflow: hidden; }
+.capas-mapa { display: flex; overflow: hidden; background: #fff; }
+.boton-ampliar-mapa { display: flex !important; align-items: center; justify-content: center; font-size: 1rem; color: var(--nx-oscuro) !important; }
+.capas-mapa__boton { border: 0; background: #fff; padding: .35rem .6rem; font-size: .8rem; font-weight: 600; color: var(--nx-oscuro); }
+.capas-mapa__boton + .capas-mapa__boton { border-left: 1px solid var(--nx-borde); }
+.capas-mapa__boton[aria-pressed="true"] { background: var(--nx-oscuro); color: #fff; }
+.capas-mapa__boton:focus-visible { outline: 2px solid var(--nx-acento); outline-offset: -2px; }
 .mapa--perfil { height: 220px; }
 @media (max-width: 991.98px) { .mapa--grande { height: 360px; } }
 .mapa__aviso { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: .5rem; padding: 1rem; text-align: center; color: var(--nx-texto-suave); }

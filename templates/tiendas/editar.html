@@ -11,9 +11,13 @@
     <div class="col-xl-9">
       <div class="card shadow-sm"><div class="card-body p-4">
         <h3 class="h6 mb-3">Datos y logo</h3>
-        {% if tienda.logo %}
-          <img src="{{ tienda.logo.url }}" alt="Logo actual" width="80" height="80" class="rounded-circle border bg-white mb-3" style="object-fit:cover">
-        {% endif %}
+        {% with nombre=form.logo.html_name nombre_limpiar=form.logo.html_name|add:"-clear" inicial=tienda.nombre|first|upper errores=form.logo.errors %}
+          {% if tienda.logo %}
+            {% include "tiendas/_campo_logo.html" with logo_url=tienda.logo.url %}
+          {% else %}
+            {% include "tiendas/_campo_logo.html" with logo_url="" %}
+          {% endif %}
+        {% endwith %}
         {% include "_campos_formulario.html" %}
       </div></div>
     </div>
@@ -26,14 +30,28 @@
             <p class="small text-muted mb-0">Toca el mapa en el lugar de tu tienda o <strong>arrastra el pin</strong> hasta la puerta. Así apareces en <strong>«Tiendas cercanas»</strong> y los clientes tienen el botón <strong>«Cómo llegar»</strong>.</p>
           </div>
         </div>
-        <div class="mapa mapa--editar" data-mapa-editar data-latitud="{{ form.latitud.id_for_label }}" data-longitud="{{ form.longitud.id_for_label }}"
-             data-centro-lat="{{ centro_mapa.0 }}" data-centro-lng="{{ centro_mapa.1 }}" role="region" aria-label="Mapa para marcar tu local"></div>
-        <p class="small mt-2 mb-2" data-coordenadas aria-live="polite"></p>
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-          <button type="button" class="btn btn-sm btn-outline-primary" data-usar-ubicacion><i class="bi bi-crosshair" aria-hidden="true"></i> Usar mi ubicación actual (si estás en tu tienda)</button>
-          <button type="button" class="btn btn-sm btn-outline-danger d-none" data-quitar-ubicacion><i class="bi bi-x-lg" aria-hidden="true"></i> Quitar del mapa</button>
+        {# Editor del mapa (static/js/mapas.js): buscar una calle, Mapa/Satélite y «Ampliar mapa» (pantalla completa). #}
+        <div class="editor-ubicacion" data-editor-ubicacion>
+          <div class="editor-ubicacion__barra">
+            <p class="editor-ubicacion__titulo"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Marca tu local en el mapa</p>
+            <div class="input-group input-group-sm editor-ubicacion__buscar">
+              <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+              <input type="search" class="form-control" data-buscar-direccion placeholder="Busca una calle o lugar (ej. Jr. Vilcabamba)" aria-label="Buscar una calle o lugar de Quillabamba" autocomplete="off">
+              <button type="button" class="btn btn-outline-primary" data-buscar-boton>Buscar</button>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-ampliar-mapa><i class="bi bi-arrows-fullscreen" aria-hidden="true"></i> Ampliar mapa</button>
+            <button type="button" class="btn btn-sm btn-primary" data-cerrar-mapa><i class="bi bi-fullscreen-exit" aria-hidden="true"></i> Reducir mapa</button>
+          </div>
+          <div class="editor-ubicacion__resultados" data-resultados-busqueda aria-live="polite"></div>
+          <div class="mapa mapa--editar" data-mapa-editar data-latitud="{{ form.latitud.id_for_label }}" data-longitud="{{ form.longitud.id_for_label }}"
+               data-centro-lat="{{ centro_mapa.0 }}" data-centro-lng="{{ centro_mapa.1 }}" role="region" aria-label="Mapa para marcar tu local"></div>
+          <p class="small mt-2 mb-2" data-coordenadas aria-live="polite"></p>
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <button type="button" class="btn btn-sm btn-outline-primary" data-usar-ubicacion><i class="bi bi-crosshair" aria-hidden="true"></i> Usar mi ubicación actual (si estás en tu tienda)</button>
+            <button type="button" class="btn btn-sm btn-outline-danger d-none" data-quitar-ubicacion><i class="bi bi-x-lg" aria-hidden="true"></i> Quitar del mapa</button>
+          </div>
+          <p class="small mt-2 mb-0" data-aviso-ubicacion aria-live="polite"></p>
         </div>
-        <p class="small mt-2 mb-0" data-aviso-ubicacion aria-live="polite"></p>
       </section>
     </div>
 
@@ -81,5 +99,6 @@
 
 {% block scripts %}
 <script src="{% static 'js/horario.js' %}"></script>
+<script src="{% static 'js/campo_logo.js' %}"></script>
 {% include "_leaflet.html" %}
 {% endblock %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load reclamos_tags %}
+{% load static reclamos_tags %}
 {% comment %}
 Centro de cuenta: Mi perfil, Datos de mi tienda, Seguridad, Ayuda y soporte, Privacidad y términos.
 Es una zona aparte: la cabecera es simple (logo, «Volver a la página» y el menú de la cuenta),
@@ -94,22 +94,25 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
 </div>
 
 {% if tienda_actual %}
-{# Ventana para cambiar el logo: muestra la imagen elegida antes de guardarla. #}
+{# Ventana para cambiar el logo: el mismo campo que en «Editar datos de mi tienda» (clic o arrastrar, vista previa). #}
 <form method="post" action="{% url 'tiendas:logo' %}" enctype="multipart/form-data" id="form-logo">
   {% csrf_token %}
   <input type="hidden" name="next" value="{{ request.get_full_path }}">
-  <input type="file" name="logo" id="archivo-logo" accept="image/jpeg,image/png,image/webp" class="visually-hidden" tabindex="-1">
   <div class="modal fade" id="modal-logo" tabindex="-1" aria-labelledby="titulo-modal-logo" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-marca">
-        <div class="modal-body text-center p-4">
-          <h2 class="h5 fw-bold mb-3" id="titulo-modal-logo">Logo nuevo de tu tienda</h2>
-          <img src="" alt="Vista previa del logo nuevo" class="vista-logo" id="vista-logo">
-          <p class="small text-muted mt-3 mb-4">Así se verá en tu tienda, en tus productos y en el catálogo. JPG, PNG o WEBP de máximo 2 MB.</p>
+        <div class="modal-body p-4">
+          <h2 class="h5 fw-bold mb-3 text-center" id="titulo-modal-logo">Logo de tu tienda</h2>
+          {% with nombre="logo" inicial=tienda_actual.nombre|first|upper quitar_envia=True %}
+            {% if tienda_actual.logo %}
+              {% include "tiendas/_campo_logo.html" with logo_url=tienda_actual.logo.url %}
+            {% else %}
+              {% include "tiendas/_campo_logo.html" with logo_url="" %}
+            {% endif %}
+          {% endwith %}
+          <p class="small text-muted text-center mt-3 mb-3">Se verá en tu tienda, en tus productos y en el catálogo.</p>
           <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-check2" aria-hidden="true"></i> Guardar logo</button>
-            <button type="button" class="btn btn-outline-primary" id="elegir-otra"><i class="bi bi-images" aria-hidden="true"></i> Elegir otra</button>
-            {% if tienda_actual.logo %}<button type="submit" name="quitar" value="1" class="btn btn-outline-danger" formnovalidate><i class="bi bi-trash3" aria-hidden="true"></i> Quitar logo</button>{% endif %}
+            <button type="submit" class="btn btn-primary" data-logo-guardar disabled><i class="bi bi-check2" aria-hidden="true"></i> Guardar logo</button>
             <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Cancelar</button>
           </div>
         </div>
@@ -117,32 +120,19 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
     </div>
   </div>
 </form>
+<script src="{% static 'js/campo_logo.js' %}"></script>
 <script {% csp_nonce_attr %}>
+  // El círculo del menú abre la ventana; al cerrarla sin guardar, se descarta la imagen elegida.
   (function () {
     var boton = document.getElementById("cambiar-logo");
-    var archivo = document.getElementById("archivo-logo");
     var modal = document.getElementById("modal-logo");
-    if (!boton || !archivo || !modal) return;
-    boton.addEventListener("click", function () { archivo.click(); });
-    document.getElementById("elegir-otra").addEventListener("click", function () { archivo.click(); });
-    archivo.addEventListener("change", function () {
-      if (!archivo.files.length) return;
-      var imagen = archivo.files[0];
-      if (!/^image\/(jpeg|png|webp)$/.test(imagen.type)) { alerta("Elige una imagen JPG, PNG o WEBP."); archivo.value = ""; return; }
-      if (imagen.size > 2 * 1024 * 1024) { alerta("La imagen pesa más de 2 MB. Elige una más liviana."); archivo.value = ""; return; }
-      document.getElementById("vista-logo").src = URL.createObjectURL(imagen);
-      bootstrap.Modal.getOrCreateInstance(modal).show();
+    if (!boton || !modal) return;
+    // Bootstrap se carga al final de la página: se usa recién al hacer clic.
+    boton.addEventListener("click", function () { bootstrap.Modal.getOrCreateInstance(modal).show(); });
+    modal.addEventListener("hidden.bs.modal", function () {
+      var campo = modal.querySelector("[data-campo-logo]");
+      if (campo && campo.reiniciarLogo) campo.reiniciarLogo();
     });
-    // Al cerrar sin guardar, se descarta la imagen elegida.
-    modal.addEventListener("hidden.bs.modal", function () { archivo.value = ""; });
-    function alerta(texto) {
-      var aviso = document.createElement("div");
-      aviso.className = "alert alert-warning alert-dismissible fade show mt-2 small";
-      aviso.setAttribute("role", "alert");
-      aviso.textContent = texto;
-      boton.closest(".centro-cuenta__usuario").after(aviso);
-      setTimeout(function () { aviso.remove(); }, 6000);
-    }
   })();
 </script>
 {% endif %}

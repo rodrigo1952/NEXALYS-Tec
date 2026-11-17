@@ -91,7 +91,7 @@ Los tres están integrados: un producto pertenece a una categoría y una marca, 
 19. Cada producto tiene una foto principal y hasta **5 fotos adicionales**.
 20. Las imágenes se **optimizan** al subirlas: se giran según la cámara, se reducen (máx. 1200 px; logos 400 px) y se guardan en WEBP.
 21. La **búsqueda** no distingue tildes ni mayúsculas, y con varias palabras deben estar todas.
-22. La tienda **edita sus datos**, su logo y su **horario** (con **refrigerio** opcional al mediodía); el perfil público muestra si está **abierta ahora**, en refrigerio o cerrada, con horas en formato de 12 horas (a. m. / p. m., hora de Perú).
+22. La tienda **edita sus datos**, su logo (un círculo grande donde se hace clic o se **arrastra la imagen**, con vista previa, como las fotos de los productos) y su **horario** (con **refrigerio** opcional al mediodía); el perfil público muestra si está **abierta ahora**, en refrigerio o cerrada, con horas en formato de 12 horas (a. m. / p. m., hora de Perú).
 23. El administrador puede **suspender una tienda** u **ocultar un producto** escribiendo un **motivo** que la tienda ve en su panel; un producto oculto por el administrador no se puede volver a publicar hasta que él lo muestre.
 24. El administrador puede **desactivar, reactivar o eliminar** cuentas; no puede modificar su propia cuenta ni la de otros administradores, y una **tienda con ventas no se elimina** (historial de ventas).
 25. **Desactivar la cuenta de una tienda también suspende su tienda** (con el mismo motivo) y oculta sus productos; reactivar la cuenta reactiva la tienda, y reactivar la tienda reactiva la cuenta.
@@ -230,7 +230,7 @@ Cuando una página falla (error 500), el error queda en la consola del administr
 
 ### Librerías dentro del proyecto
 
-Bootstrap, Bootstrap Icons, Chart.js, Leaflet y las letras están en `static/vendor/` (ver su `LEEME.md` con versiones y licencias). La página no depende de otros sitios: funciona sin internet en el laboratorio y solo los cuadros del mapa vienen de OpenStreetMap.
+Bootstrap, Bootstrap Icons, Chart.js, Leaflet y las letras están en `static/vendor/` (ver su `LEEME.md` con versiones y licencias). La página no depende de otros sitios: funciona sin internet en el laboratorio y solo los cuadros del mapa vienen de OpenStreetMap. Al marcar la ubicación del local, la tienda también puede ver el mapa en **Satélite** (fotos de Esri, con su atribución), **buscar una calle** de Quillabamba (OpenStreetMap / Nominatim, una búsqueda por clic) y **ampliar el mapa** a pantalla completa.
 
 ### Correo real (SMTP)
 

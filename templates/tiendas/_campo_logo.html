@@ -1,0 +1,35 @@
+{% comment %}
+Campo del logo con el mismo estilo que las fotos de los productos (static/js/campo_logo.js):
+círculo grande con el logo; clic o arrastrar una imagen para cambiarlo; vista previa al instante.
+
+  nombre           name del archivo (p. ej. "datos-logo" o "logo")
+  nombre_limpiar   (opcional) casilla para quitar el logo al guardar el formulario ("datos-logo-clear")
+  quitar_envia     (opcional) «Quitar logo» envía el formulario con quitar=1 (ventana del menú de la cuenta)
+  logo_url, inicial, errores
+{% endcomment %}
+<div class="campo-logo" data-campo-logo>
+  <button type="button" class="campo-logo__circulo{% if not logo_url %} campo-logo__circulo--vacio{% endif %}" data-logo-elegir aria-label="Elegir la imagen del logo">
+    <img src="{{ logo_url|default:'' }}" alt="Logo de la tienda" data-logo-vista{% if not logo_url %} hidden{% endif %}>
+    <span class="campo-logo__inicial" data-logo-inicial{% if logo_url %} hidden{% endif %} aria-hidden="true">{{ inicial }}</span>
+    <span class="campo-logo__velo" aria-hidden="true"><i class="bi bi-camera-fill"></i><span>Cambiar</span></span>
+  </button>
+  <div class="campo-logo__textos">
+    <strong class="campo-logo__titulo">Logo de tu tienda</strong>
+    <p class="campo-logo__ayuda">Haz clic en el círculo o <strong>arrastra una imagen</strong> aquí. JPG, PNG o WEBP de máximo 2 MB; mejor si es cuadrada.</p>
+    <p class="campo-logo__estado" data-logo-estado aria-live="polite"></p>
+    <div class="campo-logo__botones">
+      <button type="button" class="btn btn-sm btn-outline-primary" data-logo-cambiar><i class="bi bi-image" aria-hidden="true"></i> {% if logo_url %}Cambiar logo{% else %}Elegir imagen{% endif %}</button>
+      {% if logo_url %}
+        {% if quitar_envia %}
+          <button type="submit" name="quitar" value="1" class="btn btn-sm btn-outline-danger" formnovalidate data-logo-quitar><i class="bi bi-trash3" aria-hidden="true"></i> Quitar logo</button>
+        {% else %}
+          <button type="button" class="btn btn-sm btn-outline-danger" data-logo-quitar><i class="bi bi-trash3" aria-hidden="true"></i> Quitar logo</button>
+        {% endif %}
+      {% endif %}
+      <button type="button" class="btn btn-sm btn-link text-muted" data-logo-deshacer hidden><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Deshacer</button>
+    </div>
+    {% for error in errores %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+  </div>
+  <input type="file" name="{{ nombre }}" accept="image/jpeg,image/png,image/webp" class="visually-hidden" tabindex="-1" data-logo-archivo>
+  {% if nombre_limpiar %}<input type="checkbox" name="{{ nombre_limpiar }}" class="d-none" tabindex="-1" data-logo-limpiar>{% endif %}
+</div>
