@@ -2307,3 +2307,91 @@ body.pagina-ingreso { background: var(--nx-carbon) url("../img/fondo-vetas.svg")
   .tiendas-inicio__lista::-webkit-scrollbar { display: none; }
   .tienda-inicio { flex: 0 0 86%; scroll-snap-align: start; }
 }
+
+/* =====================================================================
+   99c. Tiendas con etiquetas (17 nov 2026): lo que hace distinta a cada tienda
+   Tarjeta del Inicio oscura con borde cian (toda la tarjeta lleva al perfil), 4 por fila,
+   etiquetas (lema dorado, servicios cian, especialidades), 3 productos con precio y estado del local.
+   ===================================================================== */
+.tiendas-inicio__cabecera { margin-top: 0; margin-bottom: .6rem; }
+.tiendas-inicio .etiqueta-oro { margin-bottom: 1.1rem; }
+.tiendas-inicio__lista { grid-template-columns: repeat(auto-fill, minmax(245px, 1fr)); }
+.tienda-inicio {
+  position: relative; gap: .75rem; padding: 1rem; background: rgba(21, 26, 34, .92);
+  border: 1px solid rgba(var(--nx-acento-rgb, 25, 195, 230), .45); border-top: 1px solid rgba(25, 195, 230, .45);
+  box-shadow: 0 0 0 1px rgba(25, 195, 230, .05), 0 0 22px rgba(25, 195, 230, .14);
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+  /* colores de las etiquetas sobre fondo oscuro */
+  --etq-lema: var(--nx-oro-claro); --etq-lema-borde: rgba(var(--nx-oro-rgb), .7);
+  --etq-servicio: #8BE6F7; --etq-servicio-fondo: rgba(25, 195, 230, .14);
+  --etq-esp: #FFFFFF; --etq-esp-fondo: rgba(255, 255, 255, .09); --etq-esp-borde: transparent;
+}
+.tienda-inicio:hover, .tienda-inicio:focus-within {
+  border-color: var(--nx-acento); box-shadow: 0 0 0 1px rgba(25, 195, 230, .35), 0 0 28px rgba(25, 195, 230, .3);
+  transform: translateY(-2px);
+}
+.tienda-inicio__nombre { color: #FFFFFF; font-size: 1.05rem; }
+.tienda-inicio__nombre:hover, .tienda-inicio__nombre:focus { color: #FFFFFF; text-decoration: none; }
+.tienda-inicio__nombre:focus-visible { outline: none; }
+.tienda-inicio:has(.tienda-inicio__nombre:focus-visible) { outline: 3px solid var(--nx-acento); outline-offset: 3px; }
+.tienda-inicio__direccion { color: #B9C3D0; }
+.tienda-inicio__logo { width: 46px; height: 46px; box-shadow: 0 0 0 2px var(--nx-acento); }
+.tienda-inicio__logo--inicial { background: var(--nx-carbon); font-size: 1.15rem; }
+.tienda-inicio__productos { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.tienda-inicio__productos li { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.tienda-inicio__productos img, .tienda-inicio__sin-foto {
+  width: 100%; aspect-ratio: 1; border-radius: 10px; background: #FFFFFF; object-fit: contain; padding: .3rem;
+}
+.tienda-inicio__sin-foto { display: flex; align-items: center; justify-content: center; color: #8A97A8; font-size: 1.4rem; }
+.tienda-inicio__precio { color: #FFFFFF; font-size: .78rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tienda-inicio__estado { display: flex; align-items: center; gap: .45rem; margin: auto 0 0; font-size: .88rem; font-weight: 600; }
+.tienda-inicio__estado::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.tienda-inicio__estado--abierto { color: #4ADE80; }
+.tienda-inicio__estado--cerrado { color: #F97066; }
+@media (max-width: 575.98px) { .tienda-inicio { flex-basis: 84%; } }
+
+/* Etiquetas de la tienda (por defecto, sobre cajas claras: perfil, Tiendas cercanas, panel) */
+.etiquetas-tienda { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.etiqueta-tienda {
+  display: inline-flex; align-items: center; gap: .3rem; padding: .22rem .6rem; border-radius: 999px;
+  font-size: .78rem; font-weight: 600; line-height: 1.3; border: 1px solid transparent;
+}
+.etiqueta-tienda--lema { color: var(--etq-lema, var(--nx-oro-texto)); border-color: var(--etq-lema-borde, var(--nx-oro)); }
+.etiqueta-tienda--servicio { color: var(--etq-servicio, #075A70); background: var(--etq-servicio-fondo, #D3F2FA); }
+.etiqueta-tienda--especialidad {
+  color: var(--etq-esp, var(--nx-oscuro)); background: var(--etq-esp-fondo, #FFFFFF); border-color: var(--etq-esp-borde, var(--nx-caja-borde));
+}
+.etiquetas-tienda--grande .etiqueta-tienda { font-size: .88rem; padding: .3rem .75rem; }
+
+/* Tiendas cercanas: filtro por servicio o especialidad (fila que se desliza en el celular) */
+.filtros-tiendas { display: flex; flex-wrap: wrap; gap: .5rem; }
+.filtro-tienda {
+  display: inline-flex; align-items: center; gap: .35rem; min-height: 40px; padding: .35rem .9rem; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .3); color: #FFFFFF; font-size: .9rem; font-weight: 500; text-decoration: none; white-space: nowrap;
+}
+.filtro-tienda:hover, .filtro-tienda:focus-visible { border-color: var(--nx-oro); color: var(--nx-oro-claro); }
+.filtro-tienda.activo { background: var(--nx-oro); border-color: var(--nx-oro); color: var(--nx-carbon); font-weight: 700; }
+@media (max-width: 575.98px) {
+  .filtros-tiendas { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: calc(var(--bs-gutter-x) * -.5); padding-right: calc(var(--bs-gutter-x) * .5); }
+  .filtros-tiendas::-webkit-scrollbar { display: none; }
+}
+
+/* Editar datos: casillas de servicios como tarjetitas */
+.opciones-servicio { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .5rem; }
+.opcion-servicio {
+  display: flex; align-items: center; gap: .6rem; min-height: 46px; padding: .5rem .8rem; border-radius: 12px;
+  background: #FFFFFF; border: 1px solid var(--nx-caja-borde); cursor: pointer; font-weight: 500;
+}
+.opcion-servicio .form-check-input { margin: 0; flex: none; }
+.opcion-servicio:has(:checked) { border-color: var(--nx-oro); box-shadow: inset 0 0 0 1px var(--nx-oro); }
+
+/* Inicio: las categorías en una sola fila en la computadora */
+@media (min-width: 992px) { .categorias-inicio__lista { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); } }
+@media (min-width: 992px) {
+  .categorias-inicio__lista { grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); gap: .6rem; }
+  .categorias-inicio__enlace { font-size: .8rem; padding: .9rem .3rem; }
+}
+.tienda-inicio__nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tienda-inicio__estado { align-items: baseline; font-size: .84rem; }
+.tienda-inicio__estado::before { transform: translateY(-1px); }
+.filtros-tiendas__separador { flex: none; align-self: center; width: 1px; height: 26px; background: rgba(var(--nx-oro-rgb), .55); margin: 0 .25rem; }

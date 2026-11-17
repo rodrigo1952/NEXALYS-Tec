@@ -41,7 +41,15 @@
   **Inicio** (como la maqueta, sin la portada azul): «¿Qué tienda está abierta ahora?» con hasta 6 tiendas, las
   abiertas primero (`tiendas/inicio.py`), «Usar mi ubicación» (abre Tiendas cercanas con `?ubicacion=1` y pide la
   ubicación sola) y «Ver todas las tiendas»; categorías oscuras con borde dorado; destacados, ofertas, recientes y
-  los 3 pasos. En el celular, tiendas y categorías se deslizan de lado.
+  los 3 pasos. En el celular, tiendas y categorías se deslizan de lado. La tarjeta de cada tienda es oscura con
+  borde cian, 4 por fila, y **toda la tarjeta lleva a su perfil** (sin botones WhatsApp ni Ver tienda, a pedido
+  del usuario): hasta 3 etiquetas, 3 productos con stock y precio (destacados primero) y «Abierto ahora · cierra…».
+- **Lo que hace distinta a cada tienda** (`tiendas/etiquetas.py`, migración `tiendas/0009`): frase corta `lema`
+  (30 letras, dorada), servicios que marca la tienda en «Editar datos» (`repara_celulares`, `repara_computadoras`,
+  `instala_camaras_redes`, `impresoras_tintas` + `otro_servicio` de texto libre, 40 letras; cian) y
+  **especialidades automáticas** (grises): categorías con ≥ 2 productos publicados y ≥ 30 % de su catálogo, máx. 2,
+  sin «Otros». Se ven en el Inicio (máx. 3), en el perfil, en «Datos de mi tienda» y en Tiendas cercanas, que tiene
+  filtros `?servicio=<campo>` y `?especialidad=<id de categoría>` (solo aparecen los que alguna tienda tiene).
   Pie `#0A0D12` con línea dorada y 4 columnas (2 en el celular): marca, Explorar, Para tiendas y Contacto (correo
   `CORREO_SOPORTE`, Ayuda, Privacidad y términos, Libro de Reclamaciones). Al imprimir, hoja blanca.
   **No se escribe `?v=` a mano**: en tu PC (DEBUG=True) `config/estaticos.py` (EstaticosConVersion) agrega solo
@@ -395,7 +403,7 @@
   la imagen (ClipboardItem) y abre WhatsApp Web (o la app) para pegarla con Ctrl+V, Facebook abre el sharer con el
   enlace y deja la imagen copiada, Instagram descarga y abre instagram.com; «Más» = menú del sistema con la imagen
   o, si no se puede, la ventana de `_compartir.html` (acepta `etiqueta`, `icono` y `red`).
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **848 pruebas, OK**.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **868 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

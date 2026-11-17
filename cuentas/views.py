@@ -54,7 +54,7 @@ def rol_requerido(*roles):
 def inicio(request):
     visibles = Producto.objects.visibles().select_related("tienda", "marca", "categoria")
     destacados, total_destacados = destacados_en_turnos(visibles)
-    tiendas, total_tiendas = tiendas_para_inicio(request.user)
+    tiendas, total_tiendas = tiendas_para_inicio()
     return render(request, "inicio.html", {
         # «¿Qué tienda está abierta ahora?»: hasta 6, las abiertas primero (tiendas/inicio.py).
         "tiendas_inicio": tiendas,

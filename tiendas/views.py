@@ -19,6 +19,7 @@ from cuentas.concurrencia import validar_y_guardar
 from cuentas.reautenticacion import confirmada_recientemente, marcar_confirmada
 
 from .decorators import tienda_requerida
+from .etiquetas import especialidades_por_tienda, etiquetas
 from .forms import HORAS_SUGERIDAS, EditarTiendaForm, LogoForm, RegistroTiendaForm, horario_formset
 from .models import CENTRO_QUILLABAMBA, Tienda
 from .verificacion import enviar_bienvenida, enviar_correo_verificacion, horas_validez, leer_token
@@ -163,6 +164,7 @@ def panel(request):
             .order_by("-num_favoritos", "nombre")[:5]
         ),
     }
+    contexto["etiquetas"] = etiquetas(tienda, especialidades_por_tienda([tienda.pk]).get(tienda.pk, []))
     return render(request, "tiendas/panel.html", contexto)
 
 
@@ -197,6 +199,8 @@ def editar(request):
                 return redirect("tiendas:panel")
     return render(request, "tiendas/editar.html", {
         "form": form, "horario": horario, "tienda": tienda, "horas_sugeridas": HORAS_SUGERIDAS,
+        # Las especialidades salen solas de sus productos: se le muestran para que sepa cuáles son.
+        "especialidades": especialidades_por_tienda([tienda.pk]).get(tienda.pk, []),
         "centro_mapa": [str(c) for c in CENTRO_QUILLABAMBA],  # texto con punto (sin formato local)
     })
 
@@ -237,7 +241,12 @@ def perfil(request, pk):
         .select_related("categoria", "marca", "tienda")
         .order_by(Lower("nombre"), "pk")  # A → Z
     )
-    return render(request, "tiendas/perfil.html", {"tienda": tienda, "productos": productos})
+    especialidades = especialidades_por_tienda([tienda.pk]).get(tienda.pk, [])
+    return render(request, "tiendas/perfil.html", {
+        "tienda": tienda,
+        "productos": productos,
+        "etiquetas": etiquetas(tienda, especialidades),  # lema, servicios y especialidades (tiendas/etiquetas.py)
+    })
 
 
 @con_mapa
@@ -254,6 +263,37 @@ def cercanas(request):
         .annotate(num_productos=Count("productos", filter=visibles))
         .order_by(Lower("nombre"))
     )
+    tiendas = list(tiendas)
+    especialidades = especialidades_por_tienda(t.pk for t in tiendas)
+
+    # Filtro por servicio (?servicio=repara_celulares) o por especialidad (?especialidad=<id de categoría>).
+    servicios_lista = [{"campo": c, "texto": t, "icono": i} for c, t, i in Tienda.SERVICIOS]
+    campos_servicio = {s["campo"] for s in servicios_lista}
+    servicio = request.GET.get("servicio", "")
+    servicio = servicio if servicio in campos_servicio else ""
+    try:
+        especialidad = int(request.GET.get("especialidad", ""))
+    except ValueError:
+        especialidad = None
+    opciones_especialidad = {}
+    for lista_esp in especialidades.values():
+        for e in lista_esp:
+            opciones_especialidad[e["id"]] = e["texto"]
+    if especialidad not in opciones_especialidad:
+        especialidad = None
+    filtros = {
+        "servicios": [s for s in servicios_lista if any(getattr(t, s["campo"]) for t in tiendas)],
+        "especialidades": sorted(({"id": i, "texto": n} for i, n in opciones_especialidad.items()),
+                                 key=lambda e: e["texto"].lower()),
+        "servicio": servicio,
+        "especialidad": especialidad,
+        "total": len(tiendas),
+    }
+    if servicio:
+        tiendas = [t for t in tiendas if getattr(t, servicio)]
+    if especialidad:
+        tiendas = [t for t in tiendas if any(e["id"] == especialidad for e in especialidades.get(t.pk, []))]
+
     lista = []
     for tienda in tiendas:
         estado = tienda.estado_atencion()
@@ -271,10 +311,12 @@ def cercanas(request):
             "abierto": estado["abierto"] if estado else None,
             "estado": estado["texto"] if estado else "",
             "productos": tienda.num_productos,
+            "etiquetas": etiquetas(tienda, especialidades.get(tienda.pk, [])),
         })
     lista.sort(key=lambda t: t["lat"] is None)  # primero las que marcaron su local (A → Z), luego las demás
     return render(request, "tiendas/cercanas.html", {
         "tiendas": lista,
+        "filtros": filtros,
         "con_ubicacion": sum(1 for t in lista if t["lat"] is not None),
         "centro_mapa": [str(c) for c in CENTRO_QUILLABAMBA],  # texto con punto (sin formato local)
     })

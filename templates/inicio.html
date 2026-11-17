@@ -1,28 +1,37 @@
 {% extends "base.html" %}
+{% load miniaturas formato %}
 {% block contenido %}
 {# Estilo «Carbón y oro»: sin portada; arriba, qué tiendas están abiertas ahora (tiendas/inicio.py). #}
 <section class="tiendas-inicio mb-4 mb-md-5" aria-labelledby="titulo-tiendas-inicio">
-  <span class="etiqueta-oro">Tiendas tecnológicas de Quillabamba</span>
   <div class="tiendas-inicio__cabecera">
     <h1 id="titulo-tiendas-inicio" class="tiendas-inicio__titulo">¿Qué tienda está abierta ahora?</h1>
     <a href="{% url 'tiendas:cercanas' %}?ubicacion=1" class="btn btn-primary tiendas-inicio__ubicacion"><i class="bi bi-crosshair" aria-hidden="true"></i> Usar mi ubicación</a>
   </div>
+  <span class="etiqueta-oro mb-3">Tiendas tecnológicas de Quillabamba</span>
   {% if tiendas_inicio %}
+    {# Toda la tarjeta lleva al perfil de la tienda (el nombre usa «stretched-link»). #}
     <ul class="tiendas-inicio__lista">
       {% for t in tiendas_inicio %}
-        <li class="tienda-inicio contexto-claro">
+        <li class="tienda-inicio">
           <div class="tienda-inicio__cabecera">
             {% if t.tienda.logo %}<img src="{{ t.tienda.logo.url }}" alt="" class="tienda-inicio__logo">{% else %}<span class="tienda-inicio__logo tienda-inicio__logo--inicial" aria-hidden="true">{{ t.inicial }}</span>{% endif %}
             <div class="min-w-0">
-              <a href="{% url 'tiendas:perfil' t.tienda.pk %}" class="tienda-inicio__nombre">{{ t.tienda.nombre }}</a>
+              <a href="{% url 'tiendas:perfil' t.tienda.pk %}" class="tienda-inicio__nombre stretched-link">{{ t.tienda.nombre }}</a>
               <div class="tienda-inicio__direccion text-truncate">{{ t.tienda.direccion }}</div>
             </div>
           </div>
-          {% if t.estado %}<span class="estado-local {% if t.abierto %}estado-local--abierto{% else %}estado-local--cerrado{% endif %}">{{ t.estado }}</span>{% endif %}
-          <div class="tienda-inicio__botones">
-            <a href="{{ t.whatsapp }}" target="_blank" rel="noopener" class="btn btn-success"><i class="bi bi-whatsapp" aria-hidden="true"></i> WhatsApp</a>
-            <a href="{% url 'tiendas:perfil' t.tienda.pk %}" class="btn btn-outline-primary">Ver tienda</a>
-          </div>
+          {% if t.etiquetas %}{% include "tiendas/_etiquetas.html" with etiquetas=t.etiquetas %}{% endif %}
+          {% if t.productos %}
+            <ul class="tienda-inicio__productos" aria-label="Algunos productos de {{ t.tienda.nombre }}">
+              {% for p in t.productos %}
+                <li>
+                  {% if p.imagen %}<img src="{{ p.imagen|miniatura }}" alt="{{ p.nombre }}" loading="lazy">{% else %}<span class="tienda-inicio__sin-foto" role="img" aria-label="{{ p.nombre }}"><i class="bi bi-box-seam" aria-hidden="true"></i></span>{% endif %}
+                  <span class="tienda-inicio__precio">{{ p.precio_final|soles }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if t.estado %}<p class="tienda-inicio__estado {% if t.abierto %}tienda-inicio__estado--abierto{% else %}tienda-inicio__estado--cerrado{% endif %}">{{ t.estado }}</p>{% endif %}
         </li>
       {% endfor %}
     </ul>

@@ -90,6 +90,30 @@ class Tienda(models.Model):
     verificada_en = models.DateTimeField("correo verificado el", null=True, blank=True)
     creada_en = models.DateTimeField("registrada el", auto_now_add=True)
 
+    # --- Lo que hace distinta a la tienda (nov 2026) ---------------------------------------
+    # Se muestran como etiquetas en el Inicio, en su perfil y en Tiendas cercanas (con filtro).
+    # Las especialidades NO se guardan: salen solas de lo que vende (tiendas/etiquetas.py).
+    lema = models.CharField(
+        "frase corta", max_length=30, blank=True,
+        help_text="Opcional. Lo que te hace distinto, en pocas palabras. Ej.: «Especialistas en laptops».",
+    )
+    repara_celulares = models.BooleanField("Reparación de celulares", default=False)
+    repara_computadoras = models.BooleanField("Reparación de laptops y PC", default=False)
+    instala_camaras_redes = models.BooleanField("Cámaras y redes", default=False)
+    impresoras_tintas = models.BooleanField("Impresoras y tintas", default=False)
+    otro_servicio = models.CharField(
+        "otro servicio", max_length=40, blank=True,
+        help_text="Opcional. Si das un servicio que no está en la lista. Ej.: «Mantenimiento de consolas».",
+    )
+
+    # (campo, texto de la etiqueta, ícono de Bootstrap Icons)
+    SERVICIOS = (
+        ("repara_celulares", "Reparación de celulares", "phone"),
+        ("repara_computadoras", "Reparación de laptops y PC", "laptop"),
+        ("instala_camaras_redes", "Cámaras y redes", "camera-video"),
+        ("impresoras_tintas", "Impresoras y tintas", "printer"),
+    )
+
     class Meta:
         ordering = ["nombre"]
         verbose_name = "tienda"
@@ -97,6 +121,14 @@ class Tienda(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def servicios(self):
+        """Servicios que la tienda marcó, en el orden de la lista y con «otro servicio» al final."""
+        lista = [{"campo": campo, "texto": texto, "icono": icono}
+                 for campo, texto, icono in self.SERVICIOS if getattr(self, campo)]
+        if self.otro_servicio:
+            lista.append({"campo": "otro_servicio", "texto": self.otro_servicio, "icono": "tools"})
+        return lista
 
     def get_absolute_url(self):
         return reverse("tiendas:perfil", args=[self.pk])

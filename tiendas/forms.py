@@ -108,6 +108,9 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
         "latitud": "ubicación en el mapa", "longitud": "ubicación en el mapa",
     }
 
+    CAMPOS_DISTINTO = ("lema", "repara_celulares", "repara_computadoras", "instala_camaras_redes",
+                       "impresoras_tintas", "otro_servicio")
+
     # Se acepta el número con +51 o espacios; se guardan solo los 9 dígitos.
     whatsapp = forms.CharField(
         label="WhatsApp",
@@ -117,7 +120,10 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
 
     class Meta:
         model = Tienda
-        fields = ["nombre", "direccion", "whatsapp", "ruc", "descripcion", "logo", "latitud", "longitud"]
+        fields = ["nombre", "direccion", "whatsapp", "ruc", "descripcion", "logo", "latitud", "longitud",
+                  # «Lo que te hace distinto»: se dibujan aparte, en su propia sección (templates/tiendas/editar.html).
+                  "lema", "repara_celulares", "repara_computadoras", "instala_camaras_redes", "impresoras_tintas",
+                  "otro_servicio"]
         # La latitud y la longitud las llena el mapa (static/js/mapas.js) al poner el pin.
         widgets = {
             "descripcion": forms.Textarea(attrs={"rows": 3}),
@@ -129,6 +135,10 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
         super().__init__(*args, **kwargs)
         # El logo se dibuja aparte, como las fotos de los productos (templates/tiendas/_campo_logo.html).
         self.fields["logo"].aparte = True
+        for nombre in self.CAMPOS_DISTINTO:
+            self.fields[nombre].aparte = True
+        self.fields["lema"].widget.attrs.update({"placeholder": "Ej.: Especialistas en laptops", "maxlength": 30})
+        self.fields["otro_servicio"].widget.attrs.update({"placeholder": "Ej.: Mantenimiento de consolas", "maxlength": 40})
 
     def clean(self):
         datos = super().clean()
@@ -144,6 +154,12 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
 
     def clean_direccion(self):
         return " ".join(self.cleaned_data["direccion"].split())
+
+    def clean_lema(self):
+        return " ".join(self.cleaned_data["lema"].split())
+
+    def clean_otro_servicio(self):
+        return " ".join(self.cleaned_data["otro_servicio"].split())
 
     def clean_whatsapp(self):
         numero = normalizar_whatsapp(self.cleaned_data["whatsapp"])

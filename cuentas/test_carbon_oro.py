@@ -136,13 +136,13 @@ class TiendasEnElInicioTests(BaseCatalogo):
         self.assertEqual(tiendas[0]["estado"], "Abierto ahora · cierra a las 8:00 p. m.")
         self.assertEqual(tiendas[2]["estado"], "Cerrado · abre a las 9:00 a. m.")
         self.assertEqual(tiendas[5]["estado"], "En refrigerio · vuelve a las 3:00 p. m.")
-        self.assertTrue(tiendas[0]["whatsapp"].startswith("https://wa.me/"))
+        self.assertEqual(tiendas[0]["productos"], [])  # sin productos con stock, no hay fotos
 
     def test_bloque_en_el_inicio(self):
         respuesta = self.client.get(reverse("inicio"))
         self.assertContains(respuesta, "¿Qué tienda está abierta ahora?")
-        self.assertContains(respuesta, 'class="tienda-inicio contexto-claro"', count=6)
-        self.assertContains(respuesta, "estado-local--abierto", count=2)
+        self.assertContains(respuesta, '<li class="tienda-inicio">', count=6)
+        self.assertContains(respuesta, "tienda-inicio__estado--abierto", count=2)
         self.assertContains(respuesta, f'href="{reverse("tiendas:cercanas")}?ubicacion=1"')
         self.assertContains(respuesta, "Ver todas las tiendas (9)")
         self.assertNotContains(respuesta, "portada-marca")

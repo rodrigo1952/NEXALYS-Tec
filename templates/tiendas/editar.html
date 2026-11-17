@@ -23,6 +23,52 @@
     </div>
 
     <div class="col-12">
+      <section class="tarjeta-cuenta" aria-labelledby="titulo-distinto">
+        <div class="tarjeta-cuenta__titulo">
+          <div>
+            <h2 class="h6 mb-1" id="titulo-distinto"><i class="bi bi-stars" aria-hidden="true"></i> Lo que te hace distinto <span class="text-muted fw-normal">(opcional)</span></h2>
+            <p class="small text-muted mb-0">Se muestra como etiquetas en el <strong>Inicio</strong>, en tu <strong>perfil</strong> y en <strong>Tiendas cercanas</strong>, donde los clientes pueden buscar tiendas por servicio.</p>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            {% with campo=form.lema %}
+              <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label|capfirst }}</label>
+              {{ campo }}
+              <div class="form-text">{{ campo.help_text }}</div>
+              {% for error in campo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            {% endwith %}
+          </div>
+          <div class="col-md-6">
+            <p class="form-label mb-1">Tus especialidades</p>
+            {% if especialidades %}
+              <ul class="etiquetas-tienda mb-1">{% for e in especialidades %}<li class="etiqueta-tienda etiqueta-tienda--especialidad">{{ e.texto }}</li>{% endfor %}</ul>
+            {% else %}
+              <p class="small text-muted mb-1">Todavía ninguna.</p>
+            {% endif %}
+            <div class="form-text">Salen solas de lo que vendes: una categoría con al menos 2 productos publicados y el 30 % o más de tu catálogo.</div>
+          </div>
+          <fieldset class="col-12">
+            <legend class="form-label fs-6 mb-2">Servicios que das en tu local</legend>
+            <div class="opciones-servicio">
+              {% for campo in form %}{% if campo.widget_type == "checkbox" and campo.field.aparte %}
+                <label class="opcion-servicio" for="{{ campo.id_for_label }}">{{ campo }} <span>{{ campo.label }}</span></label>
+              {% endif %}{% endfor %}
+            </div>
+          </fieldset>
+          <div class="col-md-6">
+            {% with campo=form.otro_servicio %}
+              <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label|capfirst }}</label>
+              {{ campo }}
+              <div class="form-text">{{ campo.help_text }}</div>
+              {% for error in campo.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+            {% endwith %}
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12">
       <section class="tarjeta-cuenta" aria-labelledby="titulo-ubicacion">
         <div class="tarjeta-cuenta__titulo">
           <div>

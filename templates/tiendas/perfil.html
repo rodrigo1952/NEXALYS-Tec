@@ -27,6 +27,7 @@
         <h1 class="perfil-tienda__nombre">{{ tienda.nombre }}</h1>
       </div>
     </div>
+    {% if etiquetas %}{% include "tiendas/_etiquetas.html" with clase="etiquetas-tienda--grande mb-3" %}{% endif %}
     {% if tienda.descripcion %}<p class="text-muted">{{ tienda.descripcion }}</p>{% endif %}
     <p class="perfil-tienda__direccion"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> {{ tienda.direccion }}</p>
     <div class="d-flex flex-wrap gap-2">

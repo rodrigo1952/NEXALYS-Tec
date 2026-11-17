@@ -1,0 +1,9 @@
+{% comment %}
+Etiquetas de una tienda (tiendas/etiquetas.py): lema en dorado, servicios en cian con ícono y especialidades en gris.
+Recibe «etiquetas»; opcional «clase» para el tamaño (p. ej. «etiquetas-tienda--grande» en el perfil).
+{% endcomment %}
+<ul class="etiquetas-tienda{% if clase %} {{ clase }}{% endif %}">
+  {% for e in etiquetas %}
+    <li class="etiqueta-tienda etiqueta-tienda--{{ e.tipo }}">{% if e.icono %}<i class="bi bi-{{ e.icono }}" aria-hidden="true"></i> {% endif %}{{ e.texto }}</li>
+  {% endfor %}
+</ul>

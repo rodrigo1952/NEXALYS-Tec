@@ -3,13 +3,18 @@ Bloque «¿Qué tienda está abierta ahora?» del Inicio (estilo «Carbón y oro
 
 Hasta 6 tiendas activas: primero las que tienen el local abierto, luego las cerradas o en refrigerio y al final
 las que no registraron su horario; dentro de cada grupo, de la A a la Z. El resto está en «Tiendas cercanas».
+Cada tarjeta lleva hasta 3 etiquetas (tiendas/etiquetas.py) y 3 productos con stock (destacados primero).
+Toda la tarjeta lleva al perfil de la tienda (ahí están WhatsApp, Cómo llegar y sus productos).
 """
 
 import unicodedata
 
+from .etiquetas import especialidades_por_tienda, etiquetas
 from .models import Tienda
 
 LIMITE_INICIO = 6
+PRODUCTOS_POR_TIENDA = 3
+ETIQUETAS_POR_TIENDA = 3
 
 
 def _primera_minuscula(texto):
@@ -32,7 +37,7 @@ def _clave_nombre(nombre):
     return unicodedata.normalize("NFKD", nombre).encode("ascii", "ignore").decode().lower()
 
 
-def tiendas_para_inicio(usuario=None, limite=LIMITE_INICIO):
+def tiendas_para_inicio(limite=LIMITE_INICIO):
     """Devuelve (lista de tiendas para las tarjetas, total de tiendas activas)."""
     tiendas = list(
         Tienda.objects.filter(estado=Tienda.Estado.ACTIVA).prefetch_related("horarios")
@@ -50,6 +55,17 @@ def tiendas_para_inicio(usuario=None, limite=LIMITE_INICIO):
         })
     lista.sort(key=lambda t: (t["grupo"], _clave_nombre(t["tienda"].nombre)))
     elegidas = lista[:limite]
+    especialidades = especialidades_por_tienda(t["tienda"].pk for t in elegidas)
     for t in elegidas:
-        t["whatsapp"] = t["tienda"].enlace_whatsapp_consulta(usuario)
+        t["etiquetas"] = etiquetas(t["tienda"], especialidades.get(t["tienda"].pk, []), maximo=ETIQUETAS_POR_TIENDA)
+        t["productos"] = productos_de_muestra(t["tienda"])
     return elegidas, len(tiendas)
+
+
+def productos_de_muestra(tienda, cantidad=PRODUCTOS_POR_TIENDA):
+    """Productos publicados y con stock: primero los destacados, luego los más nuevos."""
+    from catalogo.models import Producto  # aquí para no crear un import circular
+
+    return list(
+        Producto.objects.visibles().filter(tienda=tienda, stock__gt=0).order_by("-destacado", "-creado")[:cantidad]
+    )

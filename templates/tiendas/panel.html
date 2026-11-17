@@ -71,6 +71,7 @@
         <div><dt>WhatsApp</dt><dd>{{ tienda.whatsapp }}</dd></div>
         <div><dt>RUC</dt><dd>{{ tienda.ruc|default:"—" }}</dd></div>
         <div><dt>Descripción</dt><dd>{{ tienda.descripcion|default:"—" }}</dd></div>
+        <div><dt>Lo que te hace distinto</dt><dd>{% if etiquetas %}{% include "tiendas/_etiquetas.html" %}{% else %}— <a href="{% url 'tiendas:editar' %}#titulo-distinto">Agrega tus servicios</a>{% endif %}</dd></div>
       </dl>
     </div>
   </div>
