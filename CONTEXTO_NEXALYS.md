@@ -365,7 +365,15 @@
   fila libre. El servidor rechaza el mismo producto en dos filas (`inventario/forms.py`, `BaseLineas.clean`).
   «+ Nuevo proveedor» en el ingreso abre una ventanita que llama a `inventario:proveedor_rapido` (POST, JSON,
   prefijo `proveedor-`) y deja al proveedor elegido.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **832 pruebas, OK**.
+- **Mis productos**: los destacados van primero (`order_by("-destacado", Lower("nombre"), "pk")`) con fondo cian
+  suave, línea cian (`fila-producto--destacada`), ★ cian oscuro y etiqueta «Destacado» azul marino (`etiqueta-destacado`).
+- **QR de la tienda**: cartel a la izquierda y panel al lado (`pagina-cartel` / `panel-cartel`; en el celular, debajo)
+  con COMPARTIR e IMPRIMIR Y DESCARGAR. `static/js/cartel_qr.js` dibuja el cartel en un PNG de 1080×1350 (al cargar
+  la página) y según `data-compartir-red`: en el celular usa `navigator.share({files})`; en la PC, WhatsApp copia
+  la imagen (ClipboardItem) y abre WhatsApp Web (o la app) para pegarla con Ctrl+V, Facebook abre el sharer con el
+  enlace y deja la imagen copiada, Instagram descarga y abre instagram.com; «Más» = menú del sistema con la imagen
+  o, si no se puede, la ventana de `_compartir.html` (acepta `etiqueta`, `icono` y `red`).
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **835 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

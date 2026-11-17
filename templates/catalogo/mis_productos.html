@@ -71,12 +71,12 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
       {% with lista=request.GET.urlencode %}
       {% for producto in pagina %}
         {# id: al volver de «Editar», la página baja hasta este producto y lo resalta. #}
-        <tr id="producto-{{ producto.pk }}" class="fila-producto">
+        <tr id="producto-{{ producto.pk }}" class="fila-producto{% if producto.destacado %} fila-producto--destacada{% endif %}">
           <td><div class="celda-producto">
             {# Miniatura de la foto principal (decorativa: el nombre va al lado). #}
             {% if producto.imagen %}<img src="{{ producto.imagen|miniatura:'icono' }}" alt="" class="miniatura-tabla" width="48" height="48" loading="lazy" decoding="async">
             {% else %}<span class="miniatura-tabla miniatura-tabla--vacia" title="Sin foto"><i class="bi bi-image" aria-hidden="true"></i></span>{% endif %}
-            <div>{{ producto.nombre }}{% if producto.codigo %}<div class="small text-muted">Código: {{ producto.codigo }}</div>{% endif %}
+            <div>{% if producto.destacado %}<i class="bi bi-star-fill estrella-destacado" title="Destacado en Inicio" aria-hidden="true"></i><span class="visually-hidden">Destacado: </span>{% endif %}{{ producto.nombre }}{% if producto.codigo %}<div class="small text-muted">Código: {{ producto.codigo }}</div>{% endif %}
             {% if producto.costo is None %}<div><a href="{% url 'catalogo:editar' producto.pk %}{% if lista %}?lista={{ lista|urlencode }}{% endif %}" class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle text-decoration-none sin-precio-compra" title="Solo tú ves este aviso">Falta precio de compra</a></div>{% endif %}</div>
           </div></td>
           <td class="d-none d-lg-table-cell">{{ producto.categoria }}</td>
@@ -99,7 +99,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
           <td class="d-none d-xl-table-cell text-end text-nowrap">{% if producto.costo is not None %}{{ producto.costo|soles }}{% else %}<span class="text-warning-emphasis small">Falta</span>{% endif %}</td>
           <td class="celda-estado"><div class="estados-producto">
             {% if producto.activo %}<span class="badge text-bg-success"><i class="bi bi-eye" aria-hidden="true"></i> Publicado</span>{% else %}<span class="badge text-bg-light border"><i class="bi bi-eye-slash" aria-hidden="true"></i> Oculto</span>{% endif %}
-            {% if producto.destacado %}<span class="badge text-bg-warning"><i class="bi bi-star-fill" aria-hidden="true"></i> Destacado</span>{% endif %}
+            {% if producto.destacado %}<span class="badge etiqueta-destacado"><i class="bi bi-star-fill" aria-hidden="true"></i> Destacado</span>{% endif %}
             </div>
             {% if producto.oculto_por_admin %}
               <span class="badge text-bg-danger" title="{{ producto.motivo_ocultamiento }}"><i class="bi bi-shield-exclamation" aria-hidden="true"></i> Oculto por el administrador</span>

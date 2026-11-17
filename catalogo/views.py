@@ -255,7 +255,8 @@ def mis_productos(request):
             costo=F("ficha__costo"),
             codigo=Coalesce("ficha__codigo", Value("")),
         )
-        .order_by(Lower("nombre"), "pk")  # A → Z; el pk deja el orden fijo para la paginación
+        # Primero los destacados (máx. 3, se ven en Inicio) y luego A → Z; el pk deja el orden fijo para la paginación.
+        .order_by("-destacado", Lower("nombre"), "pk")
     )
     resumen = _resumen_inventario(request.tienda, bajo)
     # Filtros rápidos (reemplazan a las tarjetas: los números están en la pestaña Resumen).

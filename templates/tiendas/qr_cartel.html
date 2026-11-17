@@ -1,4 +1,5 @@
 {% extends "cuentas/_centro.html" %}
+{% load static %}
 {% comment %}
 Cartel con el QR de la tienda para pegar en el local. Al imprimir (o «Guardar como PDF») solo sale el cartel:
 el menú, los botones y el pie se ocultan (marca.css, @media print).
@@ -15,25 +16,44 @@ el menú, los botones y el pie se ocultan (marca.css, @media print).
     Este QR lleva a <code>{{ enlace }}</code>, que solo funciona en esta computadora. Cuando la página esté publicada, el QR llevará a tu dominio: imprímelo recién entonces.</div>
 {% endif %}
 
-<div class="d-flex flex-wrap gap-2 mb-3 no-imprimir">
-  <button type="button" class="btn btn-primary" data-imprimir><i class="bi bi-printer" aria-hidden="true"></i> Imprimir o guardar en PDF</button>
-  <a href="{% url 'tiendas:qr_descargar' 'png' %}" class="btn btn-outline-primary"><i class="bi bi-download" aria-hidden="true"></i> Descargar QR (PNG)</a>
-  <a href="{% url 'tiendas:qr_descargar' 'svg' %}" class="btn btn-outline-primary"><i class="bi bi-download" aria-hidden="true"></i> Descargar QR (SVG, para imprenta)</a>
-</div>
+{# Cartel a la izquierda y, al lado, el panel «Compartir» e «Imprimir y descargar» (static/js/cartel_qr.js). #}
+<div class="pagina-cartel">
+  <section class="cartel-qr" aria-label="Cartel para imprimir">
+    <div class="cartel-qr__tienda">
+      {% if tienda.logo %}
+        <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" class="cartel-qr__logo">
+      {% else %}
+        <span class="cartel-qr__logo cartel-qr__logo--inicial" aria-hidden="true">{{ tienda.nombre|first|upper }}</span>
+      {% endif %}
+      <h2 class="cartel-qr__nombre">{{ tienda.nombre }}</h2>
+    </div>
+    <p class="cartel-qr__llamado">Mira nuestros productos, precios y horario</p>
+    <div class="cartel-qr__codigo" role="img" aria-label="Código QR que lleva a {{ enlace }}">{{ qr_svg }}</div>
+    <p class="cartel-qr__instruccion"><i class="bi bi-phone" aria-hidden="true"></i> Escanéame con la cámara de tu celular</p>
+    <p class="cartel-qr__enlace">{{ enlace }}</p>
+    <p class="cartel-qr__marca">{% include "_logo.html" with claro=True solo_icono=True tamano=22 %} NEXALYS <span>Tec.</span></p>
+  </section>
 
-<section class="cartel-qr" aria-label="Cartel para imprimir">
-  <div class="cartel-qr__tienda">
-    {% if tienda.logo %}
-      <img src="{{ tienda.logo.url }}" alt="Logo de {{ tienda.nombre }}" class="cartel-qr__logo">
-    {% else %}
-      <span class="cartel-qr__logo cartel-qr__logo--inicial" aria-hidden="true">{{ tienda.nombre|first|upper }}</span>
-    {% endif %}
-    <h2 class="cartel-qr__nombre">{{ tienda.nombre }}</h2>
-  </div>
-  <p class="cartel-qr__llamado">Mira nuestros productos, precios y horario</p>
-  <div class="cartel-qr__codigo" role="img" aria-label="Código QR que lleva a {{ enlace }}">{{ qr_svg }}</div>
-  <p class="cartel-qr__instruccion"><i class="bi bi-phone" aria-hidden="true"></i> Escanéame con la cámara de tu celular</p>
-  <p class="cartel-qr__enlace">{{ enlace }}</p>
-  <p class="cartel-qr__marca">{% include "_logo.html" with claro=True solo_icono=True tamano=22 %} NEXALYS <span>Tec.</span></p>
-</section>
+  <aside class="panel-cartel no-imprimir" data-panel-cartel data-archivo="{{ tienda.nombre|slugify|default:'tienda' }}"
+         data-url="{{ enlace }}" data-titulo="{{ tienda.nombre }}" data-texto="Mira los productos de {{ tienda.nombre }} en NEXALYS Tec: {{ enlace }}">
+    <h2 class="panel-cartel__titulo">Compartir</h2>
+    <button type="button" class="btn btn-success" data-compartir-red="whatsapp"><i class="bi bi-whatsapp" aria-hidden="true"></i> WhatsApp (imagen)</button>
+    <button type="button" class="btn btn-outline-primary" data-compartir-red="facebook"><i class="bi bi-facebook" aria-hidden="true"></i> Facebook</button>
+    <button type="button" class="btn btn-outline-primary" data-compartir-red="instagram"><i class="bi bi-instagram" aria-hidden="true"></i> Instagram</button>
+    {% include "_compartir.html" with url=enlace titulo=tienda.nombre texto="Mira los productos de "|add:tienda.nombre|add:" en NEXALYS Tec" etiqueta="Más (Telegram, correo…)" icono="three-dots" red="sistema" clase="btn-outline-primary" %}
+    <button type="button" class="btn btn-outline-primary" data-compartir-red="copiar"><i class="bi bi-link-45deg" aria-hidden="true"></i> Copiar enlace</button>
+
+    <h2 class="panel-cartel__titulo">Imprimir y descargar</h2>
+    <button type="button" class="btn btn-primary" data-imprimir><i class="bi bi-printer" aria-hidden="true"></i> Imprimir o guardar en PDF</button>
+    <button type="button" class="btn btn-outline-primary" data-compartir-red="descargar"><i class="bi bi-image" aria-hidden="true"></i> Descargar cartel (PNG)</button>
+    <p class="panel-cartel__qr">Solo el QR:
+      <a href="{% url 'tiendas:qr_descargar' 'png' %}">PNG</a> ·
+      <a href="{% url 'tiendas:qr_descargar' 'svg' %}">SVG (para imprenta)</a></p>
+    <p class="panel-cartel__aviso" data-aviso-cartel aria-live="polite"></p>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/cartel_qr.js' %}"></script>
 {% endblock %}

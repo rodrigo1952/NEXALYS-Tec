@@ -3,12 +3,12 @@ Botón «Compartir» (detalle del producto y página de la tienda). Lo maneja st
 abre una ventanita con WhatsApp, Facebook, X, Telegram, Correo, Copiar enlace y «Más opciones»
 (el menú del teléfono o de la computadora, donde aparecen TikTok, Instagram… si están instalados).
 Al copiar el enlace, avisa abajo a la derecha.
-Usar con: {% include "_compartir.html" with url=… titulo=… texto=… clase="btn-lg" %}
+Usar con: {% include "_compartir.html" with url=… titulo=… texto=… clase="btn-lg" %}  (opcional: etiqueta=… icono=… red=… para el panel del QR)
 La «url» debe ser completa (con el dominio de SITIO_URL): así el enlace funciona fuera de la página.
 {% endcomment %}
-<button type="button" class="btn btn-outline-secondary{% if clase %} {{ clase }}{% endif %}" data-compartir aria-haspopup="dialog"
+<button type="button" class="btn btn-outline-secondary{% if clase %} {{ clase }}{% endif %}" data-compartir aria-haspopup="dialog"{% if red %} data-compartir-red="{{ red }}"{% endif %}
         data-url="{{ url }}" data-titulo="{{ titulo }}" data-texto="{{ texto }}" title="Compartir este enlace">
-  <i class="bi bi-share" aria-hidden="true"></i> Compartir
+  <i class="bi bi-{{ icono|default:'share' }}" aria-hidden="true"></i> {{ etiqueta|default:"Compartir" }}
 </button>
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
   <div id="aviso-compartir" class="toast text-bg-dark border-0" role="status" aria-live="polite" aria-atomic="true">

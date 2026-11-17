@@ -1592,6 +1592,15 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 
 /* Mis productos: al volver de «Editar», el producto editado se resalta un momento */
 .fila-producto { scroll-margin-top: 140px; }
+/* Destacados: van primero en «Mis productos» con fondo cian suave, línea cian y ★ (colores de la marca) */
+.fila-producto--destacada > td { background-color: rgba(var(--nx-acento-rgb), .07); }
+.fila-producto--destacada > td:first-child { box-shadow: inset 4px 0 0 var(--nx-acento); }
+.estrella-destacado { margin-right: .35rem; color: var(--nx-acento-texto); }
+.etiqueta-destacado { background: var(--nx-oscuro); color: #fff; }
+.etiqueta-destacado .bi { color: var(--nx-acento); }
+@media (max-width: 991.98px) {
+  .tabla-productos tr.fila-producto.fila-producto--destacada { background: #F1FBFE; border-color: rgba(var(--nx-acento-rgb), .55); box-shadow: inset 4px 0 0 var(--nx-acento), var(--nx-sombra); }
+}
 .fila-producto:target > td { animation: resaltar-fila 2.6s ease-out 1; }
 @keyframes resaltar-fila {
   0%, 35% { background-color: rgba(var(--nx-acento-rgb), .28); }
@@ -1689,6 +1698,29 @@ body.mapa-ampliado-abierto { overflow: hidden; }
   .hoja-reclamo { border: 0; padding: 0; }
 }
 
+
+/* Página del QR: cartel y, al lado, el panel «Compartir» / «Imprimir y descargar» (en el celular, debajo) */
+.pagina-cartel { display: grid; gap: 1.5rem; align-items: start; }
+@media (min-width: 992px) { .pagina-cartel { grid-template-columns: minmax(0, 520px) minmax(240px, 300px); justify-content: center; } }
+.panel-cartel {
+  display: flex; flex-direction: column; gap: .5rem; padding: 1.1rem; background: var(--nx-blanco);
+  border: 1px solid var(--nx-borde-suave); border-radius: var(--nx-radio); box-shadow: var(--nx-sombra);
+}
+@media (min-width: 992px) { .panel-cartel { position: sticky; top: 1rem; } }
+.panel-cartel__titulo { margin: .25rem 0 .1rem; font-size: .75rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--nx-texto-suave); }
+.panel-cartel__titulo:not(:first-child) { margin-top: .9rem; }
+.panel-cartel .btn { display: flex; align-items: center; justify-content: flex-start; gap: .55rem; width: 100%; text-align: left; border-radius: .7rem; }
+.panel-cartel .btn:not(.btn-primary):not(.btn-success) {
+  --bs-btn-color: var(--nx-oscuro); --bs-btn-border-color: var(--nx-borde); --bs-btn-bg: var(--nx-blanco);
+  --bs-btn-hover-color: var(--nx-oscuro); --bs-btn-hover-bg: rgba(var(--nx-acento-rgb), .1); --bs-btn-hover-border-color: var(--nx-acento);
+  --bs-btn-active-color: var(--nx-oscuro); --bs-btn-active-bg: rgba(var(--nx-acento-rgb), .18); --bs-btn-active-border-color: var(--nx-acento);
+}
+.panel-cartel .bi-facebook { color: #1877F2; }
+.panel-cartel .bi-instagram { color: #C13584; }
+.panel-cartel__qr { margin: .15rem 0 0; font-size: .85rem; color: var(--nx-texto-suave); }
+.panel-cartel__aviso { margin: .25rem 0 0; font-size: .85rem; font-weight: 600; }
+.panel-cartel__aviso:empty { display: none; }
+@media print { .pagina-cartel { display: block; } }
 
 /* Cartel con el QR de la tienda (se imprime en una hoja A4 o A5) */
 .cartel-qr { max-width: 520px; margin: 0 auto; padding: 2rem 1.75rem; text-align: center; background: var(--nx-blanco);
