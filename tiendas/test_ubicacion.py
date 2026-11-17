@@ -54,12 +54,13 @@ class TiendasCercanasTests(BaseUbicacion):
             self.assertEqual(self.client.get(url)["Referrer-Policy"], "strict-origin-when-cross-origin")
         self.assertEqual(self.client.get(reverse("catalogo:catalogo"))["Referrer-Policy"], "same-origin")
 
-    def test_enlace_en_el_menu_para_todos(self):
+    def test_enlace_en_el_menu(self):
+        # Visitante y cliente lo tienen arriba; la tienda, en el menú del celular (☰).
         self.assertContains(self.client.get(reverse("inicio")), reverse("tiendas:cercanas"))
         self.client.force_login(self.con_mapa.usuario)
         html = self.client.get(reverse("catalogo:catalogo")).content.decode()
-        menu = html[html.index("menu-secciones"):html.index("</ul>", html.index("menu-secciones"))]
-        self.assertIn("Tiendas cercanas", menu)
+        movil = html[html.index('id="menu-movil"'):]
+        self.assertIn("Tiendas cercanas", movil)
 
     def test_perfil_con_ubicacion_tiene_mapa_y_como_llegar(self):
         respuesta = self.client.get(reverse("tiendas:perfil", args=[self.con_mapa.pk]))

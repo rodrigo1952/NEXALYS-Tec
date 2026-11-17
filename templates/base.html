@@ -72,8 +72,11 @@
     <button class="navbar-toggler order-first" type="button" data-bs-toggle="offcanvas" data-bs-target="#menu-movil" aria-controls="menu-movil" aria-label="Abrir menú">
       <span class="navbar-toggler-icon"></span>
     </button>
+    {% if es_cliente %}
+      <a class="corazon-cabecera corazon-cabecera--movil d-lg-none" href="{% url 'favoritos:lista' %}" aria-label="Mis favoritos ({{ ids_favoritos|length }})"><i class="bi bi-heart-fill" aria-hidden="true"></i>{% if ids_favoritos %}<span class="corazon-cabecera__contador" aria-hidden="true">{{ ids_favoritos|length }}</span>{% endif %}</a>
+    {% endif %}
     {% if user.is_authenticated %}
-      <button type="button" class="cuenta-movil d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#menu-movil" aria-label="Menú de la cuenta de {{ user.username }}">{% include "_avatar.html" %}</button>
+      <button type="button" class="cuenta-movil d-lg-none{% if es_cliente %} ms-2{% endif %}" data-bs-toggle="offcanvas" data-bs-target="#menu-movil" aria-label="Menú de la cuenta de {{ user.username }}">{% include "_avatar.html" %}</button>
     {% elif vista != 'login' %}
       <a class="cuenta-movil d-lg-none" href="{% url 'login' %}"><i class="bi bi-person-circle" aria-hidden="true"></i><span>Entrar</span></a>
     {% endif %}
@@ -81,32 +84,33 @@
     {# Segunda fila: las secciones según el tipo de usuario. En el celular se abren con ☰. #}
     <div class="collapse navbar-collapse menu-fila order-3 order-lg-0" id="menu">
       <ul class="navbar-nav menu-secciones me-auto">
-        {# Mismo orden para todos: primero lo común y, después de una línea, lo propio de cada uno. #}
+        {# Tienda: su zona de trabajo primero (Mis productos, Inicio, Catálogo). #}
+        {# Cliente y visitante: Inicio, Catálogo, Tiendas cercanas y, el cliente, Mis favoritos. #}
+        {% if es_tienda %}
+          <li class="nav-item">
+            <a class="nav-link nav-link--propio{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i> Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %} <span class="badge rounded-pill insignia-alerta" title="Productos agotados o con stock bajo">{{ num_alertas }}<span class="visually-hidden"> alertas de stock</span></span>{% endif %}</a>
+          </li>
+        {% endif %}
         <li class="nav-item">
           <a class="nav-link{% if not ns and vista == 'inicio' %} active" aria-current="page{% endif %}" href="{% url 'inicio' %}">Inicio</a>
         </li>
         <li class="nav-item">
           <a class="nav-link{% if ns == 'catalogo' and vista == 'catalogo' or ns == 'catalogo' and vista == 'detalle' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}">Catálogo</a>
         </li>
+        {% if not es_tienda %}
         <li class="nav-item">
-          <a class="nav-link{% if ns == 'tiendas' and vista == 'cercanas' %} active" aria-current="page{% endif %}" href="{% url 'tiendas:cercanas' %}"><i class="bi bi-geo-alt" aria-hidden="true"></i> Tiendas cercanas</a>
+          <a class="nav-link{% if ns == 'tiendas' and vista == 'cercanas' %} active" aria-current="page{% endif %}" href="{% url 'tiendas:cercanas' %}">Tiendas cercanas</a>
         </li>
-        {% if es_tienda or es_cliente or es_admin %}
-          <li class="menu-secciones__separador" aria-hidden="true"></li>
-        {% endif %}
-        {% if es_tienda %}
-          <li class="nav-item">
-            <a class="nav-link nav-link--propio{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i> Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %} <span class="badge rounded-pill text-bg-warning" title="Productos agotados o con stock bajo">{{ num_alertas }}<span class="visually-hidden"> alertas de stock</span></span>{% endif %}</a>
-          </li>
         {% endif %}
         {% if es_cliente %}
           <li class="nav-item">
-            <a class="nav-link nav-link--propio{% if ns == 'favoritos' %} active" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}"><i class="bi bi-heart" aria-hidden="true"></i> Mis favoritos
+            <a class="nav-link{% if ns == 'favoritos' %} active" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}">Mis favoritos
               {% if avisos_favoritos %}<span class="badge rounded-pill text-bg-danger" title="Favoritos con novedades">{{ avisos_favoritos }}</span>{% endif %}
             </a>
           </li>
         {% endif %}
         {% if es_admin %}
+          <li class="menu-secciones__separador" aria-hidden="true"></li>
           <li class="nav-item">
             <a class="nav-link nav-link--propio" href="{% url 'panel_admin' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Administración</a>
           </li>
@@ -116,8 +120,8 @@
   </div>
 </nav>
 {# Barra de categorías: las 5 con más movimiento (vistas + favoritos) y el botón con todas. #}
-{# No se muestra en el inicio de sesión ni en la zona de trabajo de la tienda (Mis productos e inventario). #}
-{% if vista == 'login' or ns == 'inventario' or ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' %}{% else %}
+{# No se muestra en el inicio de sesión, a las tiendas (guía «Carbón y oro») ni en la zona de trabajo (Mis productos e inventario). #}
+{% if vista == 'login' or es_tienda or ns == 'inventario' or ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' %}{% else %}
 <nav class="barra-categorias" aria-label="Categorías">
   <div class="container barra-categorias__fila">
     <div class="dropdown">
@@ -163,8 +167,8 @@
 <footer class="pie-marca mt-auto">
   <div class="container pie-marca__columnas">
     <div class="pie-marca__marca">
-      <strong class="pie-marca__logo">NEXALYS <span>Tec.</span></strong>
-      <p class="mb-0">Productos tecnológicos de las tiendas de tu ciudad. Encuentra lo que buscas y escríbele a la tienda por WhatsApp.</p>
+      <strong class="pie-marca__logo">NEXALYS<span> Tec.</span></strong>
+      <p class="mb-0">Productos tecnológicos de las tiendas de tu ciudad.</p>
     </div>
     <nav class="pie-marca__grupo" aria-label="Explorar">
       <h2 class="pie-marca__titulo">Explorar</h2>
@@ -181,9 +185,10 @@
         {% if not user.is_authenticated and request.resolver_match.url_name != 'login' %}<li><a href="{% url 'login' %}">Iniciar sesión</a></li>{% endif %}
       </ul>
     </nav>
-    <nav class="pie-marca__grupo" aria-label="Ayuda">
-      <h2 class="pie-marca__titulo">Ayuda</h2>
+    <nav class="pie-marca__grupo" aria-label="Contacto">
+      <h2 class="pie-marca__titulo">Contacto</h2>
       <ul>
+        {% if correo_soporte %}<li><a href="mailto:{{ correo_soporte }}" class="pie-marca__correo">{{ correo_soporte }}</a></li>{% endif %}
         <li><a href="{% url 'ayuda' %}">Ayuda y soporte</a></li>
         <li><a href="{% url 'privacidad' %}">Privacidad y términos</a></li>
         <li><a href="{% url 'reclamos:libro' %}" class="pie-marca__libro"><i class="bi bi-journal-text" aria-hidden="true"></i> Libro de Reclamaciones</a></li>

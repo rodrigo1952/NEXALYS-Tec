@@ -1940,3 +1940,222 @@ body.mapa-ampliado-abierto { overflow: hidden; }
 
 /* Código de 6 dígitos (confirmar correo, verificar tienda) */
 .campo-codigo { font-family: "Courier New", Courier, monospace; font-size: 1.25rem; font-weight: 700; letter-spacing: .3em; text-align: center; }
+
+
+/* =====================================================================
+   99. Estilo «Carbón y oro» (nov 2026, «Guía de diseño Carbón y oro»)
+   ---------------------------------------------------------------------
+   Toda la página va sobre fondo carbón con franjas y vetas doradas
+   (static/img/fondo-vetas.svg, se repite cada 1200 px) y el contenido en
+   tarjetas blancas. Los colores del texto, enlaces y botones dependen de
+   dónde están («contexto»):
+     oscuro  → body (encabezado, títulos, textos sueltos, pie)
+     claro   → tarjetas y cajas blancas (lista CONTEXTO CLARO más abajo)
+   Cada contexto define las variables --ctx-*; Bootstrap las toma de ahí.
+   Para una caja blanca nueva: agrégale la clase «contexto-claro».
+   ===================================================================== */
+:root {
+  --nx-carbon: #0E1218;
+  --nx-carbon-rgb: 14, 18, 24;
+  --nx-carbon-franja: #151A22;
+  --nx-pie-fondo: #0A0D12;
+  --nx-oro: #C8A468;
+  --nx-oro-rgb: 200, 164, 104;
+  --nx-oro-claro: #E4CB95;
+  --nx-alerta-stock: #FFC145;
+  --nx-verde-estado: #1F7A3A;
+  --nx-verde-estado-fondo: #E6F4EA;
+  --nx-rojo-estado: #A3361F;
+  --nx-rojo-estado-fondo: #FDECEA;
+  --nx-borde-secundario: #C9D3DF;
+  --nx-radio-tarjeta: 18px;
+  --bs-body-bg: #FFFFFF;
+}
+
+/* Contexto OSCURO: toda la página */
+body {
+  --ctx-texto: #FFFFFF; --ctx-suave: #B9C3D0;
+  --ctx-enlace: #19C3E6; --ctx-enlace-rgb: 25, 195, 230; --ctx-enlace-hover: #FFFFFF; --ctx-enlace-hover-rgb: 255, 255, 255;
+  --ctx-borde: rgba(255, 255, 255, .16);
+  --ctx-pri-fondo: var(--nx-acento); --ctx-pri-hover: #45D2EE; --ctx-pri-texto: var(--nx-carbon);
+  --ctx-sec-texto: #FFFFFF; --ctx-sec-fondo: transparent; --ctx-sec-borde: rgba(255, 255, 255, .35);
+  --ctx-sec-hover-fondo: rgba(255, 255, 255, .1); --ctx-sec-hover-texto: #FFFFFF; --ctx-sec-hover-borde: rgba(255, 255, 255, .7);
+  --ctx-peligro: var(--nx-rojo-sobre-oscuro, #F97066);
+}
+/* Contexto CLARO: tarjetas y cajas blancas */
+.contexto-claro, .card, .modal-content, .dropdown-menu, .offcanvas, .popover, .list-group, .table, .alert,
+.toast:not(.text-bg-dark), .bg-white, .bg-light, .bg-body,
+.acceso-cuenta, .aviso-whatsapp, .barra-catalogo, .barra-guardar, .cartel-qr, .catalogo-vacio, .campo-logo,
+.centro-cuenta__menu, .error-caja, .filtros, .filtros-consola, .hoja-reclamo, .horas-grupo--refrigerio, .ingreso__tarjeta,
+.kpi, .lista-buscable__panel, .menu-compartir, .menu-movil, .menu-whatsapp, .numeros-tienda, .opcion-motivo,
+.opciones-derecho .form-check, .panel-cartel, .panel-consola, .perfil-tienda__datos, .perfil-tienda__horario,
+.tabla-consola, .tabla-productos tr.fila-producto, .tarjeta-cercana, .tarjeta-cuenta, .tarjeta-esqueleto, .tarjeta-foto,
+.editor-ubicacion--ampliado, .selector-icono__opcion, .visor__contenido, .atajo, .chip-filtro, .chip-rango, .categorias-inicio__enlace, .consola-cabecera__fecha, .indice-legal a {
+  --ctx-texto: var(--nx-oscuro); --ctx-suave: #3A4A5E;
+  --ctx-enlace: var(--nx-acento-texto); --ctx-enlace-rgb: 10, 111, 137; --ctx-enlace-hover: var(--nx-oscuro); --ctx-enlace-hover-rgb: var(--nx-oscuro-rgb);
+  --ctx-borde: var(--nx-borde);
+  --ctx-pri-fondo: var(--nx-carbon); --ctx-pri-hover: #252E3B; --ctx-pri-texto: #FFFFFF;
+  --ctx-sec-texto: var(--nx-oscuro); --ctx-sec-fondo: #FFFFFF; --ctx-sec-borde: var(--nx-oscuro);
+  --ctx-sec-hover-fondo: var(--nx-oscuro); --ctx-sec-hover-texto: #FFFFFF; --ctx-sec-hover-borde: var(--nx-oscuro);
+  --ctx-peligro: var(--nx-rojo, #B42318);
+  color: var(--ctx-texto);
+}
+/* Bootstrap y las variables de la marca toman el contexto de cada caja */
+body, .contexto-claro, .card, .modal-content, .dropdown-menu, .offcanvas, .popover, .list-group, .table, .alert,
+.toast:not(.text-bg-dark), .bg-white, .bg-light, .bg-body,
+.acceso-cuenta, .aviso-whatsapp, .barra-catalogo, .barra-guardar, .cartel-qr, .catalogo-vacio, .campo-logo,
+.centro-cuenta__menu, .error-caja, .filtros, .filtros-consola, .hoja-reclamo, .horas-grupo--refrigerio, .ingreso__tarjeta,
+.kpi, .lista-buscable__panel, .menu-compartir, .menu-movil, .menu-whatsapp, .numeros-tienda, .opcion-motivo,
+.opciones-derecho .form-check, .panel-cartel, .panel-consola, .perfil-tienda__datos, .perfil-tienda__horario,
+.tabla-consola, .tabla-productos tr.fila-producto, .tarjeta-cercana, .tarjeta-cuenta, .tarjeta-esqueleto, .tarjeta-foto,
+.editor-ubicacion--ampliado, .selector-icono__opcion, .visor__contenido, .atajo, .chip-filtro, .chip-rango, .categorias-inicio__enlace, .consola-cabecera__fecha, .indice-legal a {
+  --nx-texto: var(--ctx-texto);
+  --nx-texto-suave: var(--ctx-suave);
+  --bs-secondary-color: var(--ctx-suave);
+  --bs-heading-color: var(--ctx-texto);
+  --bs-link-color: var(--ctx-enlace);
+  --bs-link-color-rgb: var(--ctx-enlace-rgb);
+  --bs-link-hover-color: var(--ctx-enlace-hover);
+  --bs-link-hover-color-rgb: var(--ctx-enlace-hover-rgb);
+}
+body { color: var(--ctx-texto); }
+.text-muted { color: var(--ctx-suave) !important; }
+.fondo-marca {
+  background: var(--nx-carbon) url("../img/fondo-vetas.svg") center top / 100% 1200px repeat-y;
+}
+.text-body, .text-dark { color: var(--ctx-texto) !important; }
+
+/* Botones según el contexto: Guardar/principal (carbón en blanco, cian en oscuro) y secundarios con borde */
+.btn-primary {
+  --bs-btn-color: var(--ctx-pri-texto); --bs-btn-bg: var(--ctx-pri-fondo); --bs-btn-border-color: var(--ctx-pri-fondo);
+  --bs-btn-hover-color: var(--ctx-pri-texto); --bs-btn-hover-bg: var(--ctx-pri-hover); --bs-btn-hover-border-color: var(--ctx-pri-hover);
+  --bs-btn-active-color: var(--ctx-pri-texto); --bs-btn-active-bg: var(--ctx-pri-hover); --bs-btn-active-border-color: var(--ctx-pri-hover);
+  --bs-btn-disabled-color: var(--ctx-pri-texto); --bs-btn-disabled-bg: var(--ctx-pri-fondo); --bs-btn-disabled-border-color: var(--ctx-pri-fondo);
+}
+.btn-outline-primary, .btn-outline-secondary, .btn-outline-dark {
+  --bs-btn-color: var(--ctx-sec-texto); --bs-btn-bg: var(--ctx-sec-fondo); --bs-btn-border-color: var(--ctx-sec-borde);
+  --bs-btn-hover-color: var(--ctx-sec-hover-texto); --bs-btn-hover-bg: var(--ctx-sec-hover-fondo); --bs-btn-hover-border-color: var(--ctx-sec-hover-borde);
+  --bs-btn-active-color: var(--ctx-sec-hover-texto); --bs-btn-active-bg: var(--ctx-sec-hover-fondo); --bs-btn-active-border-color: var(--ctx-sec-hover-borde);
+  --bs-btn-disabled-color: var(--ctx-sec-texto); --bs-btn-disabled-bg: transparent; --bs-btn-disabled-border-color: var(--ctx-sec-borde);
+}
+.btn-outline-danger { --bs-btn-color: var(--ctx-peligro); --bs-btn-border-color: var(--ctx-peligro); --bs-btn-bg: transparent; }
+.btn-link { --bs-btn-color: var(--ctx-enlace); --bs-btn-hover-color: var(--ctx-enlace-hover); }
+/* Acción principal de la tienda (+ Agregar producto, + Registrar venta): dorado */
+.btn-oro {
+  --bs-btn-color: var(--nx-carbon); --bs-btn-bg: var(--nx-oro); --bs-btn-border-color: var(--nx-oro);
+  --bs-btn-hover-color: var(--nx-carbon); --bs-btn-hover-bg: #D6B67F; --bs-btn-hover-border-color: #D6B67F;
+  --bs-btn-active-color: var(--nx-carbon); --bs-btn-active-bg: #B8935A; --bs-btn-active-border-color: #B8935A;
+  --bs-btn-focus-shadow-rgb: var(--nx-oro-rgb);
+}
+/* «Guardar» de los formularios: un poco más alto (50 px) */
+.btn-guardar { min-height: 50px; }
+/* «← Volver»: píldora con borde blanco al 35 % sobre el fondo oscuro */
+.btn-volver {
+  border: 1px solid rgba(255, 255, 255, .35); background: transparent; color: #FFFFFF; border-radius: 999px;
+}
+.btn-volver .flecha { background: rgba(255, 255, 255, .12); color: #FFFFFF; }
+.btn-volver:hover, .btn-volver:focus-visible { border-color: rgba(255, 255, 255, .8); background: rgba(255, 255, 255, .08); color: #FFFFFF; }
+
+/* Tarjetas blancas con esquinas de 16 a 22 px; las importantes con borde dorado arriba */
+.card { --bs-card-border-radius: var(--nx-radio-tarjeta); --bs-card-inner-border-radius: calc(var(--nx-radio-tarjeta) - 1px); --bs-card-border-color: transparent; }
+.borde-oro-arriba { border-top: 4px solid var(--nx-oro) !important; }
+.tarjeta-cuenta, .panel-consola, .filtros, .hoja-reclamo, .tabla-consola, .kpi, .tarjeta-cercana,
+.perfil-tienda__datos, .perfil-tienda__horario, .panel-cartel { border-radius: var(--nx-radio-tarjeta); border-color: transparent; }
+
+/* ---------- Encabezado ---------- */
+.cabecera-marca { background: rgba(var(--nx-carbon-rgb), .88); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.navbar-marca { background: transparent; }
+.navbar-marca .nav-link { color: #FFFFFF; }
+.navbar-marca .nav-link:hover, .navbar-marca .nav-link:focus { color: var(--nx-acento); }
+.navbar-marca .nav-link.active {
+  color: var(--nx-acento); font-weight: 700; border-bottom: 3px solid var(--nx-acento);
+}
+.navbar-marca .navbar-toggler { border-color: rgba(255, 255, 255, .35); }
+.buscador-menu .form-control { min-height: 46px; }
+.buscador-menu .btn { width: 46px; min-width: 46px; height: 46px; min-height: 46px; padding: 0; border-radius: 50%; }
+@media (min-width: 992px) {
+  .navbar-expand-lg .navbar-collapse.menu-fila { border-top: 1px solid rgba(var(--nx-oro-rgb), .35); }
+}
+.menu-secciones__separador { background: rgba(var(--nx-oro-rgb), .45); }
+/* «Mis productos» con las alertas de stock en amarillo (si son 0, no se muestra) */
+.insignia-alerta { background: var(--nx-alerta-stock); color: var(--nx-carbon); }
+/* Cliente: corazón con la cantidad de favoritos (en cian) */
+.corazon-cabecera {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px;
+  border: 1px solid rgba(255, 255, 255, .35); border-radius: 50%; color: var(--nx-acento); font-size: 1.15rem; text-decoration: none;
+}
+.corazon-cabecera:hover, .corazon-cabecera:focus-visible { border-color: var(--nx-acento); color: var(--nx-acento); }
+.corazon-cabecera__contador {
+  position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  background: var(--nx-acento); color: var(--nx-carbon); font-size: .72rem; font-weight: 700; line-height: 20px; text-align: center;
+}
+/* Barra de categorías entre líneas doradas finas */
+.barra-categorias {
+  background: transparent; box-shadow: none;
+  border-top: 1px solid rgba(var(--nx-oro-rgb), .35); border-bottom: 1px solid rgba(var(--nx-oro-rgb), .35);
+}
+.barra-categorias__todas { color: #FFFFFF; }
+.barra-categorias__todas:hover, .barra-categorias__todas:focus-visible, .barra-categorias__todas.show { color: var(--nx-acento); }
+.barra-categorias__lista { border-left-color: rgba(var(--nx-oro-rgb), .35); }
+.barra-categorias__enlace { color: #FFFFFF; font-weight: 500; }
+.barra-categorias__enlace:hover, .barra-categorias__enlace:focus-visible { color: var(--nx-acento); border-bottom-color: var(--nx-acento); }
+.barra-categorias__enlace.activa { color: var(--nx-acento); border-bottom: 3px solid var(--nx-acento); padding-bottom: calc(.7rem - 3px); }
+.barra-categorias__menu .barra-categorias__cantidad { background: var(--nx-fondo-suave); }
+
+/* Logo de texto: 22 px (19 px en el celular) */
+.logo-marca__texto { font-size: 22px; }
+@media (max-width: 575.98px) { .logo-marca__texto { font-size: 19px; } }
+
+/* ---------- Pie ---------- */
+.pie-marca { background: var(--nx-pie-fondo); color: #B9C3D0; border-top: 1px solid rgba(var(--nx-oro-rgb), .55); }
+.pie-marca a { color: #D7DEE8; }
+.pie-marca a:hover, .pie-marca a:focus-visible { color: #FFFFFF; }
+.pie-marca__titulo { color: var(--nx-oro-claro); font-size: .95rem; letter-spacing: 0; text-transform: none; }
+.pie-marca__columnas { grid-template-columns: 1fr 1fr; }
+.pie-marca__marca { grid-column: auto; }
+@media (min-width: 768px) { .pie-marca__columnas { grid-template-columns: repeat(4, 1fr); } }
+.pie-marca__final { border-top: 1px solid rgba(var(--nx-oro-rgb), .3); }
+
+/* ---------- Celular: márgenes de 16 px, títulos de 26–32 px y botones de al menos 44 px ---------- */
+@media (max-width: 575.98px) {
+  .container, .container-fluid { --bs-gutter-x: 2rem; }
+  h1, .h1 { font-size: clamp(1.625rem, 7vw, 2rem); }
+  .btn-sm { min-height: 40px; }
+}
+
+/* Impresión: hoja blanca con texto oscuro */
+@media print {
+  .fondo-marca { background: #fff !important; }
+  body { --ctx-texto: #000; --ctx-suave: #333; color: #000; }
+}
+.corazon-cabecera--movil { margin-left: auto; width: 40px; height: 40px; font-size: 1rem; }
+.corazon-cabecera--movil + .cuenta-movil { margin-left: .5rem; }
+.consola-cuerpo { background: var(--nx-carbon) url("../img/fondo-vetas.svg") center top / 100% 1200px repeat-y; }
+.cabecera-consola { background: rgba(var(--nx-carbon-rgb), .92); border-bottom-color: rgba(var(--nx-oro-rgb), .35); }
+.consola__lateral { background: #0A0D12; }
+@media (min-width: 992px) {
+  .consola__lateral.offcanvas-lg { background-color: #0A0D12 !important; border-right: 1px solid rgba(var(--nx-oro-rgb), .35); }
+  .consola__marco { background: linear-gradient(to right, #0A0D12 248px, transparent 248px); }
+}
+.consola__lateral.offcanvas-lg { --bs-offcanvas-bg: #0A0D12; }
+/* Cajas oscuras dentro de zonas blancas (vuelven al contexto OSCURO). Para una nueva: clase «contexto-oscuro». */
+.contexto-oscuro, .tarjeta-cuenta--contacto, .menu-movil__cuenta, .menu-movil__cabecera, .portada-marca {
+  --ctx-texto: #FFFFFF; --ctx-suave: #B9C3D0;
+  --ctx-enlace: #19C3E6; --ctx-enlace-rgb: 25, 195, 230; --ctx-enlace-hover: #FFFFFF; --ctx-enlace-hover-rgb: 255, 255, 255;
+  --ctx-pri-fondo: var(--nx-acento); --ctx-pri-hover: #45D2EE; --ctx-pri-texto: var(--nx-carbon);
+  --ctx-sec-texto: #FFFFFF; --ctx-sec-fondo: transparent; --ctx-sec-borde: rgba(255, 255, 255, .35);
+  --ctx-sec-hover-fondo: rgba(255, 255, 255, .1); --ctx-sec-hover-texto: #FFFFFF; --ctx-sec-hover-borde: rgba(255, 255, 255, .7);
+  --ctx-peligro: #F97066;
+  --nx-texto: var(--ctx-texto); --nx-texto-suave: var(--ctx-suave);
+  --bs-secondary-color: var(--ctx-suave); --bs-heading-color: var(--ctx-texto);
+  --bs-link-color: var(--ctx-enlace); --bs-link-color-rgb: var(--ctx-enlace-rgb);
+  --bs-link-hover-color: var(--ctx-enlace-hover); --bs-link-hover-color-rgb: var(--ctx-enlace-hover-rgb);
+  color: var(--ctx-texto);
+}
+.tarjeta-cuenta--contacto { background: #151A22; border: 1px solid rgba(var(--nx-oro-rgb), .45); }
+/* Login: mismo fondo carbón (el diseño de la página llega en la fase 4) */
+body.pagina-ingreso { background: var(--nx-carbon) url("../img/fondo-vetas.svg") center top / 100% 1200px repeat-y; }
+.ingreso__lema { color: #FFFFFF; }
+.ruta [aria-current] { color: var(--ctx-texto); }
+.ruta a:hover { color: var(--ctx-enlace); }
+.btn-outline-warning { --bs-btn-color: #B54708; --bs-btn-border-color: #E8A23A; --bs-btn-hover-bg: #FFF4E0; --bs-btn-hover-color: #93370D; --bs-btn-hover-border-color: #B54708; }

@@ -29,13 +29,19 @@ class ConsistenciaTests(BaseCatalogo):
         self.cliente = User.objects.create_user("cliente1", password="Clave#2026")
         self.cliente.groups.add(Group.objects.get_or_create(name="Cliente")[0])
 
-    def test_menu_del_cliente_mismo_orden_y_favoritos_al_final(self):
+    def test_menu_del_cliente_con_favoritos_al_final_y_el_corazon(self):
+        # «Carbón y oro»: Inicio · Catálogo · Tiendas cercanas · Mis favoritos y, a la derecha, el corazón con la cantidad.
+        from favoritos.models import Favorito
+
+        Favorito.guardar(self.cliente, self.producto)
         self.client.force_login(self.cliente)
         html = self.client.get(reverse("inicio")).content.decode()
         menu = html[html.index('class="navbar-nav menu-secciones'):]
         orden = [menu.index(f'href="{reverse(n)}"') for n in ("inicio", "catalogo:catalogo", "tiendas:cercanas", "favoritos:lista")]
         self.assertEqual(orden, sorted(orden))
-        self.assertLess(menu.index("menu-secciones__separador"), orden[-1])
+        self.assertIn('class="corazon-cabecera"', html)
+        self.assertIn('aria-label="Mis favoritos (1)"', html)
+        self.assertIn('<span class="corazon-cabecera__contador" aria-hidden="true">1</span>', html)
 
     def test_sin_emojis_en_las_paginas(self):
         self.client.force_login(self.cliente)

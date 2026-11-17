@@ -7,6 +7,12 @@ pública si está activa; si no, a «Datos de mi tienda»), Mi cuenta,
 Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
 {% endcomment %}
 {% if user.is_authenticated %}
+  {% if es_cliente %}
+  {# Cliente: corazón con la cantidad de favoritos guardados #}
+  <li class="nav-item">
+    <a class="corazon-cabecera" href="{% url 'favoritos:lista' %}" aria-label="Mis favoritos ({{ ids_favoritos|length }})"><i class="bi bi-heart-fill" aria-hidden="true"></i>{% if ids_favoritos %}<span class="corazon-cabecera__contador" aria-hidden="true">{{ ids_favoritos|length }}</span>{% endif %}</a>
+  </li>
+  {% endif %}
   <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle{% if ns == 'tiendas' and vista in 'panel editar' or not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta password_change ayuda privacidad' %} active{% endif %}"
        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menú de la cuenta de {{ user.username }}">{% include "_avatar.html" %}<span class="menu-usuario__nombre">{{ user.username }}</span></a>

@@ -21,12 +21,25 @@
   Ningún CDN: solo los cuadros del mapa vienen de **OpenStreetMap** (y, al marcar el local, las fotos satelitales de
   **Esri** y la búsqueda de calles de **Nominatim**; los tres están permitidos en `SECURE_CSP`). Se descargaron con
   `Claude outputs/descargar_librerias.ps1`. QR con **segno 1.6.6** (en requirements).
-- Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6`, fondo `#F3F6FA` (variables `--nx-*` en `static/css/marca.css`).
+- Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6` (variables `--nx-*` en `static/css/marca.css`).
+- **Estilo «Carbón y oro»** (nov 2026, guía y maquetas del usuario; solo las de fondo oscuro). Se hace por fases y el
+  usuario revisa cada una: 1) estilos base, encabezado y pie (HECHA); 2) Inicio y Catálogo; 3) Detalle, Tiendas
+  cercanas y Perfil; 4) Login, Registro y Cuenta; 5) Favoritos; 6) Mis productos (Resumen, Productos, Ventas,
+  Editar, Nota). Fondo carbón `#0E1218` con franjas y vetas doradas (`static/img/fondo-vetas.svg`, se repite cada
+  1200 px), oro `#C8A468`, contenido en tarjetas blancas (esquinas 18 px). **Contextos** (sección 99 de `marca.css`):
+  el texto, los enlaces y los botones cambian según estén sobre el fondo oscuro (blanco, cian, botón principal cian)
+  o dentro de una caja blanca (azul marino, enlace `#0A6F89`, botón principal carbón). Las cajas blancas están en la
+  lista «Contexto CLARO»; una caja blanca nueva lleva la clase `contexto-claro` y una oscura dentro de una blanca,
+  `contexto-oscuro`. Botón dorado de la tienda: `btn-oro`. Encabezado según el rol: visitante (Inicio, Catálogo,
+  Tiendas cercanas | Iniciar sesión, Registrarse, «Registrar mi tienda»), cliente (+ Mis favoritos y un corazón con
+  la cantidad de favoritos), tienda (Mis productos con las alertas de stock en amarillo, Inicio, Catálogo).
+  Pie `#0A0D12` con línea dorada y 4 columnas (2 en el celular): marca, Explorar, Para tiendas y Contacto (correo
+  `CORREO_SOPORTE`, Ayuda, Privacidad y términos, Libro de Reclamaciones). Al imprimir, hoja blanca.
   **No se escribe `?v=` a mano**: en tu PC (DEBUG=True) `config/estaticos.py` (EstaticosConVersion) agrega solo
   `?v=<fecha del archivo>`; en el servidor `ManifestStaticFilesStorage` + `collectstatic` ponen la huella al nombre
   (`STATIC_ROOT = staticfiles/`, fuera de git). `requirements.txt` con versiones exactas (pillow 12.3.0, openpyxl 3.1.5).
   Tarjetas, campos de formulario y **filas de todas las tablas en blanco** en todo el sitio (el fondo de la página
-  sigue gris claro); al enfocar un campo, borde y brillo cian; al pasar el mouse por una fila, celeste muy suave.
+  es carbón); al enfocar un campo, borde y brillo cian; al pasar el mouse por una fila, celeste muy suave.
 - **Datos secretos en `.env`** (junto a `manage.py`, NO va a GitHub; modelo en `.env.example`, lo lee
   `config/entorno.py`). Lo crea `python config/crear_env.py` (o `--produccion`). Datos: `SECRET_KEY`, `DEBUG`
   (si falta = False), `ALLOWED_HOSTS`, `SITIO_URL` (enlaces completos para compartir), `DJANGO_ADMIN_URL`
@@ -238,8 +251,8 @@
 - Tabla de Mis productos (`tabla-productos`): miniatura de la foto principal (48 px, `loading="lazy"`; ícono gris
   si no tiene), encabezado en mayúsculas pequeñas, columna «Favoritos» (antes «Guardado»), estados con íconos
   (ojo Publicado, ojo tachado Oculto, estrella Destacado, Agotado, Stock bajo) y «Editar» con lápiz.
-- **Menú con el mismo orden para todos**: Inicio · Catálogo · Tiendas cercanas, una línea y lo propio de cada uno
-  («Mis productos», «Mis favoritos» o «Administración»).
+- **Menú según el rol** (ver «Carbón y oro»): la tienda ve primero «Mis productos»; el administrador, una línea y
+  «Administración» al final.
 - **Sin emojis**: todo el sitio usa íconos de línea (Bootstrap Icons): estrella, etiqueta (oferta), tienda, etc.
   El corazón de favoritos (`boton-corazon`) es blanco con borde; marcado, azul marino con corazón cian.
 - **Sistema de botones** (`marca.css`): normales 46 px de alto y esquina de 12 px; `btn-sm` compactos (32 px).
@@ -373,7 +386,7 @@
   la imagen (ClipboardItem) y abre WhatsApp Web (o la app) para pegarla con Ctrl+V, Facebook abre el sharer con el
   enlace y deja la imagen copiada, Instagram descarga y abre instagram.com; «Más» = menú del sistema con la imagen
   o, si no se puede, la ventana de `_compartir.html` (acepta `etiqueta`, `icono` y `red`).
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **835 pruebas, OK**.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **843 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

@@ -50,7 +50,7 @@ y la ayuda. En computadora no se usa: ahí el menú va en la cabecera.
         <h3 class="menu-movil__titulo">{% if es_tienda %}Mi tienda{% elif es_admin %}Administración{% else %}Lo mío{% endif %}</h3>
         <ul class="menu-movil__lista">
           {% if es_tienda %}
-            <li><a class="menu-movil__enlace{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} activo" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i>Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %}<span class="badge rounded-pill text-bg-warning ms-auto" title="Productos agotados o con stock bajo">{{ num_alertas }}</span>{% endif %}</a></li>
+            <li><a class="menu-movil__enlace{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} activo" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i>Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %}<span class="badge rounded-pill insignia-alerta ms-auto" title="Productos agotados o con stock bajo">{{ num_alertas }}</span>{% endif %}</a></li>
             {% if tienda_actual.estado == "activa" %}
               <li><a class="menu-movil__enlace" href="{% url 'tiendas:perfil' tienda_actual.pk %}"><i class="bi bi-shop" aria-hidden="true"></i>Ver mi tienda</a></li>
             {% endif %}
