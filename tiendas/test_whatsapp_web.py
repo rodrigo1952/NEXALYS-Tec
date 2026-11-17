@@ -36,3 +36,34 @@ class WhatsAppEnLaComputadoraTests(TestCase):
         # No se pudo reutilizar la pestaña de WhatsApp Web, así que no hace falta relajar esta política.
         respuesta = self.client.get(reverse("catalogo:catalogo"))
         self.assertEqual(respuesta["Cross-Origin-Opener-Policy"], "same-origin")
+
+
+class CambiarLaEleccionTests(TestCase):
+    """Nov 2026: la elección (Web o app) se puede cambiar siempre; «Recordar» viene desmarcado."""
+
+    def test_recordar_viene_desmarcado(self):
+        codigo = whatsapp_js()
+        self.assertIn('<input type="checkbox" class="form-check-input"> Recordar mi elección', codigo)
+        self.assertNotIn("form-check-input\" checked>", codigo)
+
+    def test_el_aviso_dura_15_segundos_y_se_pausa_con_el_mouse(self):
+        codigo = whatsapp_js()
+        self.assertIn("setTimeout(cerrarAviso, 15000)", codigo)
+        self.assertIn('aviso.addEventListener("mouseenter", pausar);', codigo)
+        self.assertIn('cambiar.className = "btn btn-outline-success btn-sm py-0";', codigo)
+
+    def test_texto_bajo_el_boton_en_producto_y_tienda(self):
+        from catalogo.models import Categoria, Marca, Producto
+        from .tests import crear_tienda
+
+        tienda = crear_tienda()
+        producto = Producto.objects.create(
+            tienda=tienda, categoria=Categoria.objects.get_or_create(nombre="Celulares")[0],
+            marca=Marca.objects.get_or_create(nombre="Samsung")[0], nombre="Galaxy", precio=500, stock=2,
+        )
+        for url in (reverse("catalogo:detalle", args=[producto.pk]), reverse("tiendas:perfil", args=[tienda.pk])):
+            self.assertContains(self.client.get(url), '<p class="modo-whatsapp" data-modo-whatsapp hidden></p>', html=True)
+        codigo = whatsapp_js()
+        self.assertIn('document.querySelectorAll("[data-modo-whatsapp]")', codigo)
+        self.assertIn("El chat se abre en", codigo)
+        self.assertIn("Listo: la próxima vez te preguntaremos dónde abrir el chat.", codigo)

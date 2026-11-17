@@ -29,7 +29,7 @@ class ListaComoCatalogoTests(BaseFavoritos):
                       'name="categoria" value="%d"' % self.categoria.pk, 'name="tienda" value="%d"' % self.otra_tienda.pk):
             self.assertContains(respuesta, parte)
         self.assertNotContains(respuesta, ">Filtrar</button>")
-        self.assertNotContains(respuesta, "<select")
+        self.assertContains(respuesta, "<select", count=1)  # solo «Ordenar por»; los filtros son casillas
 
     def test_las_categorias_muestran_su_icono_y_cantidad(self):
         respuesta = self.client.get(self.url)

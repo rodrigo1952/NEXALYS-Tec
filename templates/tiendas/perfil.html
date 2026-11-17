@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load miniaturas %}
+{% load miniaturas whatsapp %}
 {% block titulo %}{{ tienda.nombre }} | NEXALYS Tec{% endblock %}
 {% block descripcion %}{{ tienda.nombre }}: tienda de tecnología en Quillabamba. {{ tienda.direccion }}. Mira sus productos y su horario.{% endblock %}
 {% block vista_previa %}
@@ -30,7 +30,7 @@
     {% if tienda.descripcion %}<p class="text-muted">{{ tienda.descripcion }}</p>{% endif %}
     <p class="perfil-tienda__direccion"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> {{ tienda.direccion }}</p>
     <div class="d-flex flex-wrap gap-2">
-      <a href="{{ tienda.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir por WhatsApp</a>
+      <a href="{% whatsapp_tienda tienda %}" target="_blank" rel="noopener" class="btn btn-success"><i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir por WhatsApp</a>
       {% if tienda.tiene_ubicacion %}
         <a href="{{ tienda.enlace_como_llegar }}" target="_blank" rel="noopener" class="btn btn-primary"><i class="bi bi-sign-turn-right" aria-hidden="true"></i> Cómo llegar</a>
       {% else %}
@@ -38,6 +38,8 @@
       {% endif %}
       {% include "_compartir.html" with url=tienda.enlace_publico titulo=tienda.nombre texto="Mira los productos de "|add:tienda.nombre|add:" en NEXALYS Tec" %}
     </div>
+    {# En la computadora, si ya eligió WhatsApp Web o la app, aquí se ve cuál y se puede cambiar (static/js/whatsapp.js). #}
+    <p class="modo-whatsapp" data-modo-whatsapp hidden></p>
     <p class="small mt-2 mb-0"><a href="{% url 'reclamos:libro' %}?tienda={{ tienda.pk }}" class="link-secondary"><i class="bi bi-journal-text" aria-hidden="true"></i> Libro de Reclamaciones de esta tienda</a></p>
     {% if tienda.tiene_ubicacion %}
       {# Mapa pequeño con el local (OpenStreetMap). #}

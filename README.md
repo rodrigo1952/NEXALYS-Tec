@@ -82,8 +82,8 @@ Los tres están integrados: un producto pertenece a una categoría y una marca, 
 10. Un producto **se puede eliminar aunque tenga ventas**: sus ventas, ingresos y kardex conservan el nombre del producto.
 11. Solo los **clientes** tienen favoritos; un producto aparece **una sola vez** en la lista de cada cliente.
 12. Si un visitante toca el corazón, va a iniciar sesión y el producto **se guarda solo** al entrar.
-13. "Bajó de precio" compara con el **precio que tenía al guardarlo**; el contador del menú muestra las novedades desde la última vez que el cliente abrió "Mis favoritos".
-14. Si la tienda elimina el producto, el favorito **se borra**; si lo oculta, se agota o la tienda es suspendida, se muestra **"No disponible"** sin borrarlo.
+13. "Bajó de precio" compara con el **precio que tenía al guardarlo**; el contador del menú muestra las novedades desde la última vez que el cliente abrió "Mis favoritos". La tarjeta dice "Bajó S/ X desde que lo guardaste". Orden **Recomendado** de "Mis favoritos": primero los que bajaron de precio, luego los que volvieron a tener stock (en los últimos 7 días), luego los demás (el último agregado primero) y al final los agotados o no disponibles. Cada cliente puede elegir otro orden ("Ordenar por") y se le recuerda.
+14. Si la tienda elimina el producto, el favorito **se borra**; si lo oculta (o el administrador lo oculta) o la tienda es suspendida, se muestra **"No disponible"** sin borrarlo y sin botón de WhatsApp. Si solo **se agotó**, se muestra **"Agotado"** (con la foto más clara) y el botón cambia a **"¿Cuándo llega?"** (en la página del producto, **"Preguntar cuándo llega"**): el mensaje a la tienda pregunta cuándo vuelve a tener stock. Lo mismo en la página del producto. El cliente no ve si lo ocultó la tienda o el administrador: la tarjeta explica que "ya no está publicado" (con **"Ver tienda"** si la tienda sigue activa) o que "la tienda no está disponible por ahora". Si se vuelve a publicar (o la tienda se reactiva), aparece **"Volvió a estar disponible"** y sube arriba 7 días.
 15. La tienda ve **cuántos** clientes guardaron cada producto, **nunca quiénes**.
 16. Para **cambiar el correo** se pide la contraseña actual; solo los clientes pueden **eliminar su cuenta** (se borran también sus favoritos).
 17. Una **oferta** vale si su precio es menor que el normal; si tiene fecha de fin, ese día es el último y luego vuelve sola al precio normal. Ventas, WhatsApp, filtros y orden usan el precio con oferta.
@@ -204,6 +204,8 @@ Con `DEBUG=False`, Django no entrega el CSS, el JavaScript ni las fotos: lo hace
 
 - Las tarjetas usan **miniaturas** (600 px; 160 px en las miniaturas pequeñas) en `media/miniaturas/`. Se crean solas la primera vez y se borran junto con la foto original. Para crearlas todas de una vez: `python manage.py crear_miniaturas`.
 - El mensaje de WhatsApp lleva el enlace del producto al final; WhatsApp muestra una vista previa con foto, nombre y precio (solo con la página publicada en internet).
+- El mensaje empieza con un saludo según la hora de Perú ("Buenos días", "Buenas tardes" o "Buenas noches") y el nombre de la tienda; si el cliente inició sesión, se presenta con su primer nombre ("Soy David."). Luego el producto en negrita con su precio y "¿Sigue disponible? ¿Cómo puedo comprarlo?" (si está agotado: "¿Saben cuándo vuelve a tener stock?"). El botón de la tienda y Tiendas cercanas dicen "Encontré su tienda en NEXALYS Tec y quisiera hacerles una consulta." El cliente puede cambiar el texto antes de enviarlo.
+- En la computadora, si el cliente eligió recordar WhatsApp Web o la app, debajo de los botones (y arriba de la lista en Mis favoritos y Tiendas cercanas) se lee "El chat se abre en WhatsApp Web · Cambiar".
 - Botón **Compartir** en el detalle del producto y en la página de la tienda: en el celular abre el menú de compartir; en la PC copia el enlace.
 
 ### Cabecera de seguridad (CSP)

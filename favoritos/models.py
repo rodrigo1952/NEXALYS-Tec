@@ -1,5 +1,22 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
+
+# Días que un favorito que «volvió a tener stock» se queda arriba en el orden «Recomendado».
+DIAS_REPUESTO = 7
+
+# Formas de ordenar «Mis favoritos». Cada cliente elige una y se recuerda (PreferenciaFavoritos).
+ORDENES = [
+    ("recomendado", "Recomendado"),
+    ("recientes", "Agregados recientemente"),
+    ("nombre", "Nombre (A-Z)"),
+    ("precio_asc", "Precio: menor a mayor"),
+    ("precio_desc", "Precio: mayor a menor"),
+    ("descuento", "Mayor descuento"),
+]
+ORDEN_POR_DEFECTO = "recomendado"
 
 
 class Favorito(models.Model):
@@ -67,6 +84,33 @@ class Favorito(models.Model):
         return self.disponible and self.producto.precio_final < self.precio_guardado
 
     @property
+    def rebaja(self):
+        """Cuánto bajó desde que lo guardó (S/)."""
+        return self.precio_guardado - self.producto.precio_final
+
+    def _reciente(self, fecha):
+        """La fecha es posterior a guardarlo y de los últimos DIAS_REPUESTO días; el producto se puede comprar."""
+        return (
+            self.disponible and not self.producto.agotado and fecha is not None and fecha > self.creado
+            and fecha >= timezone.now() - timedelta(days=DIAS_REPUESTO)
+        )
+
+    @property
+    def repuesto_reciente(self):
+        """Volvió a tener stock en los últimos DIAS_REPUESTO días (después de guardarlo)."""
+        return self._reciente(self.producto.repuesto_el)
+
+    @property
+    def republicado_reciente(self):
+        """Volvió a estar publicado (estaba oculto o su tienda suspendida) en los últimos DIAS_REPUESTO días."""
+        return self._reciente(self.producto.republicado_el)
+
+    @property
+    def tienda_disponible(self):
+        """Su tienda está activa: aunque el producto ya no esté publicado, se puede ver la tienda."""
+        return self.producto.tienda.esta_activa
+
+    @property
     def volvio_a_tener_stock(self):
         return self.disponible and self.agotado_visto and not self.producto.agotado
 
@@ -74,3 +118,22 @@ class Favorito(models.Model):
         """Recuerda lo que el cliente acaba de ver (no guarda en la base de datos)."""
         self.precio_visto = self.producto.precio_final
         self.agotado_visto = self.producto.agotado
+
+
+class PreferenciaFavoritos(models.Model):
+    """Cómo prefiere ordenar «Mis favoritos» cada cliente (se recuerda entre visitas y equipos)."""
+
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="preferencia_favoritos",
+        verbose_name="cliente",
+    )
+    orden = models.CharField("ordenar por", max_length=20, choices=ORDENES, default=ORDEN_POR_DEFECTO)
+
+    class Meta:
+        verbose_name = "preferencia de favoritos"
+        verbose_name_plural = "preferencias de favoritos"
+
+    def __str__(self):
+        return f"{self.usuario}: {self.get_orden_display()}"

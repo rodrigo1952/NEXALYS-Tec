@@ -141,6 +141,9 @@ class Tienda(models.Model):
         self.motivo_suspension = ""
         self.suspendida_en = None  # se cancela la cuenta regresiva
         self.save(update_fields=["estado", "motivo_suspension", "suspendida_en"])
+        if self.estado == self.Estado.ACTIVA:
+            # Sus productos publicados vuelven a verse: en «Mis favoritos», «Volvió a estar disponible».
+            self.productos.filter(activo=True, oculto_por_admin=False).update(republicado_el=timezone.now())
 
     @property
     def fecha_eliminacion(self):
@@ -162,6 +165,12 @@ class Tienda(models.Model):
         if mensaje:
             enlace += f"?text={quote(mensaje)}"
         return enlace
+
+    def enlace_whatsapp_consulta(self, usuario=None):
+        """«Encontré su tienda en NEXALYS Tec…» (catalogo/whatsapp.py): página de la tienda y Tiendas cercanas."""
+        from catalogo.whatsapp import mensaje_tienda
+
+        return self.enlace_whatsapp(mensaje_tienda(self, usuario))
 
     @property
     def tiene_ubicacion(self):

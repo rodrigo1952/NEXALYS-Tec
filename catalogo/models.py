@@ -320,6 +320,11 @@ class Producto(models.Model):
     )
     motivo_ocultamiento = models.TextField("motivo del ocultamiento", blank=True)
     destacado_desde = models.DateTimeField("destacado desde", null=True, blank=True, editable=False)
+    # Cuándo pasó de agotado (stock 0) a tener stock: en «Mis favoritos» sube arriba unos días.
+    repuesto_el = models.DateTimeField("volvió a tener stock el", null=True, blank=True, editable=False)
+    # Cuándo volvió a verse en el catálogo (la tienda lo publicó de nuevo, el administrador dejó de
+    # ocultarlo o se reactivó la tienda): en «Mis favoritos» sube arriba unos días.
+    republicado_el = models.DateTimeField("volvió a estar disponible el", null=True, blank=True, editable=False)
     texto_busqueda = models.TextField("texto de búsqueda", blank=True, editable=False)
     # Partes separadas del texto de búsqueda, para ordenar por relevancia.
     nombre_busqueda = models.TextField("nombre para buscar", blank=True, editable=False)
@@ -374,17 +379,14 @@ class Producto(models.Model):
         return enlace_completo(self.get_absolute_url())
 
     # --- WhatsApp ----------------------------------------------------------------
-    def mensaje_whatsapp(self):
-        """Con el enlace al final: WhatsApp le muestra a la tienda una vista previa con foto, nombre y precio."""
-        from .templatetags.formato import soles
+    def mensaje_whatsapp(self, usuario=None):
+        """Mensaje para la tienda (catalogo/whatsapp.py): saludo según la hora, el producto y el enlace."""
+        from .whatsapp import mensaje_producto
 
-        return (
-            f"Hola, me interesa el producto \"{self.nombre}\" ({soles(self.precio_final)}) "
-            f"que vi en NEXALYS Tec: {self.enlace_publico()}"
-        )
+        return mensaje_producto(self, usuario)
 
-    def enlace_whatsapp(self):
-        return self.tienda.enlace_whatsapp(self.mensaje_whatsapp())
+    def enlace_whatsapp(self, usuario=None):
+        return self.tienda.enlace_whatsapp(self.mensaje_whatsapp(usuario))
 
     # --- Búsqueda -----------------------------------------------------------------
     def campos_busqueda(self):
@@ -424,11 +426,26 @@ class Producto(models.Model):
         # Regla: al cambiar o quitar la imagen, se borra el archivo anterior
         # para no acumular imágenes que ya nadie usa.
         anterior = nombre_anterior = stock_anterior = None
+        publicado_antes = True
         creando = self._state.adding
         if self.pk:
-            fila = Producto.objects.filter(pk=self.pk).values_list("imagen", "nombre", "stock").first()
+            fila = (Producto.objects.filter(pk=self.pk)
+                    .values_list("imagen", "nombre", "stock", "activo", "oculto_por_admin").first())
             if fila:
-                anterior, nombre_anterior, stock_anterior = fila
+                anterior, nombre_anterior, stock_anterior, activo_antes, oculto_antes = fila
+                publicado_antes = activo_antes and not oculto_antes
+        cambios = []
+        # Regla: si estaba agotado y ahora tiene stock, se anota cuándo volvió (sea por una edición,
+        # un ingreso de mercadería o la anulación de una venta).
+        if stock_anterior == 0 and self.stock > 0:
+            self.repuesto_el = timezone.now()
+            cambios.append("repuesto_el")
+        # Regla: si estaba oculto (por la tienda o por el administrador) y vuelve a publicarse.
+        if not publicado_antes and self.activo and not self.oculto_por_admin:
+            self.republicado_el = timezone.now()
+            cambios.append("republicado_el")
+        if cambios and kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = [*kwargs["update_fields"], *cambios]
         super().save(*args, **kwargs)
         self._anotar_en_kardex(creando, stock_anterior, kwargs.get("update_fields"))
         if anterior and anterior != (self.imagen.name or ""):

@@ -25,11 +25,9 @@ class CompartirTests(BaseCatalogo):
 
     def test_mensaje_de_whatsapp_con_el_enlace_al_final(self):
         producto = self.crear_producto(nombre="Laptop Lenovo IdeaPad", precio=Decimal("1199"))
-        self.assertEqual(
-            producto.mensaje_whatsapp(),
-            f'Hola, me interesa el producto "Laptop Lenovo IdeaPad" (S/ 1,199.00) que vi en NEXALYS Tec: '
-            f"{SITIO}/catalogo/producto/{producto.pk}/",
-        )
+        mensaje = producto.mensaje_whatsapp()
+        self.assertTrue(mensaje.endswith(f"\n\n{SITIO}/catalogo/producto/{producto.pk}/"))
+        self.assertIn("*Laptop Lenovo IdeaPad*\nPrecio: S/ 1,199.00", mensaje)
         self.assertIn(f"{SITIO}/catalogo/producto/{producto.pk}/", unquote(producto.enlace_whatsapp()))
 
     def test_enlaces_publicos(self):

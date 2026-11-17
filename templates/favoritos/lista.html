@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% load static formato miniaturas %}
+{% load static formato miniaturas whatsapp %}
 {% block titulo %}Mis favoritos | NEXALYS Tec{% endblock %}
 {% block contenido %}
 {% comment %}
 Mis favoritos con la misma forma que el catálogo: filtros a la izquierda (categoría con su ícono
 y tienda; se aplican al hacer clic) y tarjetas que abren el producto. Cada tarjeta mantiene los
-avisos (bajó de precio, volvió a tener stock) y los botones WhatsApp y Quitar (pide confirmación).
+avisos («Bajó S/ X desde que lo guardaste», volvió a tener stock) y los botones WhatsApp y Quitar
+(pide confirmación). «Ordenar por» está en favoritos/views.py → ordenar().
 {% endcomment %}
 <div class="d-flex flex-wrap align-items-baseline gap-2 mb-3">
   <h1 class="h3 mb-0"><i class="bi bi-heart" aria-hidden="true"></i> Mis favoritos</h1>
@@ -71,17 +72,29 @@ avisos (bajó de precio, volvió a tener stock) y los botones WhatsApp y Quitar 
 
   {# ---------- Favoritos ---------- #}
   <div class="col-lg-9">
-    <div class="barra-catalogo d-lg-none">
-      <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#panel-filtros" aria-controls="panel-filtros">
+    {# «Ordenar por» se recuerda para cada cliente; «Recomendado» pone primero lo que bajó de precio. #}
+    <div class="barra-catalogo">
+      <button type="button" class="btn btn-outline-primary btn-sm d-lg-none barra-catalogo__filtrar" data-bs-toggle="offcanvas" data-bs-target="#panel-filtros" aria-controls="panel-filtros">
         <i class="bi bi-sliders" aria-hidden="true"></i> Filtrar{% if hay_filtros %} <span class="badge rounded-pill text-bg-primary"><i class="bi bi-check-lg" aria-hidden="true"></i><span class="visually-hidden">filtros activos</span></span>{% endif %}
       </button>
+      {# En la computadora: «El chat se abre en WhatsApp Web · Cambiar» (static/js/whatsapp.js). #}
+      <p class="modo-whatsapp barra-catalogo__modo" data-modo-whatsapp hidden></p>
+      <div class="barra-catalogo__orden">
+        <i class="bi bi-arrow-down-up d-lg-none" aria-hidden="true"></i>
+        <label for="orden-favoritos" class="small text-muted text-nowrap mb-0"><span class="d-none d-lg-inline">Ordenar por</span><span class="visually-hidden d-lg-none">Ordenar por</span></label>
+        <select name="orden" id="orden-favoritos" class="form-select form-select-sm" form="filtros-catalogo" data-orden>
+          {% for valor, texto in ordenes %}
+            <option value="{{ valor }}"{% if valor == orden %} selected{% endif %}>{{ texto }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
 
     {% if pagina.object_list %}
       <div class="catalogo-grilla" data-vista="3">
         {% for favorito in pagina %}
           {% with producto=favorito.producto %}
-          <div class="card h-100 shadow-sm tarjeta-producto tarjeta-favorito{% if not favorito.disponible %} tarjeta-favorito--no-disponible{% endif %}">
+          <div class="card h-100 shadow-sm tarjeta-producto tarjeta-favorito{% if not favorito.disponible %} tarjeta-favorito--no-disponible{% elif producto.agotado %} tarjeta-favorito--agotado{% endif %}">
             {% if producto.en_oferta and favorito.disponible %}
               <span class="badge text-bg-danger position-absolute top-0 start-0 m-2" style="z-index:2">Oferta</span>
             {% endif %}
@@ -104,10 +117,10 @@ avisos (bajó de precio, volvió a tener stock) y los botones WhatsApp y Quitar 
               </h2>
               <p class="fs-5 mb-1">
                 {% include "catalogo/_precio.html" %}
-                {% if favorito.bajo_de_precio %}
-                  <small class="text-muted fw-normal text-decoration-line-through fs-6" title="Precio cuando lo guardaste">{{ favorito.precio_guardado|soles }}</small>
-                {% endif %}
               </p>
+              {% if favorito.bajo_de_precio %}
+                <p class="favorito-rebaja" title="Lo guardaste a {{ favorito.precio_guardado|soles }}"><i class="bi bi-arrow-down-circle-fill" aria-hidden="true"></i> Bajó {{ favorito.rebaja|soles }} desde que lo guardaste</p>
+              {% endif %}
               <div class="d-flex flex-wrap gap-1 mb-2">
                 {% if not favorito.disponible %}
                   <span class="badge text-bg-secondary">No disponible</span>
@@ -116,21 +129,36 @@ avisos (bajó de precio, volvió a tener stock) y los botones WhatsApp y Quitar 
                 {% else %}
                   <span class="badge text-bg-light border">Stock: {{ producto.stock }}</span>
                 {% endif %}
-                {% if favorito.bajo_de_precio %}<span class="badge text-bg-success">Bajó de precio</span>{% endif %}
+                {% if favorito.aviso_disponible %}<span class="badge text-bg-info">Volvió a estar disponible</span>{% endif %}
                 {% if favorito.aviso_stock %}<span class="badge text-bg-info">Volvió a tener stock</span>{% endif %}
               </div>
+              {% if not favorito.disponible %}
+                {# No se dice si lo ocultó la tienda o el administrador: para el cliente solo dejó de estar publicado. #}
+                <p class="favorito-no-disponible">
+                  {% if favorito.tienda_disponible %}
+                    La tienda ya no lo tiene publicado. Si lo vuelve a publicar, aparecerá aquí como antes.
+                  {% else %}
+                    Esta tienda no está disponible por ahora. Si vuelve, su producto aparecerá aquí como antes.
+                  {% endif %}
+                </p>
+              {% endif %}
               <small class="text-muted mb-3 tarjeta-producto__tienda"><i class="bi bi-shop" aria-hidden="true"></i>
-                {% if favorito.disponible %}
+                {% if favorito.tienda_disponible %}
                   <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="link-secondary">{{ producto.tienda }}</a>
                 {% else %}
                   {{ producto.tienda }}
                 {% endif %}
               </small>
               <div class="mt-auto d-flex gap-2 tarjeta-favorito__acciones">
-                {% if favorito.disponible %}
-                  <a href="{{ producto.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-sm flex-grow-1"><i class="bi bi-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+                {% if not favorito.disponible and favorito.tienda_disponible %}
+                  <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="btn btn-outline-primary btn-sm flex-grow-1"><i class="bi bi-shop" aria-hidden="true"></i> Ver tienda</a>
+                {% elif favorito.disponible and producto.agotado %}
+                  {# Agotado: la tienda sigue activa; se le puede preguntar cuándo vuelve a tener stock. #}
+                  <a href="{% whatsapp_producto producto %}" target="_blank" rel="noopener" class="btn btn-outline-success btn-sm flex-grow-1" title="Preguntar a la tienda por WhatsApp cuándo vuelve a tener stock"><i class="bi bi-whatsapp" aria-hidden="true"></i> ¿Cuándo llega?</a>
+                {% elif favorito.disponible %}
+                  <a href="{% whatsapp_producto producto %}" target="_blank" rel="noopener" class="btn btn-success btn-sm flex-grow-1"><i class="bi bi-whatsapp" aria-hidden="true"></i> WhatsApp</a>
                 {% endif %}
-                <form method="post" action="{% url 'favoritos:alternar' producto.pk %}" class="{% if not favorito.disponible %}flex-grow-1{% endif %}" data-quitar-favorito data-nombre="{{ producto.nombre }}">
+                <form method="post" action="{% url 'favoritos:alternar' producto.pk %}" class="{% if not favorito.disponible and not favorito.tienda_disponible %}flex-grow-1{% endif %}" data-quitar-favorito data-nombre="{{ producto.nombre }}">
                   {% csrf_token %}
                   <input type="hidden" name="next" value="{{ request.get_full_path }}">
                   <button type="submit" class="btn btn-outline-danger btn-sm w-100">Quitar</button>

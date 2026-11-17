@@ -164,6 +164,28 @@
 - **Mis favoritos** tiene la forma del catálogo: filtros a la izquierda (categoría con su ícono y tienda,
   varias a la vez, con su cantidad) que se aplican al hacer clic (reusa `static/js/catalogo.js`); toda la
   tarjeta abre el producto y el nombre de la tienda abre su página; «Quitar» pide confirmación.
+  «Ordenar por» (`favoritos/views.py → ordenar()`, se recuerda en `PreferenciaFavoritos`): **Recomendado**
+  (por defecto) = 1) bajaron de precio desde que se guardaron, 2) volvieron a tener stock en los últimos 7 días
+  (`Producto.repuesto_el`, se anota en `Producto.save()` al pasar de 0 a más), 3) los demás, 4) agotados o
+  no disponibles; dentro de cada grupo, el último agregado primero. Otros: Agregados recientemente, Nombre
+  (A-Z), Precio menor/mayor, Mayor descuento (los agotados y no disponibles siempre al final). La rebaja se
+  muestra como «Bajó S/ X desde que lo guardaste» (ya no hay un tercer precio tachado).
+  **Agotado ≠ No disponible**: «No disponible» (producto oculto o tienda suspendida) quita WhatsApp; «Agotado»
+  (tienda activa, stock 0) aclara la foto y cambia el botón por «¿Cuándo llega?» (borde verde; «Preguntar cuándo llega» en el detalle), también
+  en la página del producto; `Producto.mensaje_whatsapp()` pregunta cuándo vuelve a tener stock.
+  «No disponible» explica: «La tienda ya no lo tiene publicado…» (+ «Ver tienda») o «Esta tienda no está
+  disponible por ahora…» (tienda suspendida); nunca dice si lo ocultó el administrador. Si vuelve a publicarse
+  (`Producto.republicado_el`: la tienda lo publica, el admin deja de ocultarlo o `Tienda.reactivar()`), sale
+  «Volvió a estar disponible» y sube al grupo 2 durante 7 días.
+- **WhatsApp en la computadora** (`static/js/whatsapp.js`): «Recordar mi elección» viene desmarcado; el aviso
+  de abajo dura 15 s (se pausa con el mouse encima) y su «Cambiar» es un botón; en el producto y la tienda,
+  bajo los botones (y arriba de la lista en Mis favoritos y Tiendas cercanas), `[data-modo-whatsapp]` muestra
+  «El chat se abre en WhatsApp Web · Cambiar».
+- **Mensajes de WhatsApp** (`catalogo/whatsapp.py`; en plantillas `{% load whatsapp %}` →
+  `{% whatsapp_producto producto %}` / `{% whatsapp_tienda tienda %}`): saludo según la hora de Perú (Buenos días
+  5–11:59, Buenas tardes 12–18:59, Buenas noches), «Soy <primer nombre>.» si inició sesión, producto en *negrita*
+  con «Precio:», «¿Sigue disponible? ¿Cómo puedo comprarlo?» (agotado: «¿Saben cuándo vuelve a tener stock?») y el
+  enlace al final. Tienda y Tiendas cercanas: «Encontré su tienda en NEXALYS Tec y quisiera hacerles una consulta.»
 - **Consola del administrador** (`templates/administracion/_consola.html`, bloque `consola`): al iniciar
   sesión entra directo al Resumen (`cuentas.views.destino_por_rol`). Cabecera simple (logo, etiqueta
   «Administración», «Ver página pública ↗» y su cuenta), menú lateral oscuro (Resumen, Tiendas, Productos,
@@ -323,7 +345,7 @@
 - **Código de 6 dígitos** (`cuentas/codigos.py`, modelo `CodigoVerificacion`, migración cuentas 0007): solo la
   huella HMAC; uno nuevo reemplaza al anterior; vence como el enlace. Vistas `confirmar_codigo` (cliente) y
   `tiendas:verificar_codigo` (panel). Límite `limites.CODIGO`: 5 equivocados cada 15 min.
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **782 pruebas, OK**.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **814 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

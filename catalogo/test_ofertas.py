@@ -136,4 +136,4 @@ class OfertaCatalogoTests(BaseCatalogo):
 
         self.client.force_login(cliente)
         self.assertEqual(self.client.get(reverse("inicio")).context["avisos_favoritos"], 1)
-        self.assertContains(self.client.get(reverse("favoritos:lista")), "Bajó de precio")
+        self.assertContains(self.client.get(reverse("favoritos:lista")), "Bajó S/ 20.00 desde que lo guardaste")

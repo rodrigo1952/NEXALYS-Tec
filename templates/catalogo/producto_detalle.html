@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formato miniaturas %}
+{% load formato miniaturas whatsapp %}
 {% block titulo %}{{ producto.nombre }} | NEXALYS Tec{% endblock %}
 {% block descripcion %}{{ producto.nombre }} a {{ producto.precio_final|soles }} en {{ producto.tienda }}, Quillabamba. {{ producto.marca }} · {{ producto.categoria }}.{% endblock %}
 {% block vista_previa %}
@@ -85,12 +85,21 @@
       </div>
     </div>
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <a href="{{ producto.enlace_whatsapp }}" target="_blank" rel="noopener" class="btn btn-success btn-lg">
-        Consultar por WhatsApp
-      </a>
+      {% if producto.agotado %}
+        {# Agotado: no invita a comprar; el mensaje pregunta cuándo vuelve a tener stock. #}
+        <a href="{% whatsapp_producto producto %}" target="_blank" rel="noopener" class="btn btn-outline-success btn-lg">
+          <i class="bi bi-whatsapp" aria-hidden="true"></i> Preguntar cuándo llega
+        </a>
+      {% else %}
+        <a href="{% whatsapp_producto producto %}" target="_blank" rel="noopener" class="btn btn-success btn-lg">
+          Consultar por WhatsApp
+        </a>
+      {% endif %}
       {% include "favoritos/_boton_corazon.html" with con_texto=True %}
       {% include "_compartir.html" with url=producto.enlace_publico titulo=producto.nombre texto=producto.nombre|add:" en NEXALYS Tec" clase="btn-lg" %}
     </div>
+    {# En la computadora, si ya eligió WhatsApp Web o la app, aquí se ve cuál y se puede cambiar (static/js/whatsapp.js). #}
+    <p class="modo-whatsapp" data-modo-whatsapp hidden></p>
 
     {% if producto.descripcion %}
       {# Descripción: si es larga se muestra solo el inicio y un botón para leerla completa. #}

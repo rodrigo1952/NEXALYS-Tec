@@ -266,7 +266,7 @@ def cercanas(request):
             "lat": float(tienda.latitud) if tienda.tiene_ubicacion else None,
             "lng": float(tienda.longitud) if tienda.tiene_ubicacion else None,
             "perfil": reverse("tiendas:perfil", args=[tienda.pk]),
-            "whatsapp": tienda.enlace_whatsapp("Hola, te encontré en NEXALYS Tec."),
+            "whatsapp": tienda.enlace_whatsapp_consulta(request.user),
             "como_llegar": tienda.enlace_como_llegar(),
             "abierto": estado["abierto"] if estado else None,
             "estado": estado["texto"] if estado else "",

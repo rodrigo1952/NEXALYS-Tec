@@ -7,7 +7,10 @@
  *     aparece un menú pequeño con dos opciones, ambas directo al chat y con el mensaje ya escrito:
  *       · «WhatsApp Web»: web.whatsapp.com/send en una pestaña nueva.
  *       · «App de WhatsApp»: whatsapp://send, abre la app de Windows (si está instalada), sin pestañas.
- *     La elección se puede recordar en ese navegador; luego un aviso con «Cambiar» permite elegir otra vez.
+ *     La elección se recuerda en ese navegador solo si se marca «Recordar mi elección» (viene desmarcada).
+ *     Para cambiarla: el aviso de abajo (15 s, no se cierra con el mouse encima) tiene «Cambiar», y en la
+ *     página del producto, de la tienda, en Mis favoritos y en Tiendas cercanas queda el texto
+ *     «El chat se abre en WhatsApp Web · Cambiar» ([data-modo-whatsapp]).
  *
  * No se puede reutilizar una pestaña de WhatsApp Web: WhatsApp y el navegador cortan el vínculo con la
  * pestaña que abre el sitio, así que cada consulta por la web abre una pestaña nueva.
@@ -50,6 +53,36 @@
     try {
       if (modo) localStorage.setItem(CLAVE, modo); else localStorage.removeItem(CLAVE);
     } catch (e) { /* navegación privada: no se recuerda */ }
+    pintarModo();
+  }
+
+  // ---------- «Se abre en WhatsApp Web · Cambiar» debajo de los botones ----------
+  var NOMBRES = { web: "WhatsApp Web", app: "la app de WhatsApp" };
+
+  function pintarModo(textoListo) {
+    document.querySelectorAll("[data-modo-whatsapp]").forEach(function (lugar) {
+      var modo = esComputadora() ? leerModo() : null;
+      lugar.textContent = "";
+      if (textoListo) {
+        lugar.innerHTML = '<i class="bi bi-check-circle" aria-hidden="true"></i> ';
+        lugar.appendChild(document.createTextNode(textoListo));
+        lugar.hidden = false;
+        return;
+      }
+      if (!NOMBRES[modo]) { lugar.hidden = true; return; }
+      lugar.innerHTML = '<i class="bi bi-whatsapp" aria-hidden="true"></i> El chat se abre en <strong></strong> · ';
+      lugar.querySelector("strong").textContent = NOMBRES[modo];
+      var cambiar = document.createElement("button");
+      cambiar.type = "button";
+      cambiar.className = "btn btn-link p-0 align-baseline modo-whatsapp__cambiar";
+      cambiar.textContent = "Cambiar";
+      cambiar.addEventListener("click", function () {
+        guardarModo(null);
+        pintarModo("Listo: la próxima vez te preguntaremos dónde abrir el chat.");
+      });
+      lugar.appendChild(cambiar);
+      lugar.hidden = false;
+    });
   }
 
   function abrir(modo, d) {
@@ -101,7 +134,7 @@
     menu.appendChild(opcion("app", "bi-laptop", "App de WhatsApp", "Si la tienes instalada en tu computadora"));
     var recordar = document.createElement("label");
     recordar.className = "menu-whatsapp__recordar";
-    recordar.innerHTML = '<input type="checkbox" class="form-check-input" checked> Recordar mi elección en este navegador';
+    recordar.innerHTML = '<input type="checkbox" class="form-check-input"> Recordar mi elección en este navegador';
     menu.appendChild(recordar);
 
     menu.addEventListener("click", function (evento) {
@@ -153,7 +186,7 @@
     if (recordado) {
       var cambiar = document.createElement("button");
       cambiar.type = "button";
-      cambiar.className = "btn btn-link btn-sm p-0";
+      cambiar.className = "btn btn-outline-success btn-sm py-0";
       cambiar.textContent = "Cambiar";
       cambiar.addEventListener("click", function (evento) {
         evento.stopPropagation();  // si no, el clic llega al documento y cierra el menú recién abierto
@@ -169,13 +202,22 @@
     cerrar.addEventListener("click", cerrarAviso);
     aviso.appendChild(cerrar);
     document.body.appendChild(aviso);
-    temporizadorAviso = setTimeout(cerrarAviso, 9000);
+    // 15 segundos; mientras el mouse (o el teclado) está encima, no se cierra.
+    var esperar = function () { clearTimeout(temporizadorAviso); temporizadorAviso = setTimeout(cerrarAviso, 15000); };
+    var pausar = function () { clearTimeout(temporizadorAviso); };
+    aviso.addEventListener("mouseenter", pausar);
+    aviso.addEventListener("focusin", pausar);
+    aviso.addEventListener("mouseleave", esperar);
+    aviso.addEventListener("focusout", esperar);
+    esperar();
   }
 
   if (!esComputadora()) {
     window.NexalysWhatsApp = { datos: datos, destino: destino };
     return;
   }
+
+  pintarModo();
 
   document.addEventListener("click", function (evento) {
     if (menu && !menu.contains(evento.target)) cerrarMenu(false);

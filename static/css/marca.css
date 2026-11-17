@@ -1051,8 +1051,19 @@ section[id^="tema-"], section.tarjeta-cuenta[id] { scroll-margin-top: 1rem; }
 .filtro__icono { display: inline-flex; align-items: center; gap: .55rem; }
 .filtro__icono .bi { width: 1.1rem; text-align: center; color: var(--nx-acento-texto); }
 .tarjeta-favorito__acciones { position: relative; z-index: 2; }  /* por encima del enlace que cubre la tarjeta */
+/* Celular (2 por fila): WhatsApp y Quitar uno debajo del otro, para que «Quitar» no se salga de la tarjeta */
+@media (max-width: 575.98px) {
+  .tarjeta-favorito__acciones { flex-direction: column; }
+  .tarjeta-favorito__acciones > form { width: 100%; }
+}
 .tarjeta-favorito--no-disponible { opacity: .75; }
 .tarjeta-favorito--no-disponible:hover { transform: none; }
+/* Agotado: solo la foto se aclara (el texto y los botones se siguen leyendo bien) */
+.tarjeta-favorito--agotado .tarjeta-producto__foto { opacity: .5; filter: grayscale(.6); }
+/* «No disponible»: por qué y qué pasará si vuelve a publicarse */
+.favorito-no-disponible { margin: 0 0 .5rem; font-size: .82rem; line-height: 1.4; color: var(--nx-texto-suave); }
+/* «Bajó S/ X desde que lo guardaste»: verde oscuro (se lee bien sobre blanco) */
+.favorito-rebaja { margin: 0 0 .5rem; font-size: .85rem; font-weight: 600; color: #157347; }
 .modal-marca__icono--peligro { background: #FDECEE; color: #C62839; font-size: 1.6rem; }
 .modal-marca--peligro { border-top-color: #B42318; }
 .modal-marca__icono--izquierda { margin: 0 0 .9rem; width: 52px; height: 52px; font-size: 1.35rem; }
@@ -1467,6 +1478,12 @@ a.rol--tienda:hover { background: #CFDBF2; color: #1D4E96; }
 }
 .aviso-whatsapp > .bi-whatsapp { color: #198754; font-size: 1.1rem; }
 .aviso-whatsapp .btn-link { font-weight: 600; }
+/* «El chat se abre en WhatsApp Web · Cambiar» bajo el botón de WhatsApp (solo en computadora) */
+.modo-whatsapp { margin: .5rem 0 0; font-size: .82rem; color: var(--nx-texto-suave); }
+.modo-whatsapp .bi-whatsapp { color: #198754; }
+.modo-whatsapp .bi-check-circle { color: #198754; }
+.modo-whatsapp__cambiar { font-size: inherit; font-weight: 600; color: var(--nx-acento-texto); }
+.barra-catalogo__modo { margin: 0; }  /* en «Mis favoritos», a la izquierda de «Ordenar por» */
 
 /* Ventanita «Compartir en…» (static/js/compartir.js): mismo estilo que el menú de WhatsApp */
 .menu-compartir {

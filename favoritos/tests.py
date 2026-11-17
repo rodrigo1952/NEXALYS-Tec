@@ -3,11 +3,13 @@ Pruebas de favoritos (Etapa 1 del perfil del cliente).
 Ejecutar con:  python manage.py test favoritos
 """
 
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from catalogo.models import Categoria, Marca, Producto
 from tiendas.models import Tienda
@@ -189,13 +191,14 @@ class AvisosTests(BaseFavoritos):
 
         self.assertEqual(self.avisos(), 1)
         respuesta = self.client.get(reverse("favoritos:lista"))
-        self.assertContains(respuesta, "Bajó de precio")
-        self.assertContains(respuesta, "700.00")  # precio al guardarlo, tachado
+        self.assertContains(respuesta, "Bajó S/ 50.00 desde que lo guardaste")
+        self.assertContains(respuesta, 'title="Lo guardaste a S/ 700.00"')
+        self.assertNotContains(respuesta, "text-decoration-line-through fs-6")  # ya no hay un tercer precio tachado
 
         # Después de verlo, el contador baja, pero la etiqueta sigue
         # porque el precio aún es menor que cuando lo guardó.
         self.assertEqual(self.avisos(), 0)
-        self.assertContains(self.client.get(reverse("favoritos:lista")), "Bajó de precio")
+        self.assertContains(self.client.get(reverse("favoritos:lista")), "desde que lo guardaste")
 
     def test_subir_de_precio_no_avisa(self):
         Favorito.guardar(self.cliente, self.producto)
@@ -203,9 +206,9 @@ class AvisosTests(BaseFavoritos):
         self.producto.save()
         self.client.force_login(self.cliente)
         self.assertEqual(self.avisos(), 0)
-        self.assertNotContains(self.client.get(reverse("favoritos:lista")), "Bajó de precio")
+        self.assertNotContains(self.client.get(reverse("favoritos:lista")), "desde que lo guardaste")
 
-    def test_volvio_a_tener_stock_avisa_una_vez(self):
+    def test_volvio_a_tener_stock_avisa_y_la_etiqueta_dura_7_dias(self):
         self.producto.stock = 0
         self.producto.save()
         Favorito.guardar(self.cliente, self.producto)
@@ -215,7 +218,10 @@ class AvisosTests(BaseFavoritos):
 
         self.assertEqual(self.avisos(), 1)
         self.assertContains(self.client.get(reverse("favoritos:lista")), "Volvió a tener stock")
+        # El contador del menú baja después de verlo, pero la etiqueta se queda 7 días.
         self.assertEqual(self.avisos(), 0)
+        self.assertContains(self.client.get(reverse("favoritos:lista")), "Volvió a tener stock")
+        Producto.objects.filter(pk=self.producto.pk).update(repuesto_el=timezone.now() - timedelta(days=8))
         self.assertNotContains(self.client.get(reverse("favoritos:lista")), "Volvió a tener stock")
 
     def test_menu_muestra_mis_favoritos_al_cliente(self):
