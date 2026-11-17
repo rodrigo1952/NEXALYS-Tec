@@ -11,7 +11,7 @@ class MarcaTests(TestCase):
         self.assertContains(respuesta, "vendor/fuentes/fuentes.css")
         self.assertContains(respuesta, 'class="navbar navbar-expand-lg navbar-dark navbar-marca"')
         self.assertContains(respuesta, 'class="logo-marca"')
-        self.assertContains(respuesta, "portada-marca")
+        self.assertContains(respuesta, "tiendas-inicio")  # «Carbón y oro»: el Inicio empieza por las tiendas abiertas
 
     def test_boton_registrar_tienda_es_de_accion(self):
         # Sobre el menú azul marino, un botón azul no se vería: debe ser cian.

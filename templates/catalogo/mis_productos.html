@@ -42,9 +42,9 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
 {% if categorias %}
   {# Cantidad de productos por categoría; al tocar una, la tabla se filtra. #}
   <nav class="filtro-categorias d-flex flex-wrap gap-2 mb-3 fila-deslizable" aria-label="Filtrar por categoría">
-    <a href="{% querystring categoria=None marca=None page=None %}" class="btn btn-sm {% if not categoria_id %}btn-primary{% else %}btn-outline-secondary{% endif %}"{% if not categoria_id %} aria-current="true"{% endif %}>Todas ({{ total_productos }})</a>
+    <a href="{% querystring categoria=None marca=None page=None %}" class="btn btn-sm {% if not categoria_id %}btn-oro{% else %}btn-outline-secondary{% endif %}"{% if not categoria_id %} aria-current="true"{% endif %}>Todas ({{ total_productos }})</a>
     {% for c in categorias %}
-      <a href="{% querystring categoria=c.categoria_id marca=None page=None %}" class="btn btn-sm {% if c.categoria_id == categoria_id %}btn-primary{% else %}btn-outline-secondary{% endif %}"{% if c.categoria_id == categoria_id %} aria-current="true"{% endif %}>{{ c.categoria__nombre }} ({{ c.cantidad }})</a>
+      <a href="{% querystring categoria=c.categoria_id marca=None page=None %}" class="btn btn-sm {% if c.categoria_id == categoria_id %}btn-oro{% else %}btn-outline-secondary{% endif %}"{% if c.categoria_id == categoria_id %} aria-current="true"{% endif %}>{{ c.categoria__nombre }} ({{ c.cantidad }})</a>
     {% endfor %}
   </nav>
 {% endif %}

@@ -82,11 +82,11 @@ class IngresoPorTipoTests(TestCase):
 
 
 class LogoYCerrarSesionTests(TestCase):
-    def test_inicio_tiene_el_logo_animado(self):
+    def test_el_inicio_ya_no_tiene_la_portada_con_el_logo_animado(self):
+        # «Carbón y oro»: el Inicio empieza por «¿Qué tienda está abierta ahora?» (sin portada ni logo animado).
         respuesta = self.client.get(reverse("inicio"))
-        self.assertContains(respuesta, 'class="logo-portada"')
-        self.assertContains(respuesta, 'NEXALYS <tspan fill="#19C3E6">TEC.</tspan>')
-        self.assertContains(respuesta, "vendor/fuentes/fuentes.css")  # ahí está Lilita One (logo animado)
+        self.assertNotContains(respuesta, 'class="logo-portada"')
+        self.assertContains(respuesta, "¿Qué tienda está abierta ahora?")
 
     def test_cerrar_sesion_con_el_estilo_de_la_marca(self):
         self.client.force_login(crear_tienda().usuario)

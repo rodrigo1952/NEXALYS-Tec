@@ -84,33 +84,32 @@
     {# Segunda fila: las secciones según el tipo de usuario. En el celular se abren con ☰. #}
     <div class="collapse navbar-collapse menu-fila order-3 order-lg-0" id="menu">
       <ul class="navbar-nav menu-secciones me-auto">
-        {# Tienda: su zona de trabajo primero (Mis productos, Inicio, Catálogo). #}
-        {# Cliente y visitante: Inicio, Catálogo, Tiendas cercanas y, el cliente, Mis favoritos. #}
-        {% if es_tienda %}
-          <li class="nav-item">
-            <a class="nav-link nav-link--propio{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i> Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %} <span class="badge rounded-pill insignia-alerta" title="Productos agotados o con stock bajo">{{ num_alertas }}<span class="visually-hidden"> alertas de stock</span></span>{% endif %}</a>
-          </li>
-        {% endif %}
+        {# Mismo orden para todos: primero lo común y, después de una línea dorada, lo propio de cada uno. #}
         <li class="nav-item">
           <a class="nav-link{% if not ns and vista == 'inicio' %} active" aria-current="page{% endif %}" href="{% url 'inicio' %}">Inicio</a>
         </li>
         <li class="nav-item">
           <a class="nav-link{% if ns == 'catalogo' and vista == 'catalogo' or ns == 'catalogo' and vista == 'detalle' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}">Catálogo</a>
         </li>
-        {% if not es_tienda %}
         <li class="nav-item">
           <a class="nav-link{% if ns == 'tiendas' and vista == 'cercanas' %} active" aria-current="page{% endif %}" href="{% url 'tiendas:cercanas' %}">Tiendas cercanas</a>
         </li>
+        {% if es_tienda or es_cliente or es_admin %}
+          <li class="menu-secciones__separador" aria-hidden="true"></li>
+        {% endif %}
+        {% if es_tienda %}
+          <li class="nav-item">
+            <a class="nav-link nav-link--propio{% if ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' or ns == 'inventario' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:mis_productos' %}"><i class="bi bi-box-seam" aria-hidden="true"></i> Mis productos{% alertas_inventario tienda_actual as num_alertas %}{% if num_alertas %} <span class="badge rounded-pill insignia-alerta" title="Productos agotados o con stock bajo">{{ num_alertas }}<span class="visually-hidden"> alertas de stock</span></span>{% endif %}</a>
+          </li>
         {% endif %}
         {% if es_cliente %}
           <li class="nav-item">
-            <a class="nav-link{% if ns == 'favoritos' %} active" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}">Mis favoritos
+            <a class="nav-link nav-link--propio{% if ns == 'favoritos' %} active" aria-current="page{% endif %}" href="{% url 'favoritos:lista' %}"><i class="bi bi-heart" aria-hidden="true"></i> Mis favoritos
               {% if avisos_favoritos %}<span class="badge rounded-pill text-bg-danger" title="Favoritos con novedades">{{ avisos_favoritos }}</span>{% endif %}
             </a>
           </li>
         {% endif %}
         {% if es_admin %}
-          <li class="menu-secciones__separador" aria-hidden="true"></li>
           <li class="nav-item">
             <a class="nav-link nav-link--propio" href="{% url 'panel_admin' %}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Administración</a>
           </li>
@@ -120,8 +119,8 @@
   </div>
 </nav>
 {# Barra de categorías: las 5 con más movimiento (vistas + favoritos) y el botón con todas. #}
-{# No se muestra en el inicio de sesión, a las tiendas (guía «Carbón y oro») ni en la zona de trabajo (Mis productos e inventario). #}
-{% if vista == 'login' or es_tienda or ns == 'inventario' or ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' %}{% else %}
+{# No se muestra en el inicio de sesión ni en la zona de trabajo de la tienda (Mis productos e inventario). #}
+{% if vista == 'login' or ns == 'inventario' or ns == 'catalogo' and vista in 'mis_productos crear editar eliminar' %}{% else %}
 <nav class="barra-categorias" aria-label="Categorías">
   <div class="container barra-categorias__fila">
     <div class="dropdown">

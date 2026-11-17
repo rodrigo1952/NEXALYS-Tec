@@ -29,19 +29,13 @@ class ConsistenciaTests(BaseCatalogo):
         self.cliente = User.objects.create_user("cliente1", password="Clave#2026")
         self.cliente.groups.add(Group.objects.get_or_create(name="Cliente")[0])
 
-    def test_menu_del_cliente_con_favoritos_al_final_y_el_corazon(self):
-        # «Carbón y oro»: Inicio · Catálogo · Tiendas cercanas · Mis favoritos y, a la derecha, el corazón con la cantidad.
-        from favoritos.models import Favorito
-
-        Favorito.guardar(self.cliente, self.producto)
+    def test_menu_del_cliente_mismo_orden_y_favoritos_al_final(self):
         self.client.force_login(self.cliente)
         html = self.client.get(reverse("inicio")).content.decode()
         menu = html[html.index('class="navbar-nav menu-secciones'):]
         orden = [menu.index(f'href="{reverse(n)}"') for n in ("inicio", "catalogo:catalogo", "tiendas:cercanas", "favoritos:lista")]
         self.assertEqual(orden, sorted(orden))
-        self.assertIn('class="corazon-cabecera"', html)
-        self.assertIn('aria-label="Mis favoritos (1)"', html)
-        self.assertIn('<span class="corazon-cabecera__contador" aria-hidden="true">1</span>', html)
+        self.assertLess(menu.index("menu-secciones__separador"), orden[-1])
 
     def test_sin_emojis_en_las_paginas(self):
         self.client.force_login(self.cliente)
@@ -62,7 +56,8 @@ class ConsistenciaTests(BaseCatalogo):
 
     def test_iconos_de_linea_en_el_inicio(self):
         respuesta = self.client.get(reverse("inicio"))
-        self.assertContains(respuesta, '<i class="bi bi-star" aria-hidden="true"></i> Productos destacados')
+        # «Carbón y oro»: los títulos de sección llevan una raya dorada (CSS) en vez de ícono.
+        self.assertContains(respuesta, '<h2 class="titulo-seccion mb-0">Productos destacados</h2>')
         self.assertContains(respuesta, '<i class="bi bi-shop" aria-hidden="true"></i> <a')
 
     def test_tabla_de_mis_productos_dice_favoritos(self):

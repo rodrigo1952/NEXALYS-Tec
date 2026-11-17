@@ -34,18 +34,20 @@ class ZonaDeLaTiendaTests(TestCase):
         cliente.groups.add(Group.objects.get(name="Cliente"))
         self.assertRedirects(self.entrar("cliente1", "cliente"), reverse("inicio"), fetch_redirect_response=False)
 
-    def test_menu_de_la_tienda_empieza_por_mis_productos(self):
-        # «Carbón y oro»: Mis productos · Inicio · Catálogo (sin Tiendas cercanas ni barra de categorías).
+    def test_menu_mismo_orden_y_mis_productos_al_final(self):
+        # Lo común primero (Inicio · Catálogo · Tiendas cercanas) y, tras una línea, Mis productos.
         self.client.force_login(self.tienda.usuario)
         html = self.client.get(reverse("inicio")).content.decode()
-        menu = html[html.index('class="navbar-nav menu-secciones'):html.index("</ul>", html.index('class="navbar-nav menu-secciones'))]
-        mis = menu.index(f'href="{reverse("catalogo:mis_productos")}"')
+        menu = html[html.index('class="navbar-nav menu-secciones'):]
         inicio = menu.index(f'href="{reverse("inicio")}"')
         catalogo = menu.index(f'href="{reverse("catalogo:catalogo")}"')
-        self.assertLess(mis, inicio)
+        cercanas = menu.index(f'href="{reverse("tiendas:cercanas")}"')
+        separador = menu.index('class="menu-secciones__separador"')
+        mis = menu.index(f'href="{reverse("catalogo:mis_productos")}"')
         self.assertLess(inicio, catalogo)
-        self.assertNotIn(reverse("tiendas:cercanas"), menu)
-        self.assertNotIn('class="menu-secciones__separador"', menu)
+        self.assertLess(catalogo, cercanas)
+        self.assertLess(cercanas, separador)
+        self.assertLess(separador, mis)
 
     def test_sin_categorias_en_la_zona_de_trabajo(self):
         self.client.force_login(self.tienda.usuario)
@@ -55,8 +57,5 @@ class ZonaDeLaTiendaTests(TestCase):
                 respuesta = self.client.get(url)
                 self.assertEqual(respuesta.status_code, 200)
                 self.assertNotContains(respuesta, 'class="barra-categorias"')
-        # La tienda no tiene barra de categorías en ninguna página; el visitante y el cliente sí.
-        self.assertNotContains(self.client.get(reverse("inicio")), 'class="barra-categorias"')
-        self.client.logout()
         self.assertContains(self.client.get(reverse("inicio")), 'class="barra-categorias"')
         self.assertContains(self.client.get(reverse("catalogo:catalogo")), 'class="barra-categorias"')

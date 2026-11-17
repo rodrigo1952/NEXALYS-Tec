@@ -44,9 +44,9 @@ class CentroDeCuentaTests(TestCase):
         self.assertContains(respuesta, "Horario del local")
 
     def test_el_resto_de_la_pagina_sigue_igual(self):
-        # El inicio conserva la cabecera completa (con buscador; la tienda no tiene barra de categorías).
+        # El catálogo y el inicio conservan la cabecera completa.
         respuesta = self.client.get(reverse("inicio"))
-        self.assertContains(respuesta, 'id="buscar-menu"')
+        self.assertContains(respuesta, "barra-categorias")
         self.assertNotContains(respuesta, "centro-cuenta__menu")
 
     def test_ayuda_con_temas_y_privacidad_con_indice(self):

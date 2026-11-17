@@ -381,6 +381,8 @@
         estado.textContent = MENSAJES[motivo];
       });
     });
+    // Desde el Inicio («Usar mi ubicación», ?ubicacion=1): se pide la ubicación al llegar.
+    if (new URLSearchParams(location.search).get("ubicacion") === "1") boton.click();
   }
 
   // =================== Ubicación del local (Editar datos) ===================

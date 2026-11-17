@@ -1,37 +1,41 @@
 {% extends "base.html" %}
 {% block contenido %}
-<section class="portada-marca mb-4 mb-md-5">
-  <div class="portada-marca__texto">
-    <span class="portada-marca__etiqueta">Tiendas tecnológicas de Quillabamba</span>
-    <h1>Bienvenido a NEXALYS Tec</h1>
-    <p>Encuentra productos tecnológicos de las tiendas de tu ciudad y contáctalas directamente por WhatsApp.</p>
-    {# En el celular no hace falta: el buscador de la cabecera queda justo arriba. #}
-    <form method="get" action="{% url 'catalogo:catalogo' %}" class="d-none d-md-flex flex-wrap gap-2" role="search" style="max-width: 34rem">
-      <label for="buscar-portada" class="visually-hidden">Buscar productos</label>
-      <input id="buscar-portada" type="search" name="q" class="form-control form-control-lg flex-grow-1" style="min-width: 0; flex-basis: 14rem" placeholder="¿Qué estás buscando? Ej.: laptop, audífonos">
-      <button type="submit" class="btn btn-acento btn-lg">Buscar</button>
-    </form>
-    <div class="d-flex flex-wrap gap-2 portada-marca__botones">
-      <a href="{% url 'catalogo:catalogo' %}" class="btn btn-outline-light">Ver catálogo</a>
-      <a href="{% url 'tiendas:cercanas' %}" class="btn btn-outline-light"><i class="bi bi-geo-alt" aria-hidden="true"></i> Tiendas cercanas</a>
-      {% if user.is_authenticated %}
-        {% if es_tienda %}
-          <a href="{% url 'tiendas:panel' %}" class="btn btn-outline-light">Ir a mi tienda</a>
-        {% endif %}
-      {% else %}
-        <a href="{% url 'tiendas:registro' %}" class="btn btn-outline-light">¿Tienes una tienda? Regístrala</a>
-      {% endif %}
-    </div>
+{# Estilo «Carbón y oro»: sin portada; arriba, qué tiendas están abiertas ahora (tiendas/inicio.py). #}
+<section class="tiendas-inicio mb-4 mb-md-5" aria-labelledby="titulo-tiendas-inicio">
+  <span class="etiqueta-oro">Tiendas tecnológicas de Quillabamba</span>
+  <div class="tiendas-inicio__cabecera">
+    <h1 id="titulo-tiendas-inicio" class="tiendas-inicio__titulo">¿Qué tienda está abierta ahora?</h1>
+    <a href="{% url 'tiendas:cercanas' %}?ubicacion=1" class="btn btn-primary tiendas-inicio__ubicacion"><i class="bi bi-crosshair" aria-hidden="true"></i> Usar mi ubicación</a>
   </div>
-  <div class="portada-marca__dibujo">
-    {% include "_logo_portada.html" %}
-  </div>
+  {% if tiendas_inicio %}
+    <ul class="tiendas-inicio__lista">
+      {% for t in tiendas_inicio %}
+        <li class="tienda-inicio contexto-claro">
+          <div class="tienda-inicio__cabecera">
+            {% if t.tienda.logo %}<img src="{{ t.tienda.logo.url }}" alt="" class="tienda-inicio__logo">{% else %}<span class="tienda-inicio__logo tienda-inicio__logo--inicial" aria-hidden="true">{{ t.inicial }}</span>{% endif %}
+            <div class="min-w-0">
+              <a href="{% url 'tiendas:perfil' t.tienda.pk %}" class="tienda-inicio__nombre">{{ t.tienda.nombre }}</a>
+              <div class="tienda-inicio__direccion text-truncate">{{ t.tienda.direccion }}</div>
+            </div>
+          </div>
+          {% if t.estado %}<span class="estado-local {% if t.abierto %}estado-local--abierto{% else %}estado-local--cerrado{% endif %}">{{ t.estado }}</span>{% endif %}
+          <div class="tienda-inicio__botones">
+            <a href="{{ t.whatsapp }}" target="_blank" rel="noopener" class="btn btn-success"><i class="bi bi-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+            <a href="{% url 'tiendas:perfil' t.tienda.pk %}" class="btn btn-outline-primary">Ver tienda</a>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'tiendas:cercanas' %}" class="enlace-accion tiendas-inicio__todas">Ver todas las tiendas{% if total_tiendas > tiendas_inicio|length %} ({{ total_tiendas }}){% endif %}</a>
+  {% else %}
+    <p class="text-muted mb-0">Aún no hay tiendas activas.</p>
+  {% endif %}
 </section>
 
 {# Categorías con íconos: en el celular se deslizan de lado. #}
 {% if menu_categorias.todas %}
   <nav class="categorias-inicio mb-4 mb-md-5" aria-label="Categorías">
-    <h2 class="h5 mb-3">Categorías</h2>
+    <h2 class="titulo-seccion mb-3">Categorías</h2>
     <ul class="categorias-inicio__lista">
       {% for categoria in menu_categorias.todas %}
         <li><a href="{% url 'catalogo:catalogo' %}?categoria={{ categoria.pk }}" class="categorias-inicio__enlace">
@@ -44,8 +48,8 @@
 {% endif %}
 
 {% if destacados %}
-  <div class="d-flex justify-content-between align-items-baseline mb-3">
-    <h2 class="h5 mb-0"><i class="bi bi-star" aria-hidden="true"></i> Productos destacados</h2>
+  <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-1 column-gap-3 mb-3">
+    <h2 class="titulo-seccion mb-0">Productos destacados</h2>
     {% if total_destacados > destacados|length %}<a href="{% url 'catalogo:catalogo' %}?destacados=on" class="enlace-accion">Ver todos los destacados ({{ total_destacados }})</a>{% endif %}
   </div>
   <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 mb-5">
@@ -56,8 +60,8 @@
 {% endif %}
 
 {% if ofertas %}
-  <div class="d-flex justify-content-between align-items-baseline mb-3">
-    <h2 class="h5 mb-0"><i class="bi bi-tag" aria-hidden="true"></i> Ofertas</h2>
+  <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-1 column-gap-3 mb-3">
+    <h2 class="titulo-seccion mb-0">Ofertas</h2>
     <a href="{% url 'catalogo:catalogo' %}?solo_ofertas=on" class="enlace-accion">Ver todas las ofertas</a>
   </div>
   <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 mb-5">
@@ -68,11 +72,20 @@
 {% endif %}
 
 {% if recientes %}
-  <h2 class="h5 mb-3">Productos recientes</h2>
-  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3">
+  <h2 class="titulo-seccion mb-3">Productos recientes</h2>
+  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 mb-5">
     {% for producto in recientes %}
       <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
     {% endfor %}
   </div>
 {% endif %}
+
+{# Cómo funciona, en 3 pasos #}
+<section class="pasos-inicio" aria-label="Cómo funciona">
+  <ol class="pasos-inicio__lista">
+    <li><span class="pasos-inicio__numero" aria-hidden="true">1</span><div><strong>Elige una tienda</strong><span>Mira cuáles están abiertas y dónde quedan.</span></div></li>
+    <li><span class="pasos-inicio__numero" aria-hidden="true">2</span><div><strong>Revisa sus productos</strong><span>Precios, ofertas y fotos.</span></div></li>
+    <li><span class="pasos-inicio__numero" aria-hidden="true">3</span><div><strong>Escribe por WhatsApp</strong><span>Coordina tu compra directo.</span></div></li>
+  </ol>
+</section>
 {% endblock %}

@@ -23,16 +23,25 @@
   `Claude outputs/descargar_librerias.ps1`. QR con **segno 1.6.6** (en requirements).
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6` (variables `--nx-*` en `static/css/marca.css`).
 - **Estilo «Carbón y oro»** (nov 2026, guía y maquetas del usuario; solo las de fondo oscuro). Se hace por fases y el
-  usuario revisa cada una: 1) estilos base, encabezado y pie (HECHA); 2) Inicio y Catálogo; 3) Detalle, Tiendas
+  usuario revisa cada una: 1) estilos base, encabezado y pie (HECHA, con la revisión del 17 nov); 2) Inicio (HECHO)
+  y Catálogo; 3) Detalle, Tiendas
   cercanas y Perfil; 4) Login, Registro y Cuenta; 5) Favoritos; 6) Mis productos (Resumen, Productos, Ventas,
   Editar, Nota). Fondo carbón `#0E1218` con franjas y vetas doradas (`static/img/fondo-vetas.svg`, se repite cada
-  1200 px), oro `#C8A468`, contenido en tarjetas blancas (esquinas 18 px). **Contextos** (sección 99 de `marca.css`):
+  1200 px), oro `#C8A468`, contenido en cajas **gris perla `#E9EDF2`** (`--nx-caja`; el usuario no quiso blanco puro;
+  los campos, las fotos de productos y el cartel QR siguen blancos), esquinas 18 px. **Lo elegido va en dorado**
+  (pestañas `nav-pills`, periodos, chips, menú de arriba, menús laterales) y hay detalles dorados: `.titulo-seccion`
+  (raya dorada), `.etiqueta-oro`, borde dorado arriba de las cifras (`.kpi`). **Contextos** (sección 99 de `marca.css`):
   el texto, los enlaces y los botones cambian según estén sobre el fondo oscuro (blanco, cian, botón principal cian)
   o dentro de una caja blanca (azul marino, enlace `#0A6F89`, botón principal carbón). Las cajas blancas están en la
   lista «Contexto CLARO»; una caja blanca nueva lleva la clase `contexto-claro` y una oscura dentro de una blanca,
   `contexto-oscuro`. Botón dorado de la tienda: `btn-oro`. Encabezado según el rol: visitante (Inicio, Catálogo,
   Tiendas cercanas | Iniciar sesión, Registrarse, «Registrar mi tienda»), cliente (+ Mis favoritos y un corazón con
-  la cantidad de favoritos), tienda (Mis productos con las alertas de stock en amarillo, Inicio, Catálogo).
+  la cantidad de favoritos), tienda (el mismo orden de siempre y, tras una línea, Mis productos con las alertas de
+  stock en amarillo; el usuario NO quiso el orden de la guía «Mis productos primero»).
+  **Inicio** (como la maqueta, sin la portada azul): «¿Qué tienda está abierta ahora?» con hasta 6 tiendas, las
+  abiertas primero (`tiendas/inicio.py`), «Usar mi ubicación» (abre Tiendas cercanas con `?ubicacion=1` y pide la
+  ubicación sola) y «Ver todas las tiendas»; categorías oscuras con borde dorado; destacados, ofertas, recientes y
+  los 3 pasos. En el celular, tiendas y categorías se deslizan de lado.
   Pie `#0A0D12` con línea dorada y 4 columnas (2 en el celular): marca, Explorar, Para tiendas y Contacto (correo
   `CORREO_SOPORTE`, Ayuda, Privacidad y términos, Libro de Reclamaciones). Al imprimir, hoja blanca.
   **No se escribe `?v=` a mano**: en tu PC (DEBUG=True) `config/estaticos.py` (EstaticosConVersion) agrega solo
@@ -251,8 +260,8 @@
 - Tabla de Mis productos (`tabla-productos`): miniatura de la foto principal (48 px, `loading="lazy"`; ícono gris
   si no tiene), encabezado en mayúsculas pequeñas, columna «Favoritos» (antes «Guardado»), estados con íconos
   (ojo Publicado, ojo tachado Oculto, estrella Destacado, Agotado, Stock bajo) y «Editar» con lápiz.
-- **Menú según el rol** (ver «Carbón y oro»): la tienda ve primero «Mis productos»; el administrador, una línea y
-  «Administración» al final.
+- **Menú con el mismo orden para todos**: Inicio · Catálogo · Tiendas cercanas, una línea y lo propio de cada uno
+  («Mis productos», «Mis favoritos» o «Administración»).
 - **Sin emojis**: todo el sitio usa íconos de línea (Bootstrap Icons): estrella, etiqueta (oferta), tienda, etc.
   El corazón de favoritos (`boton-corazon`) es blanco con borde; marcado, azul marino con corazón cian.
 - **Sistema de botones** (`marca.css`): normales 46 px de alto y esquina de 12 px; `btn-sm` compactos (32 px).
@@ -386,7 +395,7 @@
   la imagen (ClipboardItem) y abre WhatsApp Web (o la app) para pegarla con Ctrl+V, Facebook abre el sharer con el
   enlace y deja la imagen copiada, Instagram descarga y abre instagram.com; «Más» = menú del sistema con la imagen
   o, si no se puede, la ventana de `_compartir.html` (acepta `etiqueta`, `icono` y `red`).
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **843 pruebas, OK**.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **848 pruebas, OK**.
 
 ## 7. Pendientes e ideas
 

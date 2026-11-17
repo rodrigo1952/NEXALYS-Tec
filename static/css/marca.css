@@ -1990,7 +1990,7 @@ body {
 .kpi, .lista-buscable__panel, .menu-compartir, .menu-movil, .menu-whatsapp, .numeros-tienda, .opcion-motivo,
 .opciones-derecho .form-check, .panel-cartel, .panel-consola, .perfil-tienda__datos, .perfil-tienda__horario,
 .tabla-consola, .tabla-productos tr.fila-producto, .tarjeta-cercana, .tarjeta-cuenta, .tarjeta-esqueleto, .tarjeta-foto,
-.editor-ubicacion--ampliado, .selector-icono__opcion, .visor__contenido, .atajo, .chip-filtro, .chip-rango, .categorias-inicio__enlace, .consola-cabecera__fecha, .indice-legal a {
+.editor-ubicacion--ampliado, .selector-icono__opcion, .visor__contenido, .atajo, .chip-filtro, .chip-rango, .consola-cabecera__fecha, .indice-legal a {
   --ctx-texto: var(--nx-oscuro); --ctx-suave: #3A4A5E;
   --ctx-enlace: var(--nx-acento-texto); --ctx-enlace-rgb: 10, 111, 137; --ctx-enlace-hover: var(--nx-oscuro); --ctx-enlace-hover-rgb: var(--nx-oscuro-rgb);
   --ctx-borde: var(--nx-borde);
@@ -2008,7 +2008,7 @@ body, .contexto-claro, .card, .modal-content, .dropdown-menu, .offcanvas, .popov
 .kpi, .lista-buscable__panel, .menu-compartir, .menu-movil, .menu-whatsapp, .numeros-tienda, .opcion-motivo,
 .opciones-derecho .form-check, .panel-cartel, .panel-consola, .perfil-tienda__datos, .perfil-tienda__horario,
 .tabla-consola, .tabla-productos tr.fila-producto, .tarjeta-cercana, .tarjeta-cuenta, .tarjeta-esqueleto, .tarjeta-foto,
-.editor-ubicacion--ampliado, .selector-icono__opcion, .visor__contenido, .atajo, .chip-filtro, .chip-rango, .categorias-inicio__enlace, .consola-cabecera__fecha, .indice-legal a {
+.editor-ubicacion--ampliado, .selector-icono__opcion, .visor__contenido, .atajo, .chip-filtro, .chip-rango, .consola-cabecera__fecha, .indice-legal a {
   --nx-texto: var(--ctx-texto);
   --nx-texto-suave: var(--ctx-suave);
   --bs-secondary-color: var(--ctx-suave);
@@ -2159,3 +2159,151 @@ body.pagina-ingreso { background: var(--nx-carbon) url("../img/fondo-vetas.svg")
 .ruta [aria-current] { color: var(--ctx-texto); }
 .ruta a:hover { color: var(--ctx-enlace); }
 .btn-outline-warning { --bs-btn-color: #B54708; --bs-btn-border-color: #E8A23A; --bs-btn-hover-bg: #FFF4E0; --bs-btn-hover-color: #93370D; --bs-btn-hover-border-color: #B54708; }
+
+/* =====================================================================
+   99b. «Carbón y oro», revisión del usuario (17 nov 2026)
+   - Cajas en gris perla (#E9EDF2) en vez de blanco puro; los campos de formulario siguen blancos.
+   - Lo elegido va en dorado: pestañas, periodos, chips, menú de arriba y menús laterales.
+   - Detalles dorados en títulos de sección y en el borde superior de las tarjetas de cifras.
+   - Inicio como la maqueta: «¿Qué tienda está abierta ahora?», categorías oscuras y 3 pasos.
+   ===================================================================== */
+:root { --nx-caja: #E9EDF2; --nx-caja-borde: #D5DCE5; --nx-oro-texto: #8A6A2F; }
+
+/* ---------- Cajas gris perla ---------- */
+.card { --bs-card-bg: var(--nx-caja); }
+.table { --bs-table-bg: var(--nx-caja); --bs-table-hover-bg: #DDE3EB; }
+.list-group { --bs-list-group-bg: var(--nx-caja); }
+.modal-content { --bs-modal-bg: var(--nx-caja); }
+.dropdown-menu { --bs-dropdown-bg: var(--nx-caja); --bs-dropdown-link-hover-bg: #DCE2EA; }
+.offcanvas { --bs-offcanvas-bg: var(--nx-caja); }
+.menu-movil, .acceso-cuenta, .aviso-whatsapp, .barra-catalogo, .barra-guardar, .catalogo-vacio, .centro-cuenta__menu,
+.error-caja, .filtros, .filtros-consola, .hoja-reclamo, .ingreso__tarjeta, .kpi, .lista-buscable__panel, .menu-compartir,
+.menu-whatsapp, .numeros-tienda, .panel-cartel, .panel-consola, .perfil-tienda__datos, .perfil-tienda__horario,
+.tabla-consola, .tarjeta-cercana, .tarjeta-cuenta:not(.tarjeta-cuenta--contacto), .tarjeta-esqueleto,
+.editor-ubicacion--ampliado, .consola-cabecera__fecha, .indice-legal a, .opciones-derecho .form-check {
+  background-color: var(--nx-caja);
+}
+.tabla-productos tr.fila-producto > * { --bs-table-bg: var(--nx-caja); }
+.filtros, .panel-consola, .tabla-consola, .kpi, .tarjeta-cuenta:not(.tarjeta-cuenta--contacto), .tarjeta-cercana,
+.perfil-tienda__datos, .perfil-tienda__horario, .hoja-reclamo, .numeros-tienda { border-color: var(--nx-caja-borde); }
+/* La foto de un producto conserva su fondo blanco (las fotos de las tiendas vienen sobre blanco). */
+.tarjeta-producto__foto, .foto-producto { background: #FFFFFF; }
+/* El cartel del QR se imprime: sigue blanco. */
+.cartel-qr { background: #FFFFFF; }
+
+/* ---------- Lo elegido, en dorado ---------- */
+.nav-pills {
+  --bs-nav-pills-link-active-bg: var(--nx-oro); --bs-nav-pills-link-active-color: var(--nx-carbon);
+  --bs-nav-pills-border-radius: 10px;
+}
+.nav-pills .nav-link.active { font-weight: 700; }
+.nav-pills.border-bottom { border-bottom-color: rgba(var(--nx-oro-rgb), .35) !important; }
+.navbar-marca .nav-link.active { color: var(--nx-oro-claro); border-bottom-color: var(--nx-oro); }
+.navbar-marca .nav-link:hover, .navbar-marca .nav-link:focus { color: var(--nx-oro-claro); }
+.barra-categorias__enlace.activa { color: var(--nx-oro-claro); border-bottom-color: var(--nx-oro); }
+.barra-categorias__enlace:hover, .barra-categorias__enlace:focus-visible { color: var(--nx-oro-claro); border-bottom-color: var(--nx-oro); }
+.filtro-rapido.activo, .chip-rango.activo, .vista-boton.activo, .capas-mapa__boton[aria-pressed="true"],
+.dia-chip__casilla:checked + .dia-chip__corto {
+  background: var(--nx-oro); border-color: var(--nx-oro); color: var(--nx-carbon);
+}
+.filtro-rapido.activo .contador { background: rgba(var(--nx-carbon-rgb), .14); color: var(--nx-carbon); }
+.chip-rango.activo .chip-rango__cantidad { color: rgba(var(--nx-carbon-rgb), .7); }
+.dia-chip__casilla:checked + .dia-chip__corto::before { color: var(--nx-carbon); }
+.filtro-rapido:hover, .chip-rango:hover { border-color: var(--nx-oro); }
+.centro-cuenta__enlaces a.activo { background: rgba(var(--nx-oro-rgb), .2); border-left-color: var(--nx-oro); }
+.centro-cuenta__enlaces a.activo .bi:first-child { color: var(--nx-oro-texto); }
+@media (max-width: 991.98px) { .centro-cuenta__enlaces a.activo { border-bottom-color: var(--nx-oro); } }
+.menu-movil__enlace.activo { background: rgba(var(--nx-oro-rgb), .22); box-shadow: inset 3px 0 0 var(--nx-oro); }
+.consola__nav a.activo { background: rgba(var(--nx-oro-rgb), .16); }
+.consola__nav a.activo::before { background: var(--nx-oro); }
+.consola__nav a.activo .bi { color: var(--nx-oro-claro); }
+.consola-cabecera__antetitulo { color: var(--nx-oro-claro); }
+
+/* ---------- Detalles dorados ---------- */
+.titulo-seccion { display: flex; align-items: center; gap: .6rem; font-size: 1.35rem; font-weight: 700; }
+.titulo-seccion::before { content: ""; flex: none; width: 4px; height: 1.15em; border-radius: 2px; background: var(--nx-oro); }
+.kpi, .numeros-tienda { border-top: 4px solid var(--nx-oro) !important; }
+.etiqueta-oro {
+  display: inline-block; padding: .3rem .8rem; border: 1px solid rgba(var(--nx-oro-rgb), .8); border-radius: 999px;
+  color: var(--nx-oro-claro); font-size: .82rem; font-weight: 600;
+}
+.enlace-accion { color: var(--ctx-enlace); }
+
+/* ---------- Inicio: ¿Qué tienda está abierta ahora? ---------- */
+.tiendas-inicio__cabecera {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; margin: .75rem 0 1.25rem;
+}
+.tiendas-inicio__titulo { margin: 0; font-size: clamp(1.75rem, 4.2vw, 3rem); font-weight: 700; line-height: 1.1; color: #FFFFFF; }
+.tiendas-inicio__lista {
+  display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); margin: 0; padding: 0; list-style: none;
+}
+.tienda-inicio {
+  display: flex; flex-direction: column; gap: .8rem; padding: 1.15rem; border-radius: var(--nx-radio-tarjeta);
+  background: var(--nx-caja); border-top: 4px solid var(--nx-oro);
+}
+.tienda-inicio__cabecera { display: flex; align-items: center; gap: .85rem; min-width: 0; }
+.tienda-inicio__logo {
+  flex: none; width: 54px; height: 54px; border-radius: 50%; object-fit: cover; background: #FFFFFF;
+  box-shadow: 0 0 0 3px var(--nx-acento);
+}
+.tienda-inicio__logo--inicial {
+  display: inline-flex; align-items: center; justify-content: center; background: var(--nx-oscuro); color: #FFFFFF;
+  font-size: 1.35rem; font-weight: 700;
+}
+.tienda-inicio__nombre { display: block; color: var(--nx-oscuro); font-size: 1.1rem; font-weight: 700; text-decoration: none; }
+.tienda-inicio__nombre:hover { text-decoration: underline; }
+.tienda-inicio__direccion { color: var(--ctx-suave); font-size: .88rem; }
+.estado-local { align-self: flex-start; padding: .3rem .75rem; border-radius: 999px; font-size: .85rem; font-weight: 600; }
+.estado-local--abierto { background: var(--nx-verde-estado-fondo); color: var(--nx-verde-estado); }
+.estado-local--cerrado { background: var(--nx-rojo-estado-fondo); color: var(--nx-rojo-estado); }
+.tienda-inicio__botones { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: auto; }
+.tiendas-inicio__todas { display: inline-block; margin-top: 1rem; }
+@media (max-width: 575.98px) {
+  .tiendas-inicio__ubicacion { width: 100%; }
+  .tiendas-inicio__lista { grid-template-columns: 1fr; }
+}
+
+/* ---------- Inicio: categorías oscuras con borde dorado ---------- */
+.categorias-inicio__lista { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: .75rem; }
+.categorias-inicio__enlace {
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(var(--nx-oro-rgb), .45); border-radius: 14px;
+  color: #FFFFFF; font-weight: 600; padding: 1rem .5rem;
+}
+.categorias-inicio__enlace:hover, .categorias-inicio__enlace:focus-visible {
+  background: rgba(var(--nx-oro-rgb), .1); border-color: var(--nx-oro); color: #FFFFFF;
+}
+.categorias-inicio__icono { width: auto; height: auto; background: none; color: var(--nx-acento); font-size: 1.5rem; }
+@media (max-width: 767.98px) {
+  .categorias-inicio__lista li { flex: 0 0 104px; }
+  .categorias-inicio__enlace { padding: .8rem .35rem; }
+  .categorias-inicio__icono { width: auto; height: auto; font-size: 1.3rem; }
+}
+
+/* ---------- Inicio: 3 pasos ---------- */
+.pasos-inicio {
+  padding: 1.25rem 1.5rem; border: 1px solid rgba(var(--nx-oro-rgb), .45); border-radius: var(--nx-radio-tarjeta);
+  background: rgba(255, 255, 255, .03);
+}
+.pasos-inicio__lista { display: grid; gap: 1rem 2rem; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin: 0; padding: 0; list-style: none; }
+.pasos-inicio__lista li { display: flex; align-items: flex-start; gap: .9rem; }
+.pasos-inicio__lista strong { display: block; color: #FFFFFF; }
+.pasos-inicio__lista span:not(.pasos-inicio__numero) { color: var(--ctx-suave); font-size: .92rem; }
+.pasos-inicio__numero {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px;
+  border: 2px solid var(--nx-oro); border-radius: 50%; color: var(--nx-oro-claro); font-weight: 700;
+}
+
+/* Al imprimir, las cajas vuelven a blanco */
+@media print {
+  .card, .table, .kpi, .tarjeta-cuenta, .panel-consola, .tabla-consola { --bs-card-bg: #fff; --bs-table-bg: #fff; background: #fff !important; }
+}
+@media (max-width: 575.98px) {
+  .titulo-seccion { font-size: 1.2rem; }
+  /* Tiendas del inicio: fila que se desliza de lado (se ve el borde de la siguiente) */
+  .tiendas-inicio__lista {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: .75rem;
+    margin-right: calc(var(--bs-gutter-x) * -.5); padding-right: calc(var(--bs-gutter-x) * .5); padding-bottom: .25rem;
+  }
+  .tiendas-inicio__lista::-webkit-scrollbar { display: none; }
+  .tienda-inicio { flex: 0 0 86%; scroll-snap-align: start; }
+}
