@@ -9,7 +9,7 @@ Cada página llena: icono, codigo, titulo_error, mensaje y acciones.
 {% block cabecera %}
 <header class="cabecera-error">
   <div class="container d-flex align-items-center justify-content-between gap-3">
-    <a class="navbar-brand" href="{% url 'inicio' %}" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" %}</a>
+    <a class="navbar-brand" href="{% url 'inicio' %}" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" with caja=True %}</a>
     {% if user.is_authenticated %}<span class="cabecera-error__cuenta">{% include "_avatar.html" %}<span class="d-none d-sm-inline">{{ user.username }}</span></span>{% endif %}
   </div>
 </header>

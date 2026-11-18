@@ -2,6 +2,8 @@
  * Letras de NEXALYS Tec dentro del proyecto (antes venían de Google Fonts).
  * Space Grotesk (variable, pesos 300 a 700) y Lilita One, de Fontsource. Licencia SIL Open Font License 1.1
  * (ver LICENSE-space-grotesk y LICENSE-lilita-one). «latin» trae las tildes, la ñ, ¿ y ¡.
+ * Inter (pesos 400, 500, 600 y 700) para los textos del diseño celeste: versión reducida a letras latinas,
+ * licencia SIL Open Font License 1.1 (ver LICENSE-inter).
  */
 @font-face {
   font-family: "Space Grotesk"; font-style: normal; font-display: swap; font-weight: 300 700;
@@ -22,4 +24,20 @@
   font-family: "Lilita One"; font-style: normal; font-display: swap; font-weight: 400;
   src: url("lilita-one-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter"; font-style: normal; font-display: swap; font-weight: 400;
+  src: url("inter-400.woff") format("woff");
+}
+@font-face {
+  font-family: "Inter"; font-style: normal; font-display: swap; font-weight: 500;
+  src: url("inter-500.woff") format("woff");
+}
+@font-face {
+  font-family: "Inter"; font-style: normal; font-display: swap; font-weight: 600;
+  src: url("inter-600.woff") format("woff");
+}
+@font-face {
+  font-family: "Inter"; font-style: normal; font-display: swap; font-weight: 700;
+  src: url("inter-700.woff") format("woff");
 }

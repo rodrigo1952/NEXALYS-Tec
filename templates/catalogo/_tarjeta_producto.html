@@ -1,30 +1,37 @@
-{% load miniaturas %}{% comment %}
-Tarjeta de producto. Toda la tarjeta lleva al detalle (el nombre usa «stretched-link»);
-el corazón de favoritos y el enlace de la tienda siguen funcionando aparte.
+{% load miniaturas whatsapp %}{% comment %}
+Tarjeta de producto (diseño celeste). Toda la tarjeta lleva al detalle (el nombre usa «stretched-link»);
+el corazón de favoritos, el enlace de la tienda y el botón de WhatsApp funcionan aparte.
+- Etiqueta de color con la marca (chip-marca--<marca>, colores en marca.css) y el descuento sobre la foto.
+- Agotado: foto más clara, etiqueta «Agotado» y el botón pregunta «¿Cuándo llega?».
+- En el celular el botón dice solo «WhatsApp».
 {% endcomment %}
-<div class="card h-100 shadow-sm tarjeta-producto">
+<div class="card h-100 tarjeta-producto{% if producto.agotado %} tarjeta-producto--agotada{% endif %}">
   {% include "favoritos/_boton_corazon.html" %}
   {% if producto.en_oferta %}
-    <span class="badge text-bg-danger position-absolute top-0 start-0 m-2" style="z-index:2">Oferta</span>
+    <span class="tarjeta-producto__descuento">-{{ producto.porcentaje_descuento }}%</span>
   {% endif %}
   <div class="tarjeta-producto__foto">
     {% if producto.imagen %}
-      <img src="{{ producto.imagen|miniatura }}" class="card-img-top foto-producto p-2" alt="{{ producto.nombre }}" loading="lazy">
+      <img src="{{ producto.imagen|miniatura }}" class="card-img-top foto-producto" alt="{{ producto.nombre }}" loading="lazy">
     {% else %}
       <div class="foto-vacia card-img-top"><i class="bi bi-box-seam" aria-hidden="true"></i></div>
     {% endif %}
+    {% if producto.agotado %}<span class="tarjeta-producto__agotado">Agotado</span>{% endif %}
   </div>
   <div class="card-body d-flex flex-column">
-    <small class="text-muted">{{ producto.marca }} · {{ producto.categoria }}</small>
-    <h3 class="h6 card-title mt-1"><a href="{% url 'catalogo:detalle' producto.pk %}" class="tarjeta-producto__nombre stretched-link">{{ producto.nombre }}</a></h3>
+    {% if producto.marca %}<span class="chip-marca chip-marca--{{ producto.marca.nombre|slugify }}">{{ producto.marca }}</span>{% endif %}
+    <small class="tarjeta-producto__categoria">{{ producto.categoria }}</small>
+    <h3 class="h6 card-title"><a href="{% url 'catalogo:detalle' producto.pk %}" class="tarjeta-producto__nombre stretched-link">{{ producto.nombre }}</a></h3>
     {% if producto.coincide_descripcion %}
       {# Solo al buscar: la palabra no está en el nombre, sino en la descripción del producto. #}
       <small class="text-muted fst-italic mb-1">Coincide con sus características</small>
     {% endif %}
-    <p class="fs-5 mb-1">{% include "catalogo/_precio.html" %}</p>
-    {% if producto.agotado %}
-      <span class="badge text-bg-secondary align-self-start mb-2">Agotado</span>
-    {% endif %}
+    <p class="tarjeta-producto__precio mb-0">{% include "catalogo/_precio.html" %}</p>
     <small class="text-muted mt-auto tarjeta-producto__tienda"><i class="bi bi-shop" aria-hidden="true"></i> <a href="{% url 'tiendas:perfil' producto.tienda.pk %}" class="link-secondary">{{ producto.tienda }}</a></small>
+    <a href="{% whatsapp_producto producto %}" target="_blank" rel="noopener" class="btn {% if producto.agotado %}btn-wa-borde{% else %}btn-wa{% endif %} tarjeta-producto__whatsapp"
+       aria-label="{% if producto.agotado %}Preguntar por WhatsApp cuándo llega {{ producto.nombre }}{% else %}Consultar por WhatsApp: {{ producto.nombre }}{% endif %}">
+      <i class="bi bi-whatsapp" aria-hidden="true"></i>
+      <span>{% if producto.agotado %}¿Cuándo llega?{% else %}<span class="d-none d-sm-inline">Consultar por </span>WhatsApp{% endif %}</span>
+    </a>
   </div>
 </div>

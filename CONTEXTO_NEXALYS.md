@@ -22,41 +22,49 @@
   **Esri** y la búsqueda de calles de **Nominatim**; los tres están permitidos en `SECURE_CSP`). Se descargaron con
   `Claude outputs/descargar_librerias.ps1`. QR con **segno 1.6.6** (en requirements).
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6` (variables `--nx-*` en `static/css/marca.css`).
-- **Estilo «Carbón y oro»** (nov 2026, guía y maquetas del usuario; solo las de fondo oscuro). Se hace por fases y el
-  usuario revisa cada una: 1) estilos base, encabezado y pie (HECHA, con la revisión del 17 nov); 2) Inicio (HECHO)
-  y Catálogo; 3) Detalle, Tiendas
-  cercanas y Perfil; 4) Login, Registro y Cuenta; 5) Favoritos; 6) Mis productos (Resumen, Productos, Ventas,
-  Editar, Nota). Fondo carbón `#0E1218` con franjas y vetas doradas (`static/img/fondo-vetas.svg`, se repite cada
-  1200 px), oro `#C8A468`, contenido en cajas **gris perla `#E9EDF2`** (`--nx-caja`; el usuario no quiso blanco puro;
-  los campos, las fotos de productos y el cartel QR siguen blancos), esquinas 18 px. **Lo elegido va en dorado**
-  (pestañas `nav-pills`, periodos, chips, menú de arriba, menús laterales) y hay detalles dorados: `.titulo-seccion`
-  (raya dorada), `.etiqueta-oro`, borde dorado arriba de las cifras (`.kpi`). **Contextos** (sección 99 de `marca.css`):
-  el texto, los enlaces y los botones cambian según estén sobre el fondo oscuro (blanco, cian, botón principal cian)
-  o dentro de una caja blanca (azul marino, enlace `#0A6F89`, botón principal carbón). Las cajas blancas están en la
-  lista «Contexto CLARO»; una caja blanca nueva lleva la clase `contexto-claro` y una oscura dentro de una blanca,
-  `contexto-oscuro`. Botón dorado de la tienda: `btn-oro`. Encabezado según el rol: visitante (Inicio, Catálogo,
-  Tiendas cercanas | Iniciar sesión, Registrarse, «Registrar mi tienda»), cliente (+ Mis favoritos y un corazón con
-  la cantidad de favoritos), tienda (el mismo orden de siempre y, tras una línea, Mis productos con las alertas de
-  stock en amarillo; el usuario NO quiso el orden de la guía «Mis productos primero»).
-  **Inicio** (como la maqueta, sin la portada azul): «¿Qué tienda está abierta ahora?» con hasta 6 tiendas, las
-  abiertas primero (`tiendas/inicio.py`), «Usar mi ubicación» (abre Tiendas cercanas con `?ubicacion=1` y pide la
-  ubicación sola) y «Ver todas las tiendas»; categorías oscuras con borde dorado; destacados, ofertas, recientes y
-  los 3 pasos. En el celular, tiendas y categorías se deslizan de lado. La tarjeta de cada tienda es oscura con
-  borde cian, 4 por fila, y **toda la tarjeta lleva a su perfil** (sin botones WhatsApp ni Ver tienda, a pedido
-  del usuario): hasta 3 etiquetas, 3 productos con stock y precio (destacados primero) y «Abierto ahora · cierra…».
+- **Diseño celeste** (nov 2026; reemplazó a «Carbón y oro», que ahora SOLO queda en la consola del administrador).
+  Se aplica por fases y el usuario revisa cada una: 1) estilos base, cabecera, pie e Inicio (HECHA, falta su revisión);
+  2) Catálogo y Detalle; 3) Perfil de la tienda y Tiendas cercanas; 4) Login, Registro y Cuenta; 5) Favoritos;
+  6) Mis productos (Resumen, Productos, Ventas, Editar). La vista previa aprobada está en el lienzo de diseño
+  «NEXALYS Tec — Vista previa del diseño celeste» y en `Claude outputs/NEXALYS_Tec_Diseno_Celeste.pdf`.
+  CSS: sección **100** de `marca.css` (todas sus reglas llevan delante `body:not(.consola-cuerpo)`, así la consola no
+  cambia); la sección **99** es «Carbón y oro» con `.consola-cuerpo` delante (solo la consola). Fondo celeste muy claro
+  con manchas suaves (`.fondo-marca::before/::after`), tarjetas blancas y paneles de vidrio (`.panel-vidrio`: blanco
+  translúcido con desenfoque), botones azules con degradado (`--cel-grad`), esquinas de 14 a 22 px. Títulos y precios
+  en Space Grotesk; textos en **Inter** (`static/vendor/fuentes/inter-400/500/600/700.woff`, reducida a letras latinas).
+  Variables `--cel-*`. El fondo de la página es contexto CLARO; las cajas oscuras (franja del Inicio, cabecera del menú
+  del celular) usan `contexto-oscuro`. Botones nuevos: `btn-claro` (celeste suave), `btn-wa` (WhatsApp suave),
+  `btn-wa-borde` (¿Cuándo llega?) y `btn-pildora` («Ver todos … →»). Logo: `{% include "_logo.html" with caja=True %}`
+  (la N blanca en un cuadro azul con degradado; «Tec» en azul, sin punto) en la cabecera y el pie.
+  **Cabecera**: logo, buscador blanco redondeado con lupa y botón «Buscar», corazón con la cantidad (cliente) y la cuenta
+  en una píldora blanca; el visitante ve un círculo con la persona y, en la segunda fila a la derecha, «Iniciar sesión»,
+  «Registrarse» y «Registrar mi tienda» (`.menu-acceso`). Secciones con íconos (casa, cuadrícula, ubicación); la elegida
+  en una píldora blanca con texto azul. Barra de categorías en píldoras suaves.
+  **Tarjeta de producto** (`catalogo/_tarjeta_producto.html`): etiqueta de la marca con su color
+  (`chip-marca--<marca con slugify>`, colores en marca.css; las demás en azul marino), descuento «-20%» sobre la foto,
+  precio grande en azul con el anterior tachado delante, tienda y botón «Consultar por WhatsApp» (en el celular solo
+  «WhatsApp»; agotado: «¿Cuándo llega?» con borde verde y la foto más clara). El botón está por encima del enlace que
+  cubre la tarjeta (z-index 2).
+  **Inicio** (como la vista previa): panel de Categorías (primero), «¿Qué tienda está abierta ahora?» con la fecha y
+  hora de Perú debajo («Martes 17 de noviembre · 6:52 p. m.», `tiendas.inicio.fecha_y_hora`), «Usar mi ubicación» y
+  «Ver todas las tiendas (N) →»; tarjetas de tienda de vidrio, 3 por fila: logo (o inicial en un círculo de color según
+  el último dígito del id, `tienda-inicio__logo--c0…c9`), nombre, estado con punto verde/ámbar, etiquetas, 3 productos
+  con precio y la dirección abajo; toda la tarjeta lleva al perfil. Luego destacados, ofertas y recientes con
+  píldoras «Ver todos…», «Así funciona NEXALYS Tec» (Busca · Compara · Escribe por WhatsApp) y la franja azul
+  «¿Tienes una tienda de tecnología en Quillabamba?» (no la ven las tiendas ni el administrador).
 - **Lo que hace distinta a cada tienda** (`tiendas/etiquetas.py`, migración `tiendas/0009`): frase corta `lema`
-  (30 letras, dorada), servicios que marca la tienda en «Editar datos» (`repara_celulares`, `repara_computadoras`,
-  `instala_camaras_redes`, `impresoras_tintas` + `otro_servicio` de texto libre, 40 letras; cian) y
+  (30 letras, azul con borde), servicios que marca la tienda en «Editar datos» (`repara_celulares`, `repara_computadoras`,
+  `instala_camaras_redes`, `impresoras_tintas` + `otro_servicio` de texto libre, 40 letras; celeste) y
   **especialidades automáticas** (grises): categorías con ≥ 2 productos publicados y ≥ 30 % de su catálogo, máx. 2,
   sin «Otros». Se ven en el Inicio (máx. 3), en el perfil, en «Datos de mi tienda» y en Tiendas cercanas, que tiene
   filtros `?servicio=<campo>` y `?especialidad=<id de categoría>` (solo aparecen los que alguna tienda tiene).
-  Pie `#0A0D12` con línea dorada y 4 columnas (2 en el celular): marca, Explorar, Para tiendas y Contacto (correo
+  Pie blanco translúcido con el logo y 4 columnas (2 en el celular): marca, Explorar, Para tiendas y Contacto (correo
   `CORREO_SOPORTE`, Ayuda, Privacidad y términos, Libro de Reclamaciones). Al imprimir, hoja blanca.
   **No se escribe `?v=` a mano**: en tu PC (DEBUG=True) `config/estaticos.py` (EstaticosConVersion) agrega solo
   `?v=<fecha del archivo>`; en el servidor `ManifestStaticFilesStorage` + `collectstatic` ponen la huella al nombre
   (`STATIC_ROOT = staticfiles/`, fuera de git). `requirements.txt` con versiones exactas (pillow 12.3.0, openpyxl 3.1.5).
   Tarjetas, campos de formulario y **filas de todas las tablas en blanco** en todo el sitio (el fondo de la página
-  es carbón); al enfocar un campo, borde y brillo cian; al pasar el mouse por una fila, celeste muy suave.
+  es celeste muy claro); al enfocar un campo, borde y brillo azul; al pasar el mouse por una fila, celeste muy suave.
 - **Datos secretos en `.env`** (junto a `manage.py`, NO va a GitHub; modelo en `.env.example`, lo lee
   `config/entorno.py`). Lo crea `python config/crear_env.py` (o `--produccion`). Datos: `SECRET_KEY`, `DEBUG`
   (si falta = False), `ALLOWED_HOSTS`, `SITIO_URL` (enlaces completos para compartir), `DJANGO_ADMIN_URL`
@@ -403,7 +411,8 @@
   la imagen (ClipboardItem) y abre WhatsApp Web (o la app) para pegarla con Ctrl+V, Facebook abre el sharer con el
   enlace y deja la imagen copiada, Instagram descarga y abre instagram.com; «Más» = menú del sistema con la imagen
   o, si no se puede, la ventana de `_compartir.html` (acepta `etiqueta`, `icono` y `red`).
-- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **868 pruebas, OK**.
+- Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **868 pruebas, OK** (antes del
+  diseño celeste; sus pruebas están en `cuentas/test_celeste.py`, que reemplazó a `cuentas/test_carbon_oro.py`).
 
 ## 7. Pendientes e ideas
 

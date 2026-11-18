@@ -1,5 +1,5 @@
 """
-Bloque «¿Qué tienda está abierta ahora?» del Inicio (estilo «Carbón y oro», nov 2026).
+Bloque «¿Qué tienda está abierta ahora?» del Inicio (diseño celeste, nov 2026).
 
 Hasta 6 tiendas activas: primero las que tienen el local abierto, luego las cerradas o en refrigerio y al final
 las que no registraron su horario; dentro de cada grupo, de la A a la Z. El resto está en «Tiendas cercanas».
@@ -9,9 +9,13 @@ Toda la tarjeta lleva al perfil de la tienda (ahí están WhatsApp, Cómo llegar
 
 import unicodedata
 
-from .etiquetas import especialidades_por_tienda, etiquetas
-from .models import Tienda
+from django.utils import timezone
 
+from .etiquetas import especialidades_por_tienda, etiquetas
+from .models import NOMBRES_DIAS, Tienda, hora_12
+
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+         "noviembre", "diciembre"]
 LIMITE_INICIO = 6
 PRODUCTOS_POR_TIENDA = 3
 ETIQUETAS_POR_TIENDA = 3
@@ -30,6 +34,12 @@ def etiqueta_estado(estado):
     if estado["refrigerio"]:
         return f"En refrigerio · {_primera_minuscula(estado['detalle'])}"
     return f"Cerrado · {_primera_minuscula(estado['detalle'])}"
+
+
+def fecha_y_hora(ahora=None):
+    """Bajo el título del Inicio: «Martes 17 de noviembre · 6:52 p. m.» (hora de Perú)."""
+    ahora = timezone.localtime(ahora)
+    return f"{NOMBRES_DIAS[ahora.weekday()]} {ahora.day} de {MESES[ahora.month - 1]} · {hora_12(ahora)}"
 
 
 def _clave_nombre(nombre):

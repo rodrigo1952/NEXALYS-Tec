@@ -56,7 +56,7 @@ class ConsistenciaTests(BaseCatalogo):
 
     def test_iconos_de_linea_en_el_inicio(self):
         respuesta = self.client.get(reverse("inicio"))
-        # «Carbón y oro»: los títulos de sección llevan una raya dorada (CSS) en vez de ícono.
+        # Diseño celeste: los títulos de sección llevan una raya azul (CSS) en vez de ícono.
         self.assertContains(respuesta, '<h2 class="titulo-seccion mb-0">Productos destacados</h2>')
         self.assertContains(respuesta, '<i class="bi bi-shop" aria-hidden="true"></i> <a')
 

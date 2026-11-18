@@ -49,17 +49,20 @@
 <header class="cabecera-marca" id="cabecera">
 <nav class="navbar navbar-expand-lg navbar-dark navbar-marca" aria-label="Menú principal">
   <div class="container flex-wrap">
-    <a class="navbar-brand" href="{% url 'inicio' %}" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" %}</a>
+    <a class="navbar-brand" href="{% url 'inicio' %}" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" with caja=True %}</a>
 
     {# Buscador del catálogo: en computadora va al centro; en el celular baja a su propia fila. #}
     {# En la página de inicio de sesión el menú es más simple: sin buscador. #}
     {% if vista != 'login' %}
+    {# Diseño celeste: barra blanca redondeada con la lupa adentro y el botón «Buscar» a la derecha. #}
     <form method="get" action="{% url 'catalogo:catalogo' %}" role="search" class="buscador-menu order-2 order-lg-0">
       <label for="buscar-menu" class="visually-hidden">Buscar productos</label>
-      <input id="buscar-menu" type="search" name="q" class="form-control" placeholder="¿Qué estás buscando hoy?"
+      <svg class="buscador-menu__lupa" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="buscar-menu" type="search" name="q" class="form-control" placeholder="Buscar productos..."
              value="{% if ns == 'catalogo' and vista == 'catalogo' %}{{ request.GET.q }}{% endif %}" autocomplete="off">
       <button type="submit" class="btn btn-acento" aria-label="Buscar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <svg class="d-lg-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="d-none d-lg-inline" aria-hidden="true">Buscar</span>
       </button>
     </form>
     {% endif %}
@@ -84,15 +87,15 @@
     {# Segunda fila: las secciones según el tipo de usuario. En el celular se abren con ☰. #}
     <div class="collapse navbar-collapse menu-fila order-3 order-lg-0" id="menu">
       <ul class="navbar-nav menu-secciones me-auto">
-        {# Mismo orden para todos: primero lo común y, después de una línea dorada, lo propio de cada uno. #}
+        {# Mismo orden para todos: primero lo común y, después de una línea, lo propio de cada uno. #}
         <li class="nav-item">
-          <a class="nav-link{% if not ns and vista == 'inicio' %} active" aria-current="page{% endif %}" href="{% url 'inicio' %}">Inicio</a>
+          <a class="nav-link{% if not ns and vista == 'inicio' %} active" aria-current="page{% endif %}" href="{% url 'inicio' %}"><i class="bi bi-house" aria-hidden="true"></i> Inicio</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link{% if ns == 'catalogo' and vista == 'catalogo' or ns == 'catalogo' and vista == 'detalle' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}">Catálogo</a>
+          <a class="nav-link{% if ns == 'catalogo' and vista == 'catalogo' or ns == 'catalogo' and vista == 'detalle' %} active" aria-current="page{% endif %}" href="{% url 'catalogo:catalogo' %}"><i class="bi bi-grid" aria-hidden="true"></i> Catálogo</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link{% if ns == 'tiendas' and vista == 'cercanas' %} active" aria-current="page{% endif %}" href="{% url 'tiendas:cercanas' %}">Tiendas cercanas</a>
+          <a class="nav-link{% if ns == 'tiendas' and vista == 'cercanas' %} active" aria-current="page{% endif %}" href="{% url 'tiendas:cercanas' %}"><i class="bi bi-geo-alt" aria-hidden="true"></i> Tiendas cercanas</a>
         </li>
         {% if es_tienda or es_cliente or es_admin %}
           <li class="menu-secciones__separador" aria-hidden="true"></li>
@@ -115,6 +118,14 @@
           </li>
         {% endif %}
       </ul>
+      {% if not user.is_authenticated %}
+        {# Visitante: en computadora, «Iniciar sesión», «Registrarse» y «Registrar mi tienda» van a la derecha de esta fila. #}
+        <div class="menu-acceso d-none d-lg-flex">
+          {% if vista != 'login' %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'login' %}">Iniciar sesión</a>{% endif %}
+          <a class="btn btn-claro btn-sm{% if vista == 'registro' and not ns %} active{% endif %}" href="{% url 'registro' %}">Registrarse</a>
+          <a class="btn btn-acento btn-sm ms-lg-2" href="{% url 'tiendas:registro' %}"><i class="bi bi-shop" aria-hidden="true"></i> Registrar mi tienda</a>
+        </div>
+      {% endif %}
     </div>
   </div>
 </nav>
@@ -166,8 +177,9 @@
 <footer class="pie-marca mt-auto">
   <div class="container pie-marca__columnas">
     <div class="pie-marca__marca">
-      <strong class="pie-marca__logo">NEXALYS<span> Tec.</span></strong>
+      <a href="{% url 'inicio' %}" class="pie-marca__logo" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" with caja=True tamano=40 %}</a>
       <p class="mb-0">Productos tecnológicos de las tiendas de tu ciudad.</p>
+      <p class="mb-0 mt-1">Encuéntralos aquí y escríbeles por WhatsApp.</p>
     </div>
     <nav class="pie-marca__grupo" aria-label="Explorar">
       <h2 class="pie-marca__titulo">Explorar</h2>
@@ -187,7 +199,7 @@
     <nav class="pie-marca__grupo" aria-label="Contacto">
       <h2 class="pie-marca__titulo">Contacto</h2>
       <ul>
-        {% if correo_soporte %}<li><a href="mailto:{{ correo_soporte }}" class="pie-marca__correo">{{ correo_soporte }}</a></li>{% endif %}
+        {% if correo_soporte %}<li><a href="mailto:{{ correo_soporte }}" class="pie-marca__correo"><i class="bi bi-envelope" aria-hidden="true"></i> {{ correo_soporte }}</a></li>{% endif %}
         <li><a href="{% url 'ayuda' %}">Ayuda y soporte</a></li>
         <li><a href="{% url 'privacidad' %}">Privacidad y términos</a></li>
         <li><a href="{% url 'reclamos:libro' %}" class="pie-marca__libro"><i class="bi bi-journal-text" aria-hidden="true"></i> Libro de Reclamaciones</a></li>

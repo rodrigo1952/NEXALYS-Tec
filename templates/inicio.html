@@ -1,23 +1,45 @@
 {% extends "base.html" %}
 {% load miniaturas formato %}
 {% block contenido %}
-{# Estilo «Carbón y oro»: sin portada; arriba, qué tiendas están abiertas ahora (tiendas/inicio.py). #}
+{# Diseño celeste (nov 2026): categorías, tiendas abiertas ahora, destacados, ofertas, recientes, cómo funciona y franja para tiendas. #}
+
+{# Categorías con íconos en un panel de vidrio: en el celular se deslizan de lado. #}
+{% if menu_categorias.todas %}
+  <nav class="categorias-inicio panel-vidrio mb-4 mb-md-5" aria-label="Categorías">
+    <h2 class="titulo-seccion titulo-seccion--chico mb-3">Categorías</h2>
+    <ul class="categorias-inicio__lista">
+      {% for categoria in menu_categorias.todas %}
+        <li><a href="{% url 'catalogo:catalogo' %}?categoria={{ categoria.pk }}" class="categorias-inicio__enlace">
+          <span class="categorias-inicio__icono"><i class="bi bi-{{ categoria.icono }}" aria-hidden="true"></i></span>
+          <span class="categorias-inicio__nombre">{{ categoria.nombre }}</span>
+        </a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+{% endif %}
+
+{# ¿Qué tienda está abierta ahora? (tiendas/inicio.py): hasta 6, las abiertas primero. #}
 <section class="tiendas-inicio mb-4 mb-md-5" aria-labelledby="titulo-tiendas-inicio">
   <div class="tiendas-inicio__cabecera">
-    <h1 id="titulo-tiendas-inicio" class="tiendas-inicio__titulo">¿Qué tienda está abierta ahora?</h1>
-    <a href="{% url 'tiendas:cercanas' %}?ubicacion=1" class="btn btn-primary tiendas-inicio__ubicacion"><i class="bi bi-crosshair" aria-hidden="true"></i> Usar mi ubicación</a>
+    <div>
+      <h1 id="titulo-tiendas-inicio" class="titulo-seccion tiendas-inicio__titulo">¿Qué tienda está abierta ahora?</h1>
+      {% if fecha_y_hora %}<p class="tiendas-inicio__fecha">{{ fecha_y_hora }}</p>{% endif %}
+    </div>
+    <div class="tiendas-inicio__acciones">
+      <a href="{% url 'tiendas:cercanas' %}?ubicacion=1" class="btn btn-outline-secondary btn-sm tiendas-inicio__ubicacion"><i class="bi bi-crosshair" aria-hidden="true"></i> Usar mi ubicación</a>
+      {% if tiendas_inicio %}<a href="{% url 'tiendas:cercanas' %}" class="btn-pildora tiendas-inicio__todas">Ver todas las tiendas{% if total_tiendas > tiendas_inicio|length %} ({{ total_tiendas }}){% endif %} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
+    </div>
   </div>
-  <span class="etiqueta-oro mb-3">Tiendas tecnológicas de Quillabamba</span>
   {% if tiendas_inicio %}
     {# Toda la tarjeta lleva al perfil de la tienda (el nombre usa «stretched-link»). #}
     <ul class="tiendas-inicio__lista">
       {% for t in tiendas_inicio %}
         <li class="tienda-inicio">
           <div class="tienda-inicio__cabecera">
-            {% if t.tienda.logo %}<img src="{{ t.tienda.logo.url }}" alt="" class="tienda-inicio__logo">{% else %}<span class="tienda-inicio__logo tienda-inicio__logo--inicial" aria-hidden="true">{{ t.inicial }}</span>{% endif %}
+            {% if t.tienda.logo %}<img src="{{ t.tienda.logo.url }}" alt="" class="tienda-inicio__logo">{% else %}<span class="tienda-inicio__logo tienda-inicio__logo--inicial tienda-inicio__logo--c{{ t.tienda.pk|stringformat:'d'|slice:'-1:' }}" aria-hidden="true">{{ t.inicial }}</span>{% endif %}
             <div class="min-w-0">
               <a href="{% url 'tiendas:perfil' t.tienda.pk %}" class="tienda-inicio__nombre stretched-link">{{ t.tienda.nombre }}</a>
-              <div class="tienda-inicio__direccion text-truncate">{{ t.tienda.direccion }}</div>
+              {% if t.estado %}<p class="tienda-inicio__estado {% if t.abierto %}tienda-inicio__estado--abierto{% else %}tienda-inicio__estado--cerrado{% endif %}">{{ t.estado }}</p>{% endif %}
             </div>
           </div>
           {% if t.etiquetas %}{% include "tiendas/_etiquetas.html" with etiquetas=t.etiquetas %}{% endif %}
@@ -31,37 +53,21 @@
               {% endfor %}
             </ul>
           {% endif %}
-          {% if t.estado %}<p class="tienda-inicio__estado {% if t.abierto %}tienda-inicio__estado--abierto{% else %}tienda-inicio__estado--cerrado{% endif %}">{{ t.estado }}</p>{% endif %}
+          {% if t.tienda.direccion %}<p class="tienda-inicio__direccion"><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ t.tienda.direccion }}</p>{% endif %}
         </li>
       {% endfor %}
     </ul>
-    <a href="{% url 'tiendas:cercanas' %}" class="enlace-accion tiendas-inicio__todas">Ver todas las tiendas{% if total_tiendas > tiendas_inicio|length %} ({{ total_tiendas }}){% endif %}</a>
   {% else %}
     <p class="text-muted mb-0">Aún no hay tiendas activas.</p>
   {% endif %}
 </section>
 
-{# Categorías con íconos: en el celular se deslizan de lado. #}
-{% if menu_categorias.todas %}
-  <nav class="categorias-inicio mb-4 mb-md-5" aria-label="Categorías">
-    <h2 class="titulo-seccion mb-3">Categorías</h2>
-    <ul class="categorias-inicio__lista">
-      {% for categoria in menu_categorias.todas %}
-        <li><a href="{% url 'catalogo:catalogo' %}?categoria={{ categoria.pk }}" class="categorias-inicio__enlace">
-          <span class="categorias-inicio__icono"><i class="bi bi-{{ categoria.icono }}" aria-hidden="true"></i></span>
-          <span class="categorias-inicio__nombre">{{ categoria.nombre }}</span>
-        </a></li>
-      {% endfor %}
-    </ul>
-  </nav>
-{% endif %}
-
 {% if destacados %}
-  <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-1 column-gap-3 mb-3">
+  <div class="cabecera-seccion">
     <h2 class="titulo-seccion mb-0">Productos destacados</h2>
-    {% if total_destacados > destacados|length %}<a href="{% url 'catalogo:catalogo' %}?destacados=on" class="enlace-accion">Ver todos los destacados ({{ total_destacados }})</a>{% endif %}
+    {% if total_destacados > destacados|length %}<a href="{% url 'catalogo:catalogo' %}?destacados=on" class="btn-pildora">Ver todos los destacados ({{ total_destacados }}) <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
   </div>
-  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 mb-5">
+  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 g-xl-4 mb-5">
     {% for producto in destacados %}
       <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
     {% endfor %}
@@ -69,11 +75,11 @@
 {% endif %}
 
 {% if ofertas %}
-  <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-1 column-gap-3 mb-3">
+  <div class="cabecera-seccion">
     <h2 class="titulo-seccion mb-0">Ofertas</h2>
-    <a href="{% url 'catalogo:catalogo' %}?solo_ofertas=on" class="enlace-accion">Ver todas las ofertas</a>
+    <a href="{% url 'catalogo:catalogo' %}?solo_ofertas=on" class="btn-pildora">Ver todas las ofertas <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
   </div>
-  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 mb-5">
+  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 g-xl-4 mb-5">
     {% for producto in ofertas %}
       <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
     {% endfor %}
@@ -81,8 +87,11 @@
 {% endif %}
 
 {% if recientes %}
-  <h2 class="titulo-seccion mb-3">Productos recientes</h2>
-  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 mb-5">
+  <div class="cabecera-seccion">
+    <h2 class="titulo-seccion mb-0">Productos recientes</h2>
+    <a href="{% url 'catalogo:catalogo' %}" class="btn-pildora">Ver el catálogo <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+  </div>
+  <div class="row row-cols-2 row-cols-lg-4 g-2 g-md-3 g-xl-4 mb-5">
     {% for producto in recientes %}
       <div class="col">{% include "catalogo/_tarjeta_producto.html" %}</div>
     {% endfor %}
@@ -90,11 +99,23 @@
 {% endif %}
 
 {# Cómo funciona, en 3 pasos #}
-<section class="pasos-inicio" aria-label="Cómo funciona">
+<section class="pasos-inicio mb-5" aria-labelledby="titulo-pasos">
+  <h2 id="titulo-pasos" class="titulo-seccion mb-3">Así funciona NEXALYS Tec</h2>
   <ol class="pasos-inicio__lista">
-    <li><span class="pasos-inicio__numero" aria-hidden="true">1</span><div><strong>Elige una tienda</strong><span>Mira cuáles están abiertas y dónde quedan.</span></div></li>
-    <li><span class="pasos-inicio__numero" aria-hidden="true">2</span><div><strong>Revisa sus productos</strong><span>Precios, ofertas y fotos.</span></div></li>
-    <li><span class="pasos-inicio__numero" aria-hidden="true">3</span><div><strong>Escribe por WhatsApp</strong><span>Coordina tu compra directo.</span></div></li>
+    <li class="panel-vidrio"><span class="pasos-inicio__numero" aria-hidden="true"><i class="bi bi-search"></i></span><div><strong>1. Busca</strong><span>Encuentra el producto por nombre, categoría o tienda, sin crear cuenta.</span></div></li>
+    <li class="panel-vidrio"><span class="pasos-inicio__numero" aria-hidden="true"><i class="bi bi-shop"></i></span><div><strong>2. Compara</strong><span>Mira precios, ofertas y qué tiendas están abiertas ahora en Quillabamba.</span></div></li>
+    <li class="panel-vidrio"><span class="pasos-inicio__numero" aria-hidden="true"><i class="bi bi-whatsapp"></i></span><div><strong>3. Escribe por WhatsApp</strong><span>Consulta directo a la tienda y acuerda la compra en su local.</span></div></li>
   </ol>
 </section>
+
+{# Franja para las tiendas: no la ven las tiendas ni el administrador (ya tienen su zona). #}
+{% if not es_tienda and not es_admin %}
+<section class="franja-tiendas" aria-labelledby="titulo-franja">
+  <div>
+    <h2 id="titulo-franja" class="franja-tiendas__titulo">¿Tienes una tienda de tecnología en Quillabamba?</h2>
+    <p class="franja-tiendas__texto">Publica tus productos gratis y recibe consultas por WhatsApp.</p>
+  </div>
+  <a href="{% url 'tiendas:registro' %}" class="btn franja-tiendas__boton"><i class="bi bi-shop" aria-hidden="true"></i> Registrar mi tienda</a>
+</section>
+{% endif %}
 {% endblock %}

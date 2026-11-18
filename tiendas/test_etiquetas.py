@@ -177,7 +177,8 @@ class TarjetaDelInicioTests(BaseCatalogo):
         self.tienda.save()
         respuesta = self.client.get(reverse("inicio"))
         html = respuesta.content.decode()
-        bloque = html[html.index('class="tiendas-inicio__lista"'):html.index("tiendas-inicio__todas")]
+        inicio_lista = html.index('class="tiendas-inicio__lista"')
+        bloque = html[inicio_lista:html.index("</section>", inicio_lista)]
         self.assertIn(f'href="{reverse("tiendas:perfil", args=[self.tienda.pk])}" class="tienda-inicio__nombre stretched-link"', bloque)
         self.assertNotIn("wa.me", bloque)
         self.assertNotIn("Ver tienda", bloque)

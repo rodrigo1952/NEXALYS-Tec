@@ -1,7 +1,7 @@
 {% load formato %}
 {% comment %}
-Menú de la cuenta (o de iniciar sesión). Se usa dos veces en base.html:
-en la fila de arriba en computadora y dentro del botón ☰ en el celular.
+Menú de la cuenta (o el círculo para iniciar sesión). Va en la fila de arriba en computadora
+(base.html) y en la cabecera de la consola; en el celular se usa el menú lateral (_menu_movil.html).
 Al tocar el nombre se abre un menú con: Mi tienda (solo tiendas: lleva a su página
 pública si está activa; si no, a «Datos de mi tienda»), Mi cuenta,
 Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
@@ -48,7 +48,6 @@ Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
     </ul>
   </li>
 {% else %}
-  {% if vista != 'login' %}<li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Iniciar sesión</a></li>{% endif %}
-  <li class="nav-item"><a class="nav-link{% if vista == 'registro' and not ns %} active{% endif %}" href="{% url 'registro' %}">Registrarse</a></li>
-  <li class="nav-item"><a class="btn btn-acento btn-sm ms-lg-2" href="{% url 'tiendas:registro' %}">Registrar mi tienda</a></li>
+  {# Visitante: un círculo con la persona (lleva a «Iniciar sesión»). Los botones de acceso van en la segunda fila (base.html). #}
+  {% if vista != 'login' %}<li class="nav-item"><a class="icono-cuenta" href="{% url 'login' %}" aria-label="Iniciar sesión" title="Iniciar sesión"><i class="bi bi-person" aria-hidden="true"></i></a></li>{% endif %}
 {% endif %}

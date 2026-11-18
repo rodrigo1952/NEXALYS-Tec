@@ -12,6 +12,7 @@ para depurar no se incluyen y `collectstatic` fallaría al no encontrarlos).
 | chartjs/ | Chart.js (gráficos) | 4.4.1 | MIT |
 | leaflet/ | Leaflet (mapas) | 1.9.4 | BSD-2 |
 | fuentes/ | Space Grotesk (variable) y Lilita One, de Fontsource | 5.x | SIL OFL 1.1 |
+| fuentes/ | Inter 4 (pesos 400, 500, 600 y 700), reducida a letras latinas con pyftsubset (`.woff`) | 4.0 | SIL OFL 1.1 |
 
 Para actualizar una librería: descargar la versión nueva con `Claude outputs/descargar_librerias.ps1`
 (cambiando el número), quitar la línea `sourceMappingURL` y correr las pruebas.

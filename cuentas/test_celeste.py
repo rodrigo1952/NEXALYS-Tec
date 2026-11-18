@@ -1,18 +1,20 @@
 """
-Estilo «Carbón y oro», fase 1 (nov 2026): fondo carbón con vetas doradas, colores según el contexto
-(oscuro o tarjeta blanca), encabezado según el rol y pie con la columna «Contacto».
+Diseño celeste, fase 1 (nov 2026): estilos base, cabecera, pie e Inicio como la vista previa aprobada.
+Reemplaza al estilo «Carbón y oro», que ahora solo se conserva en la consola del administrador.
 """
+
+from datetime import datetime
+from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.contrib.staticfiles import finders
-from unittest import mock
-
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from catalogo.tests import BaseCatalogo, crear_tienda
-from tiendas.inicio import tiendas_para_inicio
+from tiendas.inicio import fecha_y_hora, tiendas_para_inicio
 from tiendas.models import Tienda
 
 
@@ -32,6 +34,7 @@ class PieDePaginaTests(TestCase):
             self.assertIn(f'<h2 class="pie-marca__titulo">{titulo}</h2>', pie)
         self.assertIn("Productos tecnológicos de las tiendas de tu ciudad.", pie)
         self.assertIn("Proyecto IV ciclo · IESTP Urusayhua · 2026", pie)
+        self.assertIn("logo-marca logo-marca--caja", pie)
 
     def test_contacto_mantiene_los_enlaces_legales(self):
         # Libro de Reclamaciones (Indecopi) y Privacidad (Ley 29733) deben estar a la vista en todo el sitio.
@@ -48,12 +51,32 @@ class PieDePaginaTests(TestCase):
         self.assertIn(f'mailto:{settings.CORREO_SOPORTE}', self.pie())
 
 
-class EncabezadoSegunElRolTests(TestCase):
-    def test_visitante(self):
+class CabeceraTests(TestCase):
+    def test_visitante_con_botones_de_acceso_en_la_segunda_fila(self):
         html = self.client.get(reverse("inicio")).content.decode()
-        self.assertIn("Registrar mi tienda", html)
+        fila = html[html.index('class="menu-acceso'):]
+        fila = fila[:fila.index("</div>")]
+        for texto in ("Iniciar sesión", "Registrarse", "Registrar mi tienda"):
+            self.assertIn(texto, fila)
+        self.assertIn('class="icono-cuenta"', html)  # círculo de la persona arriba a la derecha
         self.assertNotIn("corazon-cabecera", html)
         self.assertIn('class="barra-categorias"', html)
+
+    def test_buscador_con_lupa_y_boton_buscar(self):
+        html = self.client.get(reverse("inicio")).content.decode()
+        self.assertIn('placeholder="Buscar productos..."', html)
+        self.assertIn('class="buscador-menu__lupa"', html)
+        self.assertIn('<span class="d-none d-lg-inline" aria-hidden="true">Buscar</span>', html)
+
+    def test_logo_en_cuadro_azul(self):
+        html = self.client.get(reverse("inicio")).content.decode()
+        self.assertIn('<span class="logo-marca logo-marca--caja">', html)
+        self.assertIn('<span class="logo-marca__tec">Tec</span>', html)
+
+    def test_secciones_con_iconos(self):
+        html = self.client.get(reverse("inicio")).content.decode()
+        for icono, texto in (("house", "Inicio"), ("grid", "Catálogo"), ("geo-alt", "Tiendas cercanas")):
+            self.assertIn(f'<i class="bi bi-{icono}" aria-hidden="true"></i> {texto}</a>', html)
 
     def test_cliente_sin_favoritos_no_muestra_contador(self):
         cliente = User.objects.create_user("cliente1", password="Clave#2026")
@@ -62,23 +85,35 @@ class EncabezadoSegunElRolTests(TestCase):
         html = self.client.get(reverse("inicio")).content.decode()
         self.assertIn('aria-label="Mis favoritos (0)"', html)
         self.assertNotIn("corazon-cabecera__contador", html)
+        self.assertNotIn('class="menu-acceso', html)
 
 
 class EstilosTests(TestCase):
-    def test_fondo_y_contextos(self):
+    def test_fondo_celeste_letras_y_consola_aparte(self):
         css = leer_estatico("css/marca.css")
+        self.assertIn("100. Diseño celeste", css)
+        self.assertIn("--cel-grad: linear-gradient(135deg, #2C86F7, #1460D9);", css)
+        # Todo el diseño celeste deja fuera la consola del administrador (no se cambia sin que el usuario lo pida)…
+        self.assertIn("body:not(.consola-cuerpo).fondo-marca", css)
+        # …que conserva su estilo «Carbón y oro».
+        self.assertIn(".consola-cuerpo.fondo-marca", css)
         self.assertIn('url("../img/fondo-vetas.svg")', css)
-        self.assertIn("--nx-carbon: #0E1218", css)
-        self.assertIn("--nx-oro: #C8A468", css)
-        self.assertIn(".contexto-claro, .card,", css)
-        self.assertIn(".contexto-oscuro,", css)
-        self.assertIn(".btn-oro {", css)
         self.assertIsNotNone(finders.find("img/fondo-vetas.svg"))
 
-    def test_al_imprimir_la_hoja_es_blanca(self):
+    def test_letra_inter_dentro_del_proyecto(self):
+        fuentes = leer_estatico("vendor/fuentes/fuentes.css")
+        for peso in ("400", "500", "600", "700"):
+            self.assertIn(f'url("inter-{peso}.woff")', fuentes)
+            archivo = finders.find(f"vendor/fuentes/inter-{peso}.woff")
+            self.assertIsNotNone(archivo, peso)
+            with open(archivo, "rb") as letra:
+                self.assertEqual(letra.read(4), b"wOFF")
+        self.assertIsNotNone(finders.find("vendor/fuentes/LICENSE-inter"))
+
+    def test_colores_por_marca(self):
         css = leer_estatico("css/marca.css")
-        bloque = css[css.rindex("Impresión: hoja blanca"):]
-        self.assertIn(".fondo-marca { background: #fff !important; }", bloque)
+        for marca in ("samsung", "lenovo", "xiaomi", "apple", "epson", "kingston"):
+            self.assertIn(f".chip-marca--{marca}", css)
 
 
 class CorazonDelClienteTests(BaseCatalogo):
@@ -103,6 +138,31 @@ class MenuDeLaTiendaTests(BaseCatalogo):
         orden = [menu.index(f'href="{reverse(n)}"') for n in ("inicio", "catalogo:catalogo", "tiendas:cercanas", "catalogo:mis_productos")]
         self.assertEqual(orden, sorted(orden))
         self.assertIn('class="barra-categorias"', html)
+        self.assertNotIn('class="franja-tiendas"', html)  # la franja «¿Tienes una tienda…?» no es para tiendas
+
+
+class TarjetaDeProductoTests(BaseCatalogo):
+    def test_boton_de_whatsapp_y_marca_de_color(self):
+        self.crear_producto()
+        html = self.client.get(reverse("inicio")).content.decode()
+        self.assertIn('class="chip-marca chip-marca--samsung">Samsung</span>', html)
+        self.assertIn('class="btn btn-wa tarjeta-producto__whatsapp"', html)
+        self.assertIn('<span class="d-none d-sm-inline">Consultar por </span>WhatsApp', html)
+        self.assertIn('href="https://wa.me/51911111111?text=', html)
+
+    def test_agotado_pregunta_cuando_llega(self):
+        self.crear_producto(stock=0)
+        html = self.client.get(reverse("inicio")).content.decode()
+        self.assertIn('<span class="tarjeta-producto__agotado">Agotado</span>', html)
+        self.assertIn('class="btn btn-wa-borde tarjeta-producto__whatsapp"', html)
+        self.assertIn("¿Cuándo llega?", html)
+
+    def test_oferta_con_descuento_sobre_la_foto(self):
+        from decimal import Decimal
+
+        self.crear_producto(precio=Decimal("250.00"), precio_oferta=Decimal("200.00"))
+        html = self.client.get(reverse("inicio")).content.decode()
+        self.assertIn('<span class="tarjeta-producto__descuento">-20%</span>', html)
 
 
 def estado(abierto, detalle, refrigerio=False):
@@ -146,10 +206,29 @@ class TiendasEnElInicioTests(BaseCatalogo):
         self.assertContains(respuesta, f'href="{reverse("tiendas:cercanas")}?ubicacion=1"')
         self.assertContains(respuesta, "Ver todas las tiendas (9)")
         self.assertNotContains(respuesta, "portada-marca")
-        self.assertNotContains(respuesta, "Bienvenido a NEXALYS Tec")
+        self.assertNotContains(respuesta, "etiqueta-oro")
+        self.assertContains(respuesta, "Así funciona NEXALYS Tec")
         self.assertContains(respuesta, "Escribe por WhatsApp")
+        self.assertContains(respuesta, 'class="franja-tiendas"')  # el visitante ve la franja para tiendas
+
+    def test_categorias_van_primero(self):
+        self.crear_producto()  # el panel de categorías solo sale si hay productos publicados
+        html = self.client.get(reverse("inicio")).content.decode()
+        self.assertLess(html.index('class="categorias-inicio'), html.index('class="tiendas-inicio'))
 
     def test_las_suspendidas_no_salen(self):
         self.tienda.suspender("Prueba")
         _, total = tiendas_para_inicio()
         self.assertEqual(total, 8)
+
+
+class FechaYHoraTests(TestCase):
+    def test_texto_con_hora_de_peru(self):
+        momento = timezone.make_aware(datetime(2026, 11, 17, 18, 52))
+        self.assertEqual(fecha_y_hora(momento), "Martes 17 de noviembre · 6:52 p. m.")
+        temprano = timezone.make_aware(datetime(2026, 1, 4, 9, 5))
+        self.assertEqual(fecha_y_hora(temprano), "Domingo 4 de enero · 9:05 a. m.")
+
+    def test_sale_bajo_el_titulo(self):
+        respuesta = self.client.get(reverse("inicio"))
+        self.assertContains(respuesta, '<p class="tiendas-inicio__fecha">')

@@ -1,12 +1,27 @@
 {% comment %}
 Logo de NEXALYS Tec (marca "Circuito"). Es el ÚNICO lugar donde está dibujado.
 Uso:
-  {% include "_logo.html" %}                          sobre fondo oscuro (menú, pie)
+  {% include "_logo.html" %}                          sobre fondo oscuro (menú del celular)
   {% include "_logo.html" with claro=True %}          sobre fondo blanco
+  {% include "_logo.html" with caja=True %}           diseño celeste: la N blanca en un cuadro azul con degradado
+                                                      (cabecera y pie); el texto va en azul marino y «Tec» en azul
   {% include "_logo.html" with tamano=56 %}           más grande (alto en píxeles)
   {% include "_logo.html" with solo_icono=True %}     solo la N, sin el texto
 {% endcomment %}
-<span class="logo-marca{% if claro %} logo-marca--claro{% endif %}">
+<span class="logo-marca{% if claro %} logo-marca--claro{% endif %}{% if caja %} logo-marca--caja{% endif %}">
+  {% if caja %}
+  <svg width="{% firstof tamano 44 %}" height="{% firstof tamano 44 %}" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+    <defs><linearGradient id="logo-degradado" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1F7BF2"/><stop offset="1" stop-color="#0B1B3A"/></linearGradient></defs>
+    <rect width="48" height="48" rx="12" fill="url(#logo-degradado)"/>
+    <g transform="translate(6 4) scale(0.9)">
+      <path d="M6 10.5 V33.5 M34 10.5 V33.5 M9 9.5 L31 34.5" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <circle cx="6" cy="6" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
+      <circle cx="34" cy="6" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
+      <circle cx="6" cy="38" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
+      <circle cx="34" cy="38" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
+    </g>
+  </svg>
+  {% else %}
   <svg width="{% if tamano %}{% widthratio tamano 44 40 %}{% else %}33{% endif %}" height="{% firstof tamano 36 %}" viewBox="0 0 40 44" aria-hidden="true" focusable="false">
     <path d="M6 10.5 V33.5 M34 10.5 V33.5 M9 9.5 L31 34.5" stroke="{% if claro %}#0B1B3A{% else %}#FFFFFF{% endif %}"
           stroke-width="4" stroke-linecap="round" fill="none"/>
@@ -15,5 +30,6 @@ Uso:
     <circle cx="6" cy="38" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
     <circle cx="34" cy="38" r="4.5" fill="none" stroke="#19C3E6" stroke-width="3"/>
   </svg>
-  {% if not solo_icono %}<span class="logo-marca__texto">NEXALYS <span class="logo-marca__tec">Tec.</span></span>{% endif %}
+  {% endif %}
+  {% if not solo_icono %}<span class="logo-marca__texto">NEXALYS <span class="logo-marca__tec">Tec{% if not caja %}.{% endif %}</span></span>{% endif %}
 </span>

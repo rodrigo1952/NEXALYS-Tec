@@ -9,7 +9,7 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
 <header class="cabecera-marca cabecera-cuenta" id="cabecera">
   <nav class="navbar navbar-expand navbar-dark navbar-marca" aria-label="Menú de la cuenta">
     <div class="container flex-nowrap gap-2">
-      <a class="navbar-brand" href="{% url 'inicio' %}" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" %}</a>
+      <a class="navbar-brand" href="{% url 'inicio' %}" aria-label="NEXALYS Tec, ir al inicio">{% include "_logo.html" with caja=True %}</a>
       <a href="{% url 'inicio' %}" class="cabecera-cuenta__volver ms-auto" aria-label="Volver a la página"><i class="bi bi-arrow-left" aria-hidden="true"></i><span class="d-none d-sm-inline">Volver a la página</span></a>
       <ul class="navbar-nav flex-row align-items-center menu-usuario">
         {% include "_menu_usuario.html" %}

@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 from catalogo.destacados import destacados_en_turnos
 from catalogo.models import Producto
 from favoritos.permisos import es_cliente
-from tiendas.inicio import tiendas_para_inicio
+from tiendas.inicio import fecha_y_hora, tiendas_para_inicio
 
 from . import codigos, limites
 from .clave_temporal import CLAVE_SESION
@@ -59,6 +59,7 @@ def inicio(request):
         # «¿Qué tienda está abierta ahora?»: hasta 6, las abiertas primero (tiendas/inicio.py).
         "tiendas_inicio": tiendas,
         "total_tiendas": total_tiendas,
+        "fecha_y_hora": fecha_y_hora(),
         # 8 lugares repartidos por turnos entre las tiendas (ver catalogo/destacados.py).
         "destacados": destacados,
         "total_destacados": total_destacados,

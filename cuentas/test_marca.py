@@ -11,10 +11,10 @@ class MarcaTests(TestCase):
         self.assertContains(respuesta, "vendor/fuentes/fuentes.css")
         self.assertContains(respuesta, 'class="navbar navbar-expand-lg navbar-dark navbar-marca"')
         self.assertContains(respuesta, 'class="logo-marca"')
-        self.assertContains(respuesta, "tiendas-inicio")  # «Carbón y oro»: el Inicio empieza por las tiendas abiertas
+        self.assertContains(respuesta, "tiendas-inicio")  # el Inicio muestra las tiendas abiertas ahora
 
     def test_boton_registrar_tienda_es_de_accion(self):
-        # Sobre el menú azul marino, un botón azul no se vería: debe ser cian.
+        # «Registrar mi tienda» es el botón de acción (azul con degradado en el diseño celeste).
         respuesta = self.client.get(reverse("inicio"))
         self.assertContains(respuesta, 'class="btn btn-acento btn-sm ms-lg-2"')
 
