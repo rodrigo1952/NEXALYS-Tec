@@ -1,6 +1,6 @@
 """
-Diseño celeste, fase 1 (nov 2026): estilos base, cabecera, pie e Inicio como la vista previa aprobada.
-Reemplaza al estilo «Carbón y oro», que ahora solo se conserva en la consola del administrador.
+Diseño celeste (nov 2026): estilos base, cabecera, pie e Inicio como la vista previa aprobada, la consola del
+administrador (menú lateral de vidrio) y los correos. Reemplazó por completo al estilo «Carbón y oro».
 """
 
 from datetime import datetime
@@ -89,16 +89,15 @@ class CabeceraTests(TestCase):
 
 
 class EstilosTests(TestCase):
-    def test_fondo_celeste_letras_y_consola_aparte(self):
+    def test_fondo_celeste_en_todo_el_sitio(self):
         css = leer_estatico("css/marca.css")
         self.assertIn("100. Diseño celeste", css)
         self.assertIn("--cel-grad: linear-gradient(135deg, #2C86F7, #1460D9);", css)
-        # Todo el diseño celeste deja fuera la consola del administrador (no se cambia sin que el usuario lo pida)…
-        self.assertIn("body:not(.consola-cuerpo).fondo-marca", css)
-        # …que conserva su estilo «Carbón y oro».
-        self.assertIn(".consola-cuerpo.fondo-marca", css)
-        self.assertIn('url("../img/fondo-vetas.svg")', css)
-        self.assertIsNotNone(finders.find("img/fondo-vetas.svg"))
+        self.assertIn("body.fondo-marca.fondo-marca{", css)
+        # «Carbón y oro» ya no se usa en ninguna parte (tampoco en la consola).
+        self.assertNotIn("--nx-carbon", css)
+        self.assertNotIn("fondo-vetas.svg", css)
+        self.assertNotIn("consola-cuerpo)", css)
 
     def test_letra_inter_dentro_del_proyecto(self):
         fuentes = leer_estatico("vendor/fuentes/fuentes.css")
@@ -232,3 +231,38 @@ class FechaYHoraTests(TestCase):
     def test_sale_bajo_el_titulo(self):
         respuesta = self.client.get(reverse("inicio"))
         self.assertContains(respuesta, '<p class="tiendas-inicio__fecha">')
+
+
+class ConsolaCelesteTests(TestCase):
+    def setUp(self):
+        from administracion.test_consola import crear_admin
+
+        self.client.force_login(crear_admin())
+
+    def test_cabecera_con_logo_en_cuadro_azul(self):
+        html = self.client.get(reverse("panel_admin")).content.decode()
+        cabecera = html[html.index('<header class="cabecera-consola"'):html.index("</header>")]
+        self.assertIn('<span class="logo-marca logo-marca--caja">', cabecera)
+        self.assertIn('class="btn-close" data-bs-dismiss="offcanvas"', html)
+
+    def test_menu_lateral_de_vidrio_y_grafico_en_azul(self):
+        css = leer_estatico("css/marca.css")
+        self.assertIn("Consola del administrador en celeste", css)
+        self.assertIn("body.fondo-marca .consola__nav a.activo{ background: var(--cel-grad);", css)
+        html = self.client.get(reverse("panel_admin")).content.decode()
+        self.assertIn('var azul = estilos.getPropertyValue("--cel-azul").trim() || "#1F7BF2";', html)
+
+
+class CorreosCelestesTests(TestCase):
+    def test_diseno_celeste_en_los_correos(self):
+        from django.core import mail
+
+        from config import correos
+
+        correos.enviar(["a@ejemplo.com"], "Prueba", "correos/prueba")
+        html = next(contenido for contenido, tipo in mail.outbox[0].alternatives if tipo == "text/html")
+        self.assertIn('<body style="margin:0;padding:0;background:#EEF5FE;">', html)
+        self.assertIn("background-image:linear-gradient(135deg,#2C86F7,#1460D9)", html)  # franja de arriba
+        self.assertIn('bgcolor="#1A6FE8"', html)  # Outlook: azul liso
+        self.assertIn('bgcolor="#0B1B3A"', html)  # cuadrito del logo con la «N»
+        self.assertIn('NEXALYS <span style="color:#BFE9FF;">Tec</span>', html)

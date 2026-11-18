@@ -22,13 +22,20 @@
   **Esri** y la búsqueda de calles de **Nominatim**; los tres están permitidos en `SECURE_CSP`). Se descargaron con
   `Claude outputs/descargar_librerias.ps1`. QR con **segno 1.6.6** (en requirements).
 - Marca "Circuito": azul marino `#0B1B3A`, cian `#19C3E6` (variables `--nx-*` en `static/css/marca.css`).
-- **Diseño celeste** (nov 2026; reemplazó a «Carbón y oro», que ahora SOLO queda en la consola del administrador).
+- **Diseño celeste** (nov 2026; reemplazó por completo a «Carbón y oro», también en la consola del administrador y en
+  los correos, a pedido del usuario el 17 nov).
   Se aplica por fases y el usuario revisa cada una: 1) estilos base, cabecera, pie e Inicio (HECHA, falta su revisión);
   2) Catálogo y Detalle; 3) Perfil de la tienda y Tiendas cercanas; 4) Login, Registro y Cuenta; 5) Favoritos;
   6) Mis productos (Resumen, Productos, Ventas, Editar). La vista previa aprobada está en el lienzo de diseño
   «NEXALYS Tec — Vista previa del diseño celeste» y en `Claude outputs/NEXALYS_Tec_Diseno_Celeste.pdf`.
-  CSS: sección **100** de `marca.css` (todas sus reglas llevan delante `body:not(.consola-cuerpo)`, así la consola no
-  cambia); la sección **99** es «Carbón y oro» con `.consola-cuerpo` delante (solo la consola). Fondo celeste muy claro
+  CSS: sección **100** de `marca.css` (todas sus reglas llevan delante `body.fondo-marca`, así ganan a las de antes).
+  «Carbón y oro» ya no existe (`static/img/fondo-vetas.svg` quedó sin uso).
+  **Consola del administrador**: cabecera clara con el logo en cuadro azul y la etiqueta «Administración» celeste, menú
+  lateral de vidrio (flotante, esquinas de 22 px) con la sección elegida en una píldora azul, cifras, paneles y tablas
+  en cajas blancas o de vidrio; gráfico de ventas con el mes actual en azul y los anteriores en celeste.
+  **Correos** (`templates/correos/base.html`, `_boton`, `_codigo`, `_respaldo`): fondo celeste, franja azul con degradado
+  (`bgcolor` azul liso para Outlook), logo dibujado con una tabla (cuadrito azul marino con la «N» y borde cian, sin
+  imagen), tarjeta blanca con esquinas de 18 px, botón azul, código en un recuadro celeste; letra Arial. Fondo celeste muy claro
   con manchas suaves (`.fondo-marca::before/::after`), tarjetas blancas y paneles de vidrio (`.panel-vidrio`: blanco
   translúcido con desenfoque), botones azules con degradado (`--cel-grad`), esquinas de 14 a 22 px. Títulos y precios
   en Space Grotesk; textos en **Inter** (`static/vendor/fuentes/inter-400/500/600/700.woff`, reducida a letras latinas).
@@ -413,6 +420,7 @@
   o, si no se puede, la ventana de `_compartir.html` (acepta `etiqueta`, `icono` y `red`).
 - Cada cambio va con sus pruebas (`test_*.py` en cada app). Última cuenta conocida: **868 pruebas, OK** (antes del
   diseño celeste; sus pruebas están en `cuentas/test_celeste.py`, que reemplazó a `cuentas/test_carbon_oro.py`).
+  Tras la fase 1: 878 pruebas, todas bien salvo una prueba nueva (ya corregida).
 
 ## 7. Pendientes e ideas
 

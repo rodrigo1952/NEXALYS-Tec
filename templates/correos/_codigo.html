@@ -1,3 +1,5 @@
-{# Código de 6 dígitos, grande y fácil de leer. #}
-<p style="margin:0 0 6px;">O escribe este código en la página:</p>
-<p style="margin:0 0 4px;font-family:'Courier New',Courier,monospace;font-size:30px;font-weight:bold;letter-spacing:6px;color:#0B1B3A;">{{ codigo|slice:":3" }} {{ codigo|slice:"3:" }}</p>
+{# Código de 6 dígitos, grande y fácil de leer, en un recuadro celeste. #}
+<p style="margin:0 0 8px;">O escribe este código en la página:</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 6px;">
+  <tr><td bgcolor="#EAF2FE" style="background:#EAF2FE;border:1px solid #CFE1FB;border-radius:12px;padding:10px 22px;font-family:'Courier New',Courier,monospace;font-size:30px;font-weight:bold;letter-spacing:6px;color:#0B1B3A;">{{ codigo|slice:":3" }} {{ codigo|slice:"3:" }}</td></tr>
+</table>

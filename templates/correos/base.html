@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 {% comment %}
-Diseño de todos los correos de NEXALYS Tec (config/correos.py). Los programas de correo no aceptan hojas
-de estilo ni scripts: por eso todo va con tablas y estilos escritos en cada etiqueta, y la letra es
-Arial (Space Grotesk no existe en Gmail ni Outlook).
+Diseño de todos los correos de NEXALYS Tec (config/correos.py), en el estilo celeste de la página.
+Los programas de correo no aceptan hojas de estilo, scripts, vidrio ni letras propias: por eso todo va con
+tablas y estilos escritos en cada etiqueta, y la letra es Arial. La franja de arriba tiene degradado azul
+(en Outlook, que no lo acepta, se ve azul liso por «bgcolor»). El logo está dibujado con una tabla y texto
+(un cuadrito azul marino con la «N»): se ve siempre, aunque la página no esté publicada.
 
 Bloques:  contenido (el mensaje) · motivo (por qué le llegó, en el pie)
 Ayudantes:  {% include "correos/_boton.html" with texto="…" url=… %}  y  "correos/_respaldo.html" with url=…
@@ -14,28 +16,35 @@ Ayudantes:  {% include "correos/_boton.html" with texto="…" url=… %}  y  "co
 <meta name="color-scheme" content="light">
 <title>{{ asunto }}</title>
 </head>
-<body style="margin:0;padding:0;background:#EEF1F6;">
+<body style="margin:0;padding:0;background:#EEF5FE;">
 {# Línea de vista previa: el texto gris que Gmail muestra en la bandeja antes de abrir el correo. #}
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#EEF1F6;font-size:1px;line-height:1px;">{{ vista_previa }}&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EEF1F6;">
-  <tr><td align="center" style="padding:24px 12px;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#EEF5FE;font-size:1px;line-height:1px;">{{ vista_previa }}&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EEF5FE" style="background:#EEF5FE;">
+  <tr><td align="center" style="padding:28px 12px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
-      {# Encabezado #}
-      <tr><td style="background:#0B1B3A;border-radius:12px 12px 0 0;padding:20px 28px;">
-        <span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;letter-spacing:.5px;color:#FFFFFF;">NEXALYS <span style="color:#19C3E6;">Tec.</span></span>
-        <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#A9B8D0;padding-top:4px;">Tiendas tecnológicas de Quillabamba</div>
+      {# Encabezado: franja azul con degradado y el logo dibujado #}
+      <tr><td bgcolor="#1A6FE8" style="background-color:#1A6FE8;background-image:linear-gradient(135deg,#2C86F7,#1460D9);border-radius:18px 18px 0 0;padding:22px 28px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="40" height="40" align="center" valign="middle" bgcolor="#0B1B3A" style="width:40px;height:40px;background:#0B1B3A;border-radius:10px;border:2px solid #19C3E6;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;line-height:40px;color:#FFFFFF;">N</td>
+            <td style="padding-left:12px;">
+              <span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;letter-spacing:.3px;color:#FFFFFF;">NEXALYS <span style="color:#BFE9FF;">Tec</span></span>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#D6E6FB;padding-top:3px;">Tiendas tecnológicas de Quillabamba</div>
+            </td>
+          </tr>
+        </table>
       </td></tr>
-      {# Mensaje #}
-      <tr><td style="background:#FFFFFF;padding:28px 28px 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#1F2937;">
+      {# Mensaje: tarjeta blanca #}
+      <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border-left:1px solid #E1ECFA;border-right:1px solid #E1ECFA;padding:30px 30px 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#2B3D5C;">
         {% block contenido %}{% endblock %}
       </td></tr>
-      <tr><td style="background:#FFFFFF;border-radius:0 0 12px 12px;padding:8px 28px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#1F2937;">
-        Saludos,<br><strong>Equipo de NEXALYS Tec</strong>
+      <tr><td bgcolor="#FFFFFF" style="background:#FFFFFF;border:1px solid #E1ECFA;border-top:0;border-radius:0 0 18px 18px;padding:8px 30px 26px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#2B3D5C;">
+        Saludos,<br><strong style="color:#0B1B3A;">Equipo de NEXALYS Tec</strong>
       </td></tr>
       {# Pie #}
-      <tr><td style="padding:18px 28px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#6B7280;text-align:center;">
+      <tr><td style="padding:20px 28px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#46566D;text-align:center;">
         {% block motivo %}{% endblock %}
-        {% if correo_soporte %}<br>¿Dudas? Responde este correo o escríbenos a <a href="mailto:{{ correo_soporte }}" style="color:#0E7FA0;">{{ correo_soporte }}</a>.{% endif %}
+        {% if correo_soporte %}<br>¿Dudas? Responde este correo o escríbenos a <a href="mailto:{{ correo_soporte }}" style="color:#1A5FD0;">{{ correo_soporte }}</a>.{% endif %}
         <br>NEXALYS Tec · Quillabamba, Cusco, Perú · {{ anio }}
       </td></tr>
     </table>

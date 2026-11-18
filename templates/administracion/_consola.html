@@ -3,7 +3,8 @@
 {% comment %}
 Consola de administración: una zona aparte de la tienda pública.
 - Cabecera simple: logo, «Ver página pública ↗» y el menú de la cuenta (sin buscador ni categorías).
-- Menú lateral con las secciones (en el celular se abre con el botón ☰).
+- Menú lateral con las secciones (en el celular se abre con el botón ☰). Diseño celeste: menú de vidrio y la
+  sección elegida en una píldora azul (marca.css, «Consola del administrador en celeste»).
 Cada página llena el bloque «consola».
 {% endcomment %}
 {% block clase_body %} consola-cuerpo{% endblock %}
@@ -15,7 +16,7 @@ Cada página llena el bloque «consola».
     <button class="cabecera-consola__menu d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#consola-menu" aria-controls="consola-menu" aria-label="Abrir el menú de la consola">
       <i class="bi bi-list" aria-hidden="true"></i>
     </button>
-    <a class="navbar-brand" href="{% url 'panel_admin' %}" aria-label="NEXALYS Tec, ir al resumen de la consola">{% include "_logo.html" %}</a>
+    <a class="navbar-brand" href="{% url 'panel_admin' %}" aria-label="NEXALYS Tec, ir al resumen de la consola">{% include "_logo.html" with caja=True %}</a>
     <span class="cabecera-consola__etiqueta d-none d-sm-inline-flex">Administración</span>
     <a href="{% url 'inicio' %}" class="cabecera-cuenta__volver ms-auto" target="_blank" rel="noopener" aria-label="Ver página pública (se abre en otra pestaña)">
       <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="d-none d-md-inline">Ver página pública</span>
@@ -39,7 +40,7 @@ Cada página llena el bloque «consola».
   <aside class="consola__lateral offcanvas-lg offcanvas-start" tabindex="-1" id="consola-menu" aria-labelledby="titulo-consola-menu">
     <div class="offcanvas-header">
       <span class="h6 mb-0" id="titulo-consola-menu">Administración</span>
-      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#consola-menu" aria-label="Cerrar"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#consola-menu" aria-label="Cerrar"></button>
     </div>
     <nav class="offcanvas-body consola__nav" aria-label="Secciones de la consola">
       <p class="consola__grupo">General</p>

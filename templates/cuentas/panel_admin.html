@@ -185,8 +185,9 @@
   var montos = JSON.parse(document.getElementById("datos-montos").textContent);
   document.getElementById("grafico-respaldo").classList.add("visually-hidden");
   var estilos = getComputedStyle(document.documentElement);
-  var cian = estilos.getPropertyValue("--nx-acento").trim() || "#19C3E6";
-  var marino = estilos.getPropertyValue("--nx-oscuro").trim() || "#0B1B3A";
+  // Diseño celeste: el mes actual en azul y los anteriores en celeste.
+  var azul = estilos.getPropertyValue("--cel-azul").trim() || "#1F7BF2";
+  var celeste = "#A9CBF7";
   new Chart(document.getElementById("grafico-ventas-admin"), {
     type: "bar",
     data: {
@@ -194,8 +195,8 @@
       datasets: [{
         label: "Vendido (S/)",
         data: montos,
-        backgroundColor: montos.map(function (_, i) { return i === montos.length - 1 ? cian : marino; }),
-        borderRadius: 6,
+        backgroundColor: montos.map(function (_, i) { return i === montos.length - 1 ? azul : celeste; }),
+        borderRadius: 8,
         maxBarThickness: 46
       }]
     },
@@ -207,7 +208,7 @@
       },
       scales: {
         x: { grid: { display: false } },
-        y: { beginAtZero: true, ticks: { callback: function (v) { return "S/ " + v.toLocaleString("es-PE"); } } }
+        y: { beginAtZero: true, grid: { color: "#E1ECFA" }, ticks: { callback: function (v) { return "S/ " + v.toLocaleString("es-PE"); } } }
       }
     }
   });
