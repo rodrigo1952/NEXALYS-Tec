@@ -232,6 +232,14 @@ def cambiar_logo(request):
 @con_mapa
 def perfil(request, pk):
     """CU-06 Consultar ubicación de tienda: perfil público con dirección y productos."""
+    if request.GET.get("desde") == "qr":
+        # Llegó escaneando el QR de la tienda: se cuenta (tiendas/qr.py) y se deja la dirección limpia,
+        # para que al recargar o compartir el enlace no se cuente otra vez.
+        from . import qr
+
+        tienda = get_object_or_404(Tienda, pk=pk, estado=Tienda.Estado.ACTIVA)
+        qr.registrar_escaneo(request, tienda)
+        return redirect(tienda)
     tienda = get_object_or_404(
         Tienda.objects.prefetch_related("horarios"), pk=pk, estado=Tienda.Estado.ACTIVA
     )
@@ -328,7 +336,7 @@ def cercanas(request):
 
 @tienda_requerida()
 def qr_cartel(request):
-    """Cartel con logo, nombre y QR para pegar en el local (se imprime o se guarda en PDF)."""
+    """«Mi código QR»: escaneos, cartel con logo, nombre y QR para pegar en el local, compartir y descargas."""
     from django.conf import settings
     from django.utils.safestring import mark_safe
 
@@ -338,7 +346,8 @@ def qr_cartel(request):
     return render(request, "tiendas/qr_cartel.html", {
         "tienda": tienda,
         "qr_svg": mark_safe(qr.svg(tienda)),  # lo genera segno: solo dibujos, sin texto del usuario
-        "enlace": tienda.enlace_publico(),
+        "enlace": tienda.enlace_publico(),  # el que se ve y se comparte: sin «?desde=qr»
+        "escaneos": qr.resumen_escaneos(tienda),
         "es_local": "127.0.0.1" in settings.SITIO_URL or "localhost" in settings.SITIO_URL,
     })
 

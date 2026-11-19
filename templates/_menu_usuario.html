@@ -3,7 +3,7 @@
 Menú de la cuenta (o el círculo para iniciar sesión). Va en la fila de arriba en computadora
 (base.html) y en la cabecera de la consola; en el celular se usa el menú lateral (_menu_movil.html).
 Al tocar el nombre se abre un menú con: Mi tienda (solo tiendas: lleva a su página
-pública si está activa; si no, a «Datos de mi tienda»), Mi cuenta,
+pública si está activa; si no, a «Datos de mi tienda»), Mi código QR (solo tiendas activas), Mi cuenta,
 Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
 {% endcomment %}
 {% if user.is_authenticated %}
@@ -14,7 +14,7 @@ Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
   </li>
   {% endif %}
   <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle{% if ns == 'tiendas' and vista in 'panel editar' or not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta password_change ayuda privacidad' %} active{% endif %}"
+    <a class="nav-link dropdown-toggle{% if ns == 'tiendas' and vista in 'panel editar qr' or not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta password_change ayuda privacidad' %} active{% endif %}"
        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menú de la cuenta de {{ user.username }}">{% include "_avatar.html" %}<span class="menu-usuario__nombre">{{ user.username }}</span></a>
     <ul class="dropdown-menu dropdown-menu-end menu-cuenta shadow">
       <li class="menu-cuenta__cabecera">
@@ -33,6 +33,7 @@ Ayuda y soporte, Privacidad y términos y Cerrar sesión (pide confirmación).
       {% if tienda_actual %}
         {% if tienda_actual.estado == "activa" %}
           <li><a class="dropdown-item" href="{% url 'tiendas:perfil' tienda_actual.pk %}"><i class="bi bi-shop" aria-hidden="true"></i> Mi tienda</a></li>
+          <li><a class="dropdown-item" href="{% url 'tiendas:qr' %}"><i class="bi bi-qr-code" aria-hidden="true"></i> Mi código QR</a></li>
         {% else %}
           <li><a class="dropdown-item" href="{% url 'tiendas:panel' %}"><i class="bi bi-shop" aria-hidden="true"></i> Mi tienda</a></li>
         {% endif %}

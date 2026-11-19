@@ -4,17 +4,39 @@
 Cartel con el QR de la tienda para pegar en el local. Al imprimir (o «Guardar como PDF») solo sale el cartel:
 el menú, los botones y el pie se ocultan (marca.css, @media print).
 {% endcomment %}
-{% block titulo %}Código QR de {{ tienda.nombre }} | NEXALYS Tec{% endblock %}
+{% block titulo %}Mi código QR · {{ tienda.nombre }} | NEXALYS Tec{% endblock %}
 {% block centro %}
-<div class="seccion-cuenta__cabecera no-imprimir">
-  <h1 class="h3 mb-1">Código QR de tu tienda</h1>
-  <p class="text-muted mb-0">Imprímelo y pégalo en tu local. Al escanearlo, el cliente entra a tu página en NEXALYS Tec.</p>
+<div class="seccion-cuenta__cabecera seccion-qr__cabecera no-imprimir">
+  <div>
+    <h1 class="h3 mb-1">Mi código QR</h1>
+    <p class="text-muted mb-0">Pégalo en tu local o compártelo: al escanearlo, el cliente entra a tu página en NEXALYS Tec.</p>
+  </div>
+  <a href="{{ tienda.get_absolute_url }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye" aria-hidden="true"></i> Ver mi página pública</a>
 </div>
 
 {% if es_local %}
   <div class="alert alert-warning no-imprimir">
     Este QR lleva a <code>{{ enlace }}</code>, que solo funciona en esta computadora. Cuando la página esté publicada, el QR llevará a tu dominio: imprímelo recién entonces.</div>
 {% endif %}
+
+{# Escaneos del QR (tiendas/qr.py → resumen_escaneos): cada celular cuenta una vez por visita. #}
+<div class="escaneos-qr no-imprimir" aria-label="Escaneos de tu código QR">
+  <div class="escaneos-qr__dato">
+    <span class="escaneos-qr__icono"><i class="bi bi-qr-code-scan" aria-hidden="true"></i></span>
+    <p class="escaneos-qr__numero">{{ escaneos.este_mes }}{% if escaneos.diferencia > 0 %}<span class="escaneos-qr__sube"><i class="bi bi-arrow-up-right" aria-hidden="true"></i>+{{ escaneos.diferencia }}</span>{% endif %}</p>
+    <p class="escaneos-qr__etiqueta">Escaneos este mes{% if escaneos.comparacion %} ({{ escaneos.comparacion }}){% endif %}</p>
+  </div>
+  <div class="escaneos-qr__dato">
+    <span class="escaneos-qr__icono"><i class="bi bi-bar-chart" aria-hidden="true"></i></span>
+    <p class="escaneos-qr__numero">{{ escaneos.total }}</p>
+    <p class="escaneos-qr__etiqueta">Escaneos desde que tienes tu QR</p>
+  </div>
+  <div class="escaneos-qr__dato">
+    <span class="escaneos-qr__icono"><i class="bi bi-clock" aria-hidden="true"></i></span>
+    <p class="escaneos-qr__numero escaneos-qr__numero--texto">{{ escaneos.ultimo|default:"Todavía no" }}</p>
+    <p class="escaneos-qr__etiqueta">Último escaneo</p>
+  </div>
+</div>
 
 {# Cartel a la izquierda y, al lado, el panel «Compartir» e «Imprimir y descargar» (static/js/cartel_qr.js). #}
 <div class="pagina-cartel">
@@ -52,6 +74,8 @@ el menú, los botones y el pie se ocultan (marca.css, @media print).
     <p class="panel-cartel__aviso" data-aviso-cartel aria-live="polite"></p>
   </aside>
 </div>
+<p class="nota-qr no-imprimir"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Cada celular cuenta una vez por visita y tus propias visitas no cuentan.
+  Solo se cuentan los escaneos del código: el enlace que compartes por WhatsApp o redes no suma aquí.</span></p>
 {% endblock %}
 
 {% block scripts %}

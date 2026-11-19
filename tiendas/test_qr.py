@@ -1,4 +1,4 @@
-"""QR de la tienda: cartel para imprimir y descargas PNG/SVG con el enlace a su página."""
+"""QR de la tienda («Mi código QR»): cartel para imprimir y descargas PNG/SVG con el enlace a su página."""
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -22,10 +22,12 @@ class CodigoQrTests(TestCase):
         # segno no lee QR: se comprueba que el contenido codificado es el enlace, comparando con uno hecho a mano.
         import segno
 
-        self.assertEqual(codigo.matrix, segno.make(f"{SITIO}/tiendas/{self.tienda.pk}/", error="q").matrix)
+        # Lleva la marca «?desde=qr» para contar los escaneos (test_qr_escaneos.py).
+        self.assertEqual(codigo.matrix, segno.make(f"{SITIO}/tiendas/{self.tienda.pk}/?desde=qr", error="q").matrix)
 
     def test_cartel_para_imprimir(self):
         respuesta = self.client.get(reverse("tiendas:qr"))
+        self.assertContains(respuesta, '<h1 class="h3 mb-1">Mi código QR</h1>')
         self.assertContains(respuesta, '<h2 class="cartel-qr__nombre">Tienda Uno</h2>')
         self.assertContains(respuesta, "Escanéame con la cámara de tu celular")
         self.assertContains(respuesta, f"{SITIO}/tiendas/{self.tienda.pk}/")
@@ -47,13 +49,21 @@ class CodigoQrTests(TestCase):
         self.assertIn(b"<svg", svg.content)
         self.assertEqual(self.client.get("/tiendas/panel/qr.exe").status_code, 404)
 
-    def test_acceso_desde_el_panel(self):
-        self.assertContains(self.client.get(reverse("tiendas:panel")), f'href="{reverse("tiendas:qr")}"')
+    def test_acceso_desde_los_menus(self):
+        # Ya no es una tarjeta dentro de «Datos de mi tienda»: es un ítem del menú lateral, del avatar y del celular.
+        panel = self.client.get(reverse("tiendas:panel"))
+        self.assertNotContains(panel, "tarjeta-qr")
+        self.assertContains(panel, f'href="{reverse("tiendas:qr")}"')
+        self.assertContains(panel, '<i class="bi bi-qr-code" aria-hidden="true"></i>Mi código QR</a>')
+        self.assertContains(panel, '<i class="bi bi-qr-code" aria-hidden="true"></i> Mi código QR</a>')
+        pagina = self.client.get(reverse("tiendas:qr"))
+        self.assertContains(pagina, 'class="activo" aria-current="page"><i class="bi bi-qr-code" aria-hidden="true"></i>Mi código QR</a>')
+        self.assertNotContains(pagina, 'class="activo" aria-current="page"><i class="bi bi-shop" aria-hidden="true"></i>Datos de mi tienda')
 
     def test_solo_tiendas_activas(self):
         self.tienda.estado = Tienda.Estado.PENDIENTE
         self.tienda.save()
-        self.assertNotContains(self.client.get(reverse("tiendas:panel")), "Código QR de tu tienda")
+        self.assertNotContains(self.client.get(reverse("tiendas:panel")), "Mi código QR")
         self.assertEqual(self.client.get(reverse("tiendas:qr")).status_code, 302)
         self.client.logout()
         self.assertEqual(self.client.get(reverse("tiendas:qr")).status_code, 302)

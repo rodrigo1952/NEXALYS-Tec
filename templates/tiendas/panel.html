@@ -87,15 +87,6 @@
   </div>
 </div>
 
-{% if tienda.estado == "activa" %}
-  <div class="tarjeta-cuenta mt-3 tarjeta-qr">
-    <div class="tarjeta-cuenta__titulo">
-      <h2 class="h6 mb-0"><i class="bi bi-qr-code" aria-hidden="true"></i> Código QR de tu tienda</h2>
-      <a href="{% url 'tiendas:qr' %}" class="btn btn-sm btn-primary"><i class="bi bi-printer" aria-hidden="true"></i> Ver cartel para imprimir</a>
-    </div>
-    <p class="small text-muted mb-0">Pégalo en tu local o en tus bolsas: al escanearlo con el celular, el cliente ve tu página con tus productos, horario y WhatsApp.</p>
-  </div>
-{% endif %}
 {% include "reclamos/_tarjeta_panel.html" %}
 
 {% if mas_guardados %}

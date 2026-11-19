@@ -53,7 +53,10 @@ sin Inicio/Catálogo ni la barra de categorías. Cada página llena el bloque «
         {% if user.is_authenticated %}
           <li><a href="{% url 'mi_cuenta' %}" class="{% if not ns and vista in 'mi_cuenta editar_datos eliminar_cuenta' %}activo{% endif %}"{% if not ns and vista == 'mi_cuenta' %} aria-current="page"{% endif %}><i class="bi bi-person" aria-hidden="true"></i>Mi perfil</a></li>
           {% if tienda_actual %}
-            <li><a href="{% url 'tiendas:panel' %}" class="{% if ns == 'tiendas' %}activo{% endif %}"{% if ns == 'tiendas' and vista == 'panel' %} aria-current="page"{% endif %}><i class="bi bi-shop" aria-hidden="true"></i>Datos de mi tienda</a></li>
+            <li><a href="{% url 'tiendas:panel' %}" class="{% if ns == 'tiendas' and vista != 'qr' %}activo{% endif %}"{% if ns == 'tiendas' and vista == 'panel' %} aria-current="page"{% endif %}><i class="bi bi-shop" aria-hidden="true"></i>Datos de mi tienda</a></li>
+            {% if tienda_actual.estado == "activa" %}
+              <li><a href="{% url 'tiendas:qr' %}" class="{% if ns == 'tiendas' and vista == 'qr' %}activo{% endif %}"{% if ns == 'tiendas' and vista == 'qr' %} aria-current="page"{% endif %}><i class="bi bi-qr-code" aria-hidden="true"></i>Mi código QR</a></li>
+            {% endif %}
             {% reclamos_pendientes tienda_actual as globo_reclamos %}
             <li><a href="{% url 'reclamos:tienda_lista' %}" class="{% if ns == 'reclamos' %}activo{% endif %}"{% if ns == 'reclamos' and vista == 'tienda_lista' %} aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i>Libro de Reclamaciones{% if globo_reclamos %} <span class="badge rounded-pill text-bg-warning" title="Hojas sin responder">{{ globo_reclamos }}</span>{% endif %}</a></li>
           {% endif %}

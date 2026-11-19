@@ -406,3 +406,21 @@ class HorarioDia(models.Model):
         if not tramos:
             return "Cerrado"
         return " y ".join(f"{hora_12(inicio)} – {hora_12(fin)}" for inicio, fin in tramos)
+
+
+class EscaneoQR(models.Model):
+    """
+    Una visita que llegó a la página de la tienda escaneando su código QR (tiendas/qr.py, «?desde=qr»).
+    Solo guarda la tienda y la fecha: ningún dato de la persona. La tienda ve los números en «Mi código QR».
+    """
+
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE, related_name="escaneos_qr", verbose_name="tienda")
+    fecha = models.DateTimeField("fecha", auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-fecha"]
+        verbose_name = "escaneo del QR"
+        verbose_name_plural = "escaneos del QR"
+
+    def __str__(self):
+        return f"{self.tienda} · {timezone.localtime(self.fecha):%d/%m/%Y %H:%M}"
