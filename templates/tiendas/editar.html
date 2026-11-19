@@ -90,6 +90,7 @@
           </div>
           <div class="editor-ubicacion__resultados" data-resultados-busqueda aria-live="polite"></div>
           <div class="mapa mapa--editar" data-mapa-editar data-latitud="{{ form.latitud.id_for_label }}" data-longitud="{{ form.longitud.id_for_label }}"
+               data-guardada-lat="{{ form.originales.latitud|default_if_none:''|stringformat:'s' }}" data-guardada-lng="{{ form.originales.longitud|default_if_none:''|stringformat:'s' }}"
                data-centro-lat="{{ centro_mapa.0 }}" data-centro-lng="{{ centro_mapa.1 }}" role="region" aria-label="Mapa para marcar tu local"></div>
           <p class="small mt-2 mb-2" data-coordenadas aria-live="polite"></p>
           <div class="d-flex flex-wrap gap-2 align-items-center">
@@ -136,6 +137,7 @@
     </div>
   </div>
 
+  {% include "_confirmar_clave.html" %}
   <div class="d-flex gap-2 mt-4">
     <button type="submit" class="btn btn-primary">Guardar cambios</button>
     <a href="{% url 'tiendas:panel' %}" class="btn btn-outline-secondary">Cancelar</a>

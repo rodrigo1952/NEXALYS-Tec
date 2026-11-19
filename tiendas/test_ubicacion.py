@@ -118,5 +118,7 @@ class MarcarUbicacionTests(BaseUbicacion):
         self.assertFalse(self.tienda.tiene_ubicacion)
 
     def test_la_contrasena_menciona_la_ubicacion_una_sola_vez(self):
+        # En la ayuda de la contraseña (latitud y longitud son un solo dato para el usuario).
         texto = self.client.get(self.url).content.decode()
-        self.assertEqual(texto.count("ubicación en el mapa"), 1)
+        self.assertIn("es necesaria si cambias: nombre de la tienda, dirección, WhatsApp, ubicación en el mapa.", texto)
+        self.assertNotIn("ubicación en el mapa, ubicación en el mapa", texto)

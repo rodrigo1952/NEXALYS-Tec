@@ -108,7 +108,10 @@
   tienda. El administrador no los ve.
 - **Datos sensibles**: cambiar nombre, apellido o correo de la cuenta, y nombre, dirección, WhatsApp o
   **ubicación en el mapa** de la tienda, pide la contraseña otra vez (`cuentas/reautenticacion.py`, válido
-  10 minutos). Los productos no la piden.
+  10 minutos). Los productos no la piden. La caja de la contraseña va encima de «Guardar cambios»
+  (`templates/_confirmar_clave.html`, nov 2026) y `static/js/formularios.js` la muestra apenas cambia un dato
+  sensible, con el motivo («Cambiaste: ubicación en el mapa»); si se intenta guardar sin ella, no se envía y la
+  resalta. Cada campo sensible lleva `data-sensible`, `data-sensible-tipo` y `data-sensible-original`.
 - **Stock**: solo se escribe al CREAR el producto (inventario inicial). Al editar, el campo «Stock actual» se ve
   bloqueado con enlaces a «Ajustar stock» y «Registrar ingreso»: así todo cambio queda en el kardex con su motivo.
 - **Ubicación del cliente**: «Tiendas cercanas» la usa solo en su navegador (distancias); nunca llega al servidor
@@ -363,6 +366,16 @@
   la tienda. `Tienda.ruc` (opcional, migración tiendas 0008).
 - **QR de la tienda**: `tiendas/qr.py` (segno, corrección Q), `/tiendas/panel/qr/` cartel para imprimir y
   `/tiendas/panel/qr.png|svg`. Solo tiendas activas.
+- **«Mi código QR» de la tienda (nov 2026)**: ítem propio en el menú lateral del centro de cuenta, en el menú del
+  avatar y en el menú del celular (solo tiendas activas); ya no hay tarjeta del QR en «Datos de mi tienda». La página
+  (`/tiendas/panel/qr/`, Propuesta A) muestra arriba los escaneos (este mes con la comparación con el mes pasado, total
+  y último) y debajo el cartel con el panel de compartir/descargar. El QR lleva `…/tiendas/<pk>/?desde=qr`: `perfil`
+  cuenta el escaneo (`EscaneoQR`: tienda + fecha; migración tiendas 0010) una vez por visita (sesión), sin contar a la
+  propia tienda ni al administrador, y redirige a la página limpia. El enlace que se comparte va sin la marca.
+- **Formularios con errores (nov 2026)**: `static/js/formularios.js` (en `base.html`) baja hasta el primer error y lo
+  resalta (`.campo-resaltado`) cuando la página es la respuesta a un POST (`<body data-formulario-enviado>`).
+- **Pin del mapa (Editar mi tienda, nov 2026)**: si queda distinto de lo guardado (`data-guardada-lat/lng`), sale el
+  aviso «Moviste el pin» / «Quitaste tu local del mapa» con «Deshacer» (`.aviso-pin`), porque un toque lo mueve.
 - **QR de la página (feria, nov 2026)**: `administracion/qr.py` (segno, corrección Q). Consola → General → «QR de la página»
   (`/administracion/qr/`): cartel para imprimir (mismas clases y `cartel_qr.js` que el de las tiendas), descargas
   `/administracion/qr.png|svg`, contador de visitas y «Abrir pantalla para la feria» (`/administracion/qr/pantalla/`,

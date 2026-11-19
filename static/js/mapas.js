@@ -266,7 +266,23 @@
       enElMapa.title = texto;
       enElMapa.setAttribute("aria-label", texto);
     }
+    // El vidrio del diseño celeste (backdrop-filter en .tarjeta-cuenta) encierra a lo que tiene «position: fixed»:
+    // el mapa ampliado quedaba atrapado dentro de su tarjeta y la página se congelaba. Por eso, al ampliarlo,
+    // el editor se lleva directo a <body>, y al reducirlo vuelve a su lugar (marcado con un comentario).
+    var lugar = null;
+    function moverEditor(abrir) {
+      if (abrir && !lugar) {
+        lugar = document.createComment(" lugar del mapa ");
+        editor.parentNode.insertBefore(lugar, editor);
+        document.body.appendChild(editor);
+      } else if (!abrir && lugar) {
+        lugar.parentNode.insertBefore(editor, lugar);
+        lugar.parentNode.removeChild(lugar);
+        lugar = null;
+      }
+    }
     function cambiar(abrir) {
+      moverEditor(abrir);
       pintarBoton(abrir);
       editor.classList.toggle("editor-ubicacion--ampliado", abrir);
       document.body.classList.toggle("mapa-ampliado-abierto", abrir);
@@ -396,14 +412,39 @@
     if (!window.L) { sinMapa(elemento); if (botonUsar) botonUsar.disabled = true; return; }
 
     var inicial = latitud.value && longitud.value ? [parseFloat(latitud.value), parseFloat(longitud.value)] : null;
+    // La ubicación que ya está guardada (si el formulario volvió con errores, «inicial» puede ser otra).
+    var guardada = "guardadaLat" in elemento.dataset
+      ? (elemento.dataset.guardadaLat && elemento.dataset.guardadaLng
+        ? [parseFloat(elemento.dataset.guardadaLat), parseFloat(elemento.dataset.guardadaLng)] : null)
+      : inicial;
     var mapa = crearMapa(elemento, inicial || centroDe(elemento), inicial ? 18 : 15);
     var pin = null;
 
+    function mismoLugar(a, b) {
+      if (!a || !b) return !a && !b;
+      var la = a.lat !== undefined ? [a.lat, a.lng] : a, lb = b.lat !== undefined ? [b.lat, b.lng] : b;
+      return la[0].toFixed(6) === lb[0].toFixed(6) && la[1].toFixed(6) === lb[1].toFixed(6);
+    }
+    // Un toque en el mapa mueve el pin: si quedó distinto de lo guardado, se avisa y se puede deshacer.
     function mostrar() {
-      if (pin) {
-        var p = pin.getLatLng();
-        texto.innerHTML = '<i class="bi bi-geo-alt-fill text-success" aria-hidden="true"></i> Pin puesto en ' +
-          p.lat.toFixed(6) + ", " + p.lng.toFixed(6) + ". Se guardará al presionar «Guardar cambios».";
+      var actual = pin ? pin.getLatLng() : null;
+      var cambio = !mismoLugar(actual, guardada);
+      var deshacer = ' <button type="button" class="aviso-pin__deshacer" data-deshacer-pin>' +
+        '<i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Deshacer</button>';
+      texto.classList.toggle("aviso-pin", cambio);
+      if (cambio && actual && guardada) {
+        texto.innerHTML = '<i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> ' +
+          "<span><strong>Moviste el pin.</strong> Aún no se guarda: presiona «Guardar cambios» o, si fue sin querer, deshazlo.</span>" + deshacer;
+      } else if (cambio && actual) {
+        texto.innerHTML = '<i class="bi bi-geo-alt-fill" aria-hidden="true"></i> ' +
+          "<span><strong>Pin puesto en " + actual.lat.toFixed(6) + ", " + actual.lng.toFixed(6) + ".</strong> " +
+          "Se guardará al presionar «Guardar cambios».</span>" + deshacer;
+      } else if (cambio) {
+        texto.innerHTML = '<i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> ' +
+          "<span><strong>Quitaste tu local del mapa.</strong> Aún no se guarda: presiona «Guardar cambios» o deshazlo.</span>" + deshacer;
+      } else if (actual) {
+        texto.innerHTML = '<i class="bi bi-geo-alt-fill text-success" aria-hidden="true"></i> ' +
+          "Tu local está marcado aquí. Para moverlo, arrastra el pin o toca otro lugar del mapa.";
       } else {
         texto.innerHTML = '<i class="bi bi-info-circle" aria-hidden="true"></i> Aún no marcaste tu local: toca el mapa en el lugar de tu tienda.';
       }
@@ -419,20 +460,31 @@
         longitud.value = "";
       }
       mostrar();
+      // Avisa al formulario (static/js/formularios.js): la ubicación pide la contraseña.
+      latitud.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    function crearPin(punto) {
+      pin = L.marker(punto, { draggable: true, autoPan: true, title: "Tu local (arrástralo para ajustarlo)" }).addTo(mapa);
+      pin.on("dragend", guardarCampos);
     }
     function ponerPin(punto) {
       if (pin) pin.setLatLng(punto);
-      else {
-        pin = L.marker(punto, { draggable: true, autoPan: true, title: "Tu local (arrástralo para ajustarlo)" }).addTo(mapa);
-        pin.on("dragend", guardarCampos);
-      }
+      else crearPin(punto);
       guardarCampos();
     }
 
-    if (inicial) {
-      pin = L.marker(inicial, { draggable: true, autoPan: true, title: "Tu local (arrástralo para ajustarlo)" }).addTo(mapa);
-      pin.on("dragend", guardarCampos);
-    }
+    if (inicial) crearPin(inicial);
+    texto.addEventListener("click", function (evento) {
+      if (!evento.target.closest("[data-deshacer-pin]")) return;
+      if (guardada) {
+        if (pin) pin.setLatLng(guardada); else crearPin(guardada);
+        mapa.setView(guardada, Math.max(mapa.getZoom(), 17));
+      } else if (pin) {
+        mapa.removeLayer(pin);
+        pin = null;
+      }
+      guardarCampos();
+    });
     mostrar();
     mapa.on("click", function (evento) { ponerPin(evento.latlng); });
     botonesCapas(mapa);

@@ -99,7 +99,8 @@ class RegistroTiendaForm(AceptarPrivacidadMixin, EstiloBootstrapMixin, UserCreat
 class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelForm):
     """
     La tienda edita sus propios datos desde su panel. Para cambiar el nombre, la
-    dirección o el WhatsApp se pide la contraseña (no para la descripción ni el logo).
+    dirección, el WhatsApp o la ubicación se pide la contraseña (no para la descripción,
+    el logo, «Lo que te hace distinto» ni el horario).
     """
 
     # La ubicación en el mapa también es sensible: con ella los clientes llegan al local.
@@ -107,6 +108,8 @@ class EditarTiendaForm(ConfirmarClaveMixin, EstiloBootstrapMixin, forms.ModelFor
         "nombre": "nombre de la tienda", "direccion": "dirección", "whatsapp": "WhatsApp",
         "latitud": "ubicación en el mapa", "longitud": "ubicación en el mapa",
     }
+    # El navegador compara el WhatsApp como número (sin espacios ni +51), igual que normalizar_whatsapp.
+    TIPOS_SENSIBLES = {"whatsapp": "telefono"}
 
     CAMPOS_DISTINTO = ("lema", "repara_celulares", "repara_computadoras", "instala_camaras_redes",
                        "impresoras_tintas", "otro_servicio")

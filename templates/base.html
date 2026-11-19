@@ -43,7 +43,7 @@
     [data-ampliar] { cursor: zoom-in; }
   </style>
 </head>
-<body class="fondo-marca d-flex flex-column min-vh-100{% block clase_body %}{% endblock %}">
+<body class="fondo-marca d-flex flex-column min-vh-100{% block clase_body %}{% endblock %}"{% if request.method == "POST" %} data-formulario-enviado{% endif %}>
 {% with ns=request.resolver_match.namespace vista=request.resolver_match.url_name %}
 {% block cabecera %}
 <header class="cabecera-marca" id="cabecera">
@@ -426,5 +426,7 @@
 {% block scripts %}{% endblock %}
 {# Al final: avisa antes de salir de un formulario con cambios y guarda borradores (data-avisar-salida, data-borrador). #}
 <script src="{% static 'js/no_perder.js' %}"></script>
+{# Formularios: la contraseña para datos sensibles aparece junto al botón y, si vuelve con errores, la página baja al primero. #}
+<script src="{% static 'js/formularios.js' %}"></script>
 </body>
 </html>

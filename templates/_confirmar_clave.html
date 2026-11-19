@@ -1,0 +1,16 @@
+{# Contraseña para guardar datos sensibles (cuentas/reautenticacion.py). Va justo encima del botón «Guardar cambios». #}
+{# static/js/formularios.js la muestra apenas cambias un dato sensible y escribe el motivo; sin JavaScript se ve siempre. #}
+{% if form.clave_actual %}{% with campo=form.clave_actual motivos=form.motivos_clave %}
+<div class="confirmar-clave{% if campo.errors %} confirmar-clave--error{% endif %}" data-confirmar-clave role="group" aria-labelledby="titulo-confirmar-clave">
+  <span class="confirmar-clave__icono" aria-hidden="true"><i class="bi bi-shield-lock-fill"></i></span>
+  <div class="confirmar-clave__cuerpo">
+    <p class="confirmar-clave__titulo" id="titulo-confirmar-clave">Falta un paso: confirma que eres tú</p>
+    <p class="confirmar-clave__motivo" data-motivo-clave aria-live="polite">{% if motivos %}Cambiaste: <strong>{{ motivos }}</strong>. {% endif %}Por seguridad, escribe tu contraseña para guardar.</p>
+    <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+    {{ campo }}
+    <div class="text-danger small" data-error-clave{% if not campo.errors %} hidden{% endif %}>{% for error in campo.errors %}{{ error }}{% endfor %}</div>
+    <div class="form-text" data-ayuda-clave>{{ campo.help_text }}</div>
+    <div class="form-text" data-ayuda-clave-corta hidden>Después no se vuelve a pedir durante {{ form.minutos_sin_pedir }} minutos.</div>
+  </div>
+</div>
+{% endwith %}{% endif %}
