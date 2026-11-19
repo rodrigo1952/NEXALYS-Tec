@@ -36,6 +36,19 @@
     });
   }
 
+  // El logo de NEXALYS es un SVG sin ancho ni alto: el navegador lo toma como 300 × 150 y, al recortarlo
+  // en cuadrado, solo quedaba un pedazo (una «hoja» oscura). Se carga con un tamaño fijo de 512 × 512.
+  function cargarLogo(img) {
+    var src = img.currentSrc || img.src;
+    if (!/\.svg(\?|#|$)/i.test(src)) return cargarImagen(src);
+    return fetch(src).then(function (respuesta) { return respuesta.text(); }).then(function (texto) {
+      var raiz = new DOMParser().parseFromString(texto, "image/svg+xml").documentElement;
+      raiz.setAttribute("width", "512");
+      raiz.setAttribute("height", "512");
+      return cargarImagen("data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(raiz)));
+    });
+  }
+
   function lineas(ctx, texto, anchoMax) {
     var palabras = texto.split(" "), resultado = [], actual = "";
     palabras.forEach(function (p) {
@@ -64,6 +77,8 @@
     var llamado = cartel.querySelector(".cartel-qr__llamado").textContent.trim();
     var enlace = cartel.querySelector(".cartel-qr__enlace").textContent.trim();
     var inicial = (nombre[0] || "?").toUpperCase();
+    // El cartel de la página (administracion/qr.html) lleva el logo de NEXALYS: cuadrado redondeado, sin recortar.
+    var esMarca = !!(logo && logo.classList.contains("cartel-qr__logo--marca"));
 
     var copia = svg.cloneNode(true);
     copia.setAttribute("xmlns", "http://www.w3.org/2000/svg");
@@ -73,7 +88,7 @@
 
     return Promise.all([
       cargarImagen(urlQr),
-      logo ? cargarImagen(logo.currentSrc || logo.src).catch(function () { return null; }) : Promise.resolve(null),
+      logo ? cargarLogo(logo).catch(function () { return null; }) : Promise.resolve(null),
       document.fonts ? document.fonts.ready : Promise.resolve(),
     ]).then(function (r) {
       var qr = r[0], imgLogo = r[1];
@@ -94,25 +109,41 @@
 
       // Logo (o inicial) y nombre de la tienda.
       var y = 110, radio = 64, cx = ANCHO / 2;
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, y + radio, radio, 0, Math.PI * 2);
-      ctx.closePath();
-      if (imgLogo) {
-        ctx.clip();
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(cx - radio, y, radio * 2, radio * 2);
-        var lado = Math.min(imgLogo.naturalWidth, imgLogo.naturalHeight);
-        ctx.drawImage(imgLogo, (imgLogo.naturalWidth - lado) / 2, (imgLogo.naturalHeight - lado) / 2, lado, lado,
-                      cx - radio, y, radio * 2, radio * 2);
-      } else {
+      if (imgLogo && esMarca) {
+        ctx.save();
+        ctx.shadowColor = "rgba(20, 96, 217, .28)";
+        ctx.shadowBlur = 28;
+        ctx.shadowOffsetY = 10;
+        redondeado(ctx, cx - radio, y, radio * 2, radio * 2, 32);
         ctx.fillStyle = AZUL;
         ctx.fill();
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "700 64px " + LETRA;
-        ctx.fillText(inicial, cx, y + radio + 22);
+        ctx.restore();
+        ctx.save();
+        redondeado(ctx, cx - radio, y, radio * 2, radio * 2, 32);
+        ctx.clip();
+        ctx.drawImage(imgLogo, cx - radio, y, radio * 2, radio * 2);
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, y + radio, radio, 0, Math.PI * 2);
+        ctx.closePath();
+        if (imgLogo) {
+          ctx.clip();
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(cx - radio, y, radio * 2, radio * 2);
+          var lado = Math.min(imgLogo.naturalWidth, imgLogo.naturalHeight);
+          ctx.drawImage(imgLogo, (imgLogo.naturalWidth - lado) / 2, (imgLogo.naturalHeight - lado) / 2, lado, lado,
+                        cx - radio, y, radio * 2, radio * 2);
+        } else {
+          ctx.fillStyle = AZUL;
+          ctx.fill();
+          ctx.fillStyle = "#FFFFFF";
+          ctx.font = "700 64px " + LETRA;
+          ctx.fillText(inicial, cx, y + radio + 22);
+        }
+        ctx.restore();
       }
-      ctx.restore();
       y += radio * 2 + 70;
       ctx.fillStyle = AZUL;
       ctx.font = "700 64px " + LETRA;

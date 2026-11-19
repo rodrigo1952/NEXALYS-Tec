@@ -35,6 +35,15 @@ class QrPaginaTests(TestCase):
         # En el menú lateral de la consola, marcado como la sección actual.
         self.assertContains(respuesta, 'aria-current="page"><i class="bi bi-qr-code" aria-hidden="true"></i>QR de la página</a>')
 
+    def test_el_cartel_descargado_lleva_el_logo_completo(self):
+        # El logo es un SVG sin ancho ni alto: al bajar el PNG solo salía un pedazo («hoja» oscura).
+        self.assertContains(self.client.get(reverse("administracion:qr")), "cartel-qr__logo--marca")
+        from django.contrib.staticfiles import finders
+        with open(finders.find("js/cartel_qr.js"), encoding="utf-8") as archivo:
+            codigo = archivo.read()
+        for texto in ("function cargarLogo(img)", 'raiz.setAttribute("width", "512")', 'classList.contains("cartel-qr__logo--marca")'):
+            self.assertIn(texto, codigo)
+
     @override_settings(SITIO_URL="http://127.0.0.1:8000")
     def test_aviso_si_el_qr_apunta_a_la_pc(self):
         self.assertTrue(qr.es_local())
