@@ -805,3 +805,71 @@ def copias_descargar(request, nombre):
         raise Http404("No existe esa copia.")
     return FileResponse(open(ruta, "rb"), as_attachment=True, filename=ruta.name, content_type="application/zip")
 
+
+
+# ---------------------------------------------------------------------------
+# QR de la página (ferias y carteles): administracion/qr.py
+# ---------------------------------------------------------------------------
+
+def _datos_qr():
+    from django.utils.safestring import mark_safe
+
+    from . import qr
+
+    return {
+        "qr_svg": mark_safe(qr.svg()),  # lo genera segno: solo dibujos, sin texto del usuario
+        "enlace": qr.enlace(),
+        "enlace_corto": qr.enlace_corto(),
+        "es_local": qr.es_local(),
+        "visitas": qr.resumen_visitas(),
+    }
+
+
+@never_cache
+@solo_admin
+def qr_pagina(request):
+    """Cartel con el QR de NEXALYS Tec para imprimir, descargas y el contador de visitas."""
+    return render(request, "administracion/qr.html", _datos_qr())
+
+
+@never_cache
+@solo_admin
+def qr_pantalla(request):
+    """Pantalla completa para el stand de una feria: QR grande, pasos y contador que se actualiza solo."""
+    return render(request, "administracion/qr_pantalla.html", _datos_qr())
+
+
+@never_cache
+@solo_admin
+def qr_visitas(request):
+    """Contador para la pantalla de la feria (lo pide cada 15 segundos, sin recargar la página)."""
+    from django.http import JsonResponse
+
+    from . import qr
+
+    datos = qr.resumen_visitas()
+    return JsonResponse({"total": datos["total"], "hoy": datos["hoy"]})
+
+
+@solo_admin
+def qr_descargar(request, formato):
+    from django.http import Http404, HttpResponse
+
+    from . import qr
+
+    if formato not in ("png", "svg"):
+        raise Http404
+    respuesta = HttpResponse(qr.archivo(formato), content_type="image/png" if formato == "png" else "image/svg+xml")
+    respuesta["Content-Disposition"] = f'attachment; filename="qr-nexalys-tec.{formato}"'
+    return respuesta
+
+
+@require_POST
+@solo_admin
+def qr_reiniciar(request):
+    """Pone el contador en cero (por ejemplo, la mañana de la feria)."""
+    from .models import VisitaQR
+
+    borradas, _ = VisitaQR.objects.all().delete()
+    messages.success(request, f"Contador en cero: se borraron {borradas} visita{'s' if borradas != 1 else ''}.")
+    return redirect("administracion:qr")

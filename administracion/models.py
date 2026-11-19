@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class AccionAdmin(models.Model):
@@ -82,3 +83,20 @@ class ErrorRegistrado(models.Model):
 
     def __str__(self):
         return f"{self.tipo} en {self.ruta} ({self.veces})"
+
+
+class VisitaQR(models.Model):
+    """
+    Una visita que llegó escaneando el QR de la página (administracion/qr.py), por ejemplo en una feria.
+    Solo guarda la fecha: ningún dato de la persona. La consola muestra el total y las de hoy.
+    """
+
+    fecha = models.DateTimeField("fecha", auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-fecha"]
+        verbose_name = "visita por el QR"
+        verbose_name_plural = "visitas por el QR"
+
+    def __str__(self):
+        return f"Visita por el QR · {timezone.localtime(self.fecha):%d/%m/%Y %H:%M}"

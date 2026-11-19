@@ -1,0 +1,71 @@
+{% extends "administracion/_consola.html" %}
+{% load static %}
+{% comment %}
+QR de la página de NEXALYS Tec (administracion/qr.py): cartel para imprimir, descargas, contador de visitas
+y el botón que abre la pantalla para la feria. El cartel usa las mismas clases y el mismo script que el
+QR de las tiendas (cartel-qr, panel-cartel, static/js/cartel_qr.js).
+{% endcomment %}
+{% block titulo %}QR de la página | Administración | NEXALYS Tec{% endblock %}
+{% block consola %}
+<div class="consola-cabecera no-imprimir">
+  <div>
+    <p class="consola-cabecera__antetitulo">General</p>
+    <h1 class="h3 mb-0">QR de la página</h1>
+  </div>
+  <a href="{% url 'administracion:qr_pantalla' %}" class="btn btn-primary" target="_blank" rel="noopener">
+    <i class="bi bi-display" aria-hidden="true"></i> Abrir pantalla para la feria</a>
+</div>
+
+{% if es_local %}
+  <div class="alert alert-warning no-imprimir">
+    <strong>Este QR todavía no sirve en otros celulares.</strong> Lleva a <code>{{ enlace }}</code>, que solo abre en esta
+    computadora. Abre el túnel de Cloudflare y pon su enlace en <code>SITIO_URL</code> del <code>.env</code> (pasos abajo).</div>
+{% endif %}
+
+<div class="pagina-cartel">
+  <section class="cartel-qr" aria-label="Cartel para imprimir">
+    <div class="cartel-qr__tienda">
+      <img src="{% static 'img/favicon.svg' %}" alt="Logo de NEXALYS Tec" class="cartel-qr__logo cartel-qr__logo--marca">
+      <h2 class="cartel-qr__nombre">NEXALYS Tec</h2>
+    </div>
+    <p class="cartel-qr__llamado">Las tiendas de tecnología de Quillabamba en un solo lugar</p>
+    <div class="cartel-qr__codigo" role="img" aria-label="Código QR que lleva a {{ enlace }}">{{ qr_svg }}</div>
+    <p class="cartel-qr__instruccion"><i class="bi bi-phone" aria-hidden="true"></i> Escanéame con la cámara de tu celular</p>
+    <p class="cartel-qr__enlace">{{ enlace_corto }}</p>
+    <p class="cartel-qr__marca">{% include "_logo.html" with claro=True solo_icono=True tamano=22 %} NEXALYS <span>Tec.</span></p>
+  </section>
+
+  <aside class="panel-cartel no-imprimir" data-panel-cartel data-archivo="nexalys-tec"
+         data-url="{{ enlace }}" data-titulo="NEXALYS Tec" data-texto="Conoce NEXALYS Tec: {{ enlace }}">
+    <h2 class="panel-cartel__titulo">Visitas por el QR</h2>
+    <div class="contador-qr">
+      <p class="contador-qr__numero"><strong>{{ visitas.total }}</strong> en total</p>
+      <p class="contador-qr__detalle">{{ visitas.hoy }} hoy{% if visitas.ultima %} · la última: {{ visitas.ultima|date:"d/m, g:i a" }}{% endif %}</p>
+    </div>
+    <form method="post" action="{% url 'administracion:qr_reiniciar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-primary"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Poner el contador en cero</button>
+    </form>
+
+    <h2 class="panel-cartel__titulo">Imprimir y descargar</h2>
+    <button type="button" class="btn btn-primary" data-imprimir><i class="bi bi-printer" aria-hidden="true"></i> Imprimir o guardar en PDF</button>
+    <button type="button" class="btn btn-outline-primary" data-compartir-red="descargar"><i class="bi bi-image" aria-hidden="true"></i> Descargar cartel (PNG)</button>
+    <button type="button" class="btn btn-outline-primary" data-compartir-red="copiar"><i class="bi bi-link-45deg" aria-hidden="true"></i> Copiar enlace</button>
+    <p class="panel-cartel__qr">Solo el QR:
+      <a href="{% url 'administracion:qr_descargar' 'png' %}">PNG</a> ·
+      <a href="{% url 'administracion:qr_descargar' 'svg' %}">SVG (para imprenta)</a></p>
+    <p class="panel-cartel__aviso" data-aviso-cartel aria-live="polite"></p>
+  </aside>
+</div>
+
+<p class="nota-consola no-imprimir"><i class="bi bi-info-circle" aria-hidden="true"></i><span>
+  <strong>Para una feria sin la página publicada:</strong> 1) abre el túnel con
+  <code>cloudflared tunnel --url http://localhost:8000</code>; 2) copia el enlace <code>https://…trycloudflare.com</code> en
+  <code>SITIO_URL</code> del <code>.env</code> (y <code>.trycloudflare.com</code> en <code>ALLOWED_HOSTS</code>); 3) reinicia
+  <code>runserver</code> y abre la pantalla para la feria. Ese enlace cambia cada vez que abres el túnel: si cierras el túnel,
+  un cartel impreso antes deja de funcionar. Cada celular cuenta una sola vez y tus propias pruebas como administrador no se cuentan.</span></p>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/cartel_qr.js' %}"></script>
+{% endblock %}

@@ -363,6 +363,13 @@
   la tienda. `Tienda.ruc` (opcional, migración tiendas 0008).
 - **QR de la tienda**: `tiendas/qr.py` (segno, corrección Q), `/tiendas/panel/qr/` cartel para imprimir y
   `/tiendas/panel/qr.png|svg`. Solo tiendas activas.
+- **QR de la página (feria, nov 2026)**: `administracion/qr.py` (segno, corrección Q). Consola → General → «QR de la página»
+  (`/administracion/qr/`): cartel para imprimir (mismas clases y `cartel_qr.js` que el de las tiendas), descargas
+  `/administracion/qr.png|svg`, contador de visitas y «Abrir pantalla para la feria» (`/administracion/qr/pantalla/`,
+  sin cabecera ni pie, QR grande; el contador se actualiza cada 15 s con `/administracion/qr/visitas/`). El QR lleva a
+  `SITIO_URL/?desde=qr`: `inicio` (cuentas/views.py) cuenta la visita (`VisitaQR`, solo la fecha; migración
+  administracion 0007) una vez por sesión, no cuenta al administrador y redirige al Inicio limpio. «Poner el contador
+  en cero» (POST). Como el enlace del túnel cambia, el QR no se guarda: se arma al abrir la página.
 - **Duplicar producto**: `catalogo:crear?copiar=<pk>` abre el formulario lleno (`_datos_para_duplicar` en
   catalogo/views.py): todo menos stock (0), fotos y código interno; sin publicar ni destacar; la oferta solo si
   sigue vigente y la categoría/marca solo si siguen activas. Solo productos de la misma tienda (404 si no).

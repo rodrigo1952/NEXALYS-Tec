@@ -45,6 +45,7 @@ Cada página llena el bloque «consola».
     <nav class="offcanvas-body consola__nav" aria-label="Secciones de la consola">
       <p class="consola__grupo">General</p>
       <a href="{% url 'panel_admin' %}" class="{% if vista == 'panel_admin' %}activo{% endif %}"{% if vista == 'panel_admin' %} aria-current="page"{% endif %}><i class="bi bi-speedometer2" aria-hidden="true"></i>Resumen</a>
+      <a href="{% url 'administracion:qr' %}" class="{% if ns == 'administracion' and 'qr' in vista %}activo{% endif %}"{% if ns == 'administracion' and vista == 'qr' %} aria-current="page"{% endif %}><i class="bi bi-qr-code" aria-hidden="true"></i>QR de la página</a>
 
       <p class="consola__grupo">Marketplace</p>
       <a href="{% url 'administracion:tiendas' %}" class="{% if ns == 'administracion' and 'tienda' in vista %}activo{% endif %}"{% if ns == 'administracion' and vista == 'tiendas' %} aria-current="page"{% endif %}><i class="bi bi-shop" aria-hidden="true"></i>Tiendas{% if globo_tiendas %}<span class="consola__globo" title="Tiendas por verificar">{{ globo_tiendas }}</span>{% endif %}</a>

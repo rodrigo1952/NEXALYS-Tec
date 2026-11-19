@@ -52,6 +52,13 @@ def rol_requerido(*roles):
 
 
 def inicio(request):
+    if request.GET.get("desde") == "qr":
+        # Llegó escaneando el QR de la página (feria o cartel): se cuenta y se deja la dirección limpia,
+        # para que al recargar o compartir el enlace no se cuente otra vez (administracion/qr.py).
+        from administracion import qr
+
+        qr.registrar_visita(request)
+        return redirect("inicio")
     visibles = Producto.objects.visibles().select_related("tienda", "marca", "categoria")
     destacados, total_destacados = destacados_en_turnos(visibles)
     tiendas, total_tiendas = tiendas_para_inicio()

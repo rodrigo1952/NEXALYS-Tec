@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% comment %}
+Pantalla para el stand de una feria (consola → QR de la página → «Abrir pantalla para la feria»).
+Sin cabecera ni pie: QR grande, los pasos para escanearlo y el contador de visitas, que se actualiza solo
+cada 15 segundos (administracion:qr_visitas). Con F11 el navegador la muestra a pantalla completa.
+{% endcomment %}
+{% block titulo %}Escanea y prueba NEXALYS Tec{% endblock %}
+{% block clase_body %} pantalla-qr-cuerpo{% endblock %}
+{% block clase_main %}pantalla-qr{% endblock %}
+{% block cabecera %}{% endblock %}
+{% block mensajes %}{% endblock %}
+
+{% block contenido %}
+<div class="pantalla-qr__marco">
+  <section class="pantalla-qr__texto">
+    {% include "_logo.html" with caja=True tamano=84 %}
+    <h1 class="pantalla-qr__titulo">Escanea y prueba <span>NEXALYS Tec</span></h1>
+    <p class="pantalla-qr__lema">Las tiendas de tecnología de Quillabamba en un solo lugar: busca, compara precios y escríbeles por WhatsApp.</p>
+    <ol class="pantalla-qr__pasos">
+      <li><span class="pantalla-qr__paso"><i class="bi bi-camera" aria-hidden="true"></i></span>Abre la cámara de tu celular</li>
+      <li><span class="pantalla-qr__paso"><i class="bi bi-qr-code-scan" aria-hidden="true"></i></span>Apunta al código</li>
+      <li><span class="pantalla-qr__paso"><i class="bi bi-hand-index" aria-hidden="true"></i></span>Toca el enlace que aparece</li>
+    </ol>
+    <p class="pantalla-qr__contador" data-contador-qr data-url="{% url 'administracion:qr_visitas' %}">
+      <i class="bi bi-people" aria-hidden="true"></i> Visitas desde este código: <strong data-contador-total>{{ visitas.total }}</strong></p>
+  </section>
+
+  <section class="pantalla-qr__qr">
+    <div class="pantalla-qr__codigo" role="img" aria-label="Código QR que lleva a {{ enlace }}">{{ qr_svg }}</div>
+    <p class="pantalla-qr__enlace">{{ enlace_corto }}</p>
+  </section>
+</div>
+
+{% if es_local %}
+  <p class="pantalla-qr__aviso">Este QR solo funciona en esta computadora: abre el túnel y revisa <code>SITIO_URL</code> en el <code>.env</code>.</p>
+{% endif %}
+<a href="{% url 'administracion:qr' %}" class="pantalla-qr__volver"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a la consola</a>
+{% endblock %}
+
+{% block pie %}{% endblock %}
+
+{% block scripts %}
+<script {% csp_nonce_attr %}>
+  // Contador de la pantalla de la feria: se actualiza cada 15 segundos sin recargar la página.
+  (function () {
+    var caja = document.querySelector("[data-contador-qr]");
+    var total = document.querySelector("[data-contador-total]");
+    if (!caja || !total || !window.fetch) return;
+    setInterval(function () {
+      fetch(caja.dataset.url, { credentials: "same-origin", cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (datos) {
+          if (!datos || String(datos.total) === total.textContent) return;
+          total.textContent = datos.total;
+          caja.classList.remove("pantalla-qr__contador--nuevo");
+          void caja.offsetWidth;  // vuelve a empezar la animación
+          caja.classList.add("pantalla-qr__contador--nuevo");
+        })
+        .catch(function () {});
+    }, 15000);
+  })();
+</script>
+{% endblock %}
