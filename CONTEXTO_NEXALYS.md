@@ -286,7 +286,11 @@
 - «Mis productos» y los productos del perfil público van de la A a la Z.
 - «Mis productos» recuerda la página y los filtros: Editar/Eliminar llevan `?lista=…` (solo ver, q, categoria,
   marca y page) y al guardar o cancelar se vuelve ahí; la fila del producto editado se resalta (`#producto-<id>`).
-  Filtro rápido «Ocultos» (no publicados u ocultos por el administrador).
+  Filtro rápido «Ocultos» (no publicados u ocultos por el administrador). Nov 2026: «En oferta» (vigentes,
+  número en rojo, justo después de «Todos») y «Oferta vencida» (solo si hay alguna; fecha límite ya pasada);
+  ambas incluyen productos ocultos porque sirven para revisar precios. Las vencidas no se borran solas: en esa
+  píldora, «Quitar las N ofertas vencidas» abre una ventana con la lista y quita precio y fecha de TODAS las de
+  la tienda (`quitar_ofertas_vencidas`, solo POST), sin importar la categoría o marca elegida.
 - Paginación con números en todas las listas (`catalogo/_paginacion.html`, etiqueta `numeros_de_pagina`):
   todas hasta 7 páginas; con más, la primera, la última y las cercanas («1 … 8 9 10 11 12 … 30»).
 - **«Publicado» y «Destacado en el inicio»** se ven como tarjetas con interruptor (verde con ojo / ámbar con

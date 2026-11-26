@@ -11,6 +11,7 @@ urlpatterns = [
     path("mis-productos/nuevo/", views.producto_crear, name="crear"),
     path("mis-productos/<int:pk>/editar/", views.producto_editar, name="editar"),
     path("mis-productos/<int:pk>/eliminar/", views.producto_eliminar, name="eliminar"),
+    path("mis-productos/quitar-ofertas-vencidas/", views.quitar_ofertas_vencidas, name="quitar_ofertas_vencidas"),
     # CU-07: gestión de categorías y marcas (solo Administrador)
     path("gestion/<str:tipo>/", gestion.gestion_lista, name="gestion_lista"),
     path("gestion/<str:tipo>/nuevo/", gestion.gestion_crear, name="gestion_crear"),

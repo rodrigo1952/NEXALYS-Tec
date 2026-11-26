@@ -2774,3 +2774,9 @@ body.fondo-marca .aviso-oferta { display: flex; align-items: center; gap: .35rem
 .selector-color__contraste { flex-basis: 100%; font-size: .875rem; }
 .selector-color__contraste--bien { color: #1E7E34; }
 .selector-color__contraste--mal { color: #B42318; font-weight: 600; }
+
+/* Mis productos (nov 2026): número de la píldora «En oferta» en rojo, a juego con el precio de oferta. */
+body.fondo-marca .filtro-rapido--oferta:not(.activo) .contador { background: #FDECEA; color: #C62828; }
+/* Ventana «¿Quitar las ofertas vencidas?» (nov 2026): lista con desplazamiento si son muchas. */
+.lista-vencidas { max-height: 14rem; overflow-y: auto; padding-left: 1.1rem; }
+.lista-vencidas li + li { margin-top: .25rem; }

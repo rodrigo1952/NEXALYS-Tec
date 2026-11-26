@@ -14,6 +14,9 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
 {# Filtros rápidos: los números completos (valor del inventario, ganancia, etc.) están en la pestaña Resumen. #}
 <nav class="filtros-rapidos d-flex flex-wrap align-items-center gap-2 mb-3 fila-deslizable" aria-label="Filtros rápidos">
   <a href="{% querystring ver=None alerta=None sin_costo=None page=None %}" class="filtro-rapido{% if not ver %} activo{% endif %}"{% if not ver %} aria-current="true"{% endif %}>Todos <span class="contador">{{ resumen.productos }}</span></a>
+  {# Nov 2026: ofertas vigentes (número en rojo, como el precio) y vencidas (solo si hay alguna). #}
+  <a href="{% querystring ver='oferta' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--oferta{% if ver == 'oferta' %} activo{% endif %}"{% if ver == 'oferta' %} aria-current="true"{% endif %}>En oferta <span class="contador">{{ resumen.en_oferta }}</span></a>
+  {% if resumen.oferta_vencida or ver == 'oferta_vencida' %}<a href="{% querystring ver='oferta_vencida' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--aviso{% if ver == 'oferta_vencida' %} activo{% endif %}"{% if ver == 'oferta_vencida' %} aria-current="true"{% endif %} title="Ofertas cuya fecha límite ya pasó">Oferta vencida <span class="contador">{{ resumen.oferta_vencida }}</span></a>{% endif %}
   <a href="{% querystring ver='bajo' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--aviso{% if ver == 'bajo' %} activo{% endif %}"{% if ver == 'bajo' %} aria-current="true"{% endif %}>Stock bajo <span class="contador">{{ resumen.stock_bajo }}</span></a>
   <a href="{% querystring ver='agotados' alerta=None sin_costo=None page=None %}" class="filtro-rapido filtro-rapido--peligro{% if ver == 'agotados' %} activo{% endif %}"{% if ver == 'agotados' %} aria-current="true"{% endif %}>Agotados <span class="contador">{{ resumen.agotados }}</span></a>
   <a href="{% querystring ver='ocultos' alerta=None sin_costo=None page=None %}" class="filtro-rapido{% if ver == 'ocultos' %} activo{% endif %}"{% if ver == 'ocultos' %} aria-current="true"{% endif %} title="No publicados u ocultos por el administrador">Ocultos <span class="contador">{{ resumen.ocultos }}</span></a>
@@ -50,6 +53,16 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
 {% endif %}
 {% if ver == 'alertas' %}<p class="small text-muted">Mostrando solo productos agotados o con stock bajo. <a href="{% url 'catalogo:mis_productos' %}" class="enlace-accion">Ver todos</a></p>{% endif %}
 {% if ver == 'ocultos' %}<p class="small text-muted">Estos productos no se ven en el catálogo. Para volver a mostrar uno, entra a «Editar» y marca «Publicado» (si lo ocultó el administrador, verás su motivo).</p>{% endif %}
+{% if ver == 'oferta_vencida' %}
+  <div class="aviso-vencidas d-flex flex-wrap align-items-center gap-2 mb-2">
+    <p class="small text-muted mb-0 flex-grow-1">La fecha límite de estas ofertas ya pasó y los clientes ven el precio normal. Entra a «Editar» para poner una nueva fecha, o quítalas todas de una vez.</p>
+    {% if resumen.oferta_vencida %}
+      <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modal-quitar-vencidas">
+        <i class="bi bi-tag" aria-hidden="true"></i> Quitar {% if resumen.oferta_vencida == 1 %}la oferta vencida{% else %}las {{ resumen.oferta_vencida }} ofertas vencidas{% endif %}
+      </button>
+    {% endif %}
+  </div>
+{% endif %}
 {% if ver == 'sin_costo' %}<p class="small text-muted">Agrega el precio de compra con «Editar» para que estos productos cuenten en tu ganancia y en el valor del inventario.</p>{% endif %}
 
 <div class="table-responsive bg-white rounded shadow-sm contenedor-tabla-productos">
@@ -88,6 +101,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
               <span class="badge text-bg-danger">Oferta</span>
             {% else %}
               {{ producto.precio|soles }}
+              {% if producto.oferta_vencida %}<br><span class="badge text-bg-warning" title="Venció el {{ producto.oferta_hasta|date:'d/m/Y' }}">Oferta vencida</span>{% endif %}
             {% endif %}
           </td>
           <td class="text-end text-nowrap celda-stock" data-etiqueta="Stock">
@@ -133,4 +147,30 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
 <p class="small text-muted mt-2">El costo, el stock mínimo y el código son privados: solo tú los ves. Cada cambio de stock queda anotado en el kardex.</p>
 
 {% include "catalogo/_paginacion.html" %}
+
+{% if vencidas %}
+{# Nov 2026: confirmar antes de quitar TODAS las ofertas vencidas de la tienda (vista quitar_ofertas_vencidas). #}
+<div class="modal fade" id="modal-quitar-vencidas" tabindex="-1" aria-labelledby="titulo-quitar-vencidas" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal-marca modal-marca--peligro">
+      <div class="modal-body p-4">
+        <div class="modal-marca__icono modal-marca__icono--peligro modal-marca__icono--izquierda" aria-hidden="true"><i class="bi bi-tag"></i></div>
+        <h2 class="h5 fw-bold" id="titulo-quitar-vencidas">¿Quitar {% if resumen.oferta_vencida == 1 %}la oferta vencida{% else %}{{ resumen.oferta_vencida }} ofertas vencidas{% endif %}?</h2>
+        <ul class="lista-vencidas small mb-2">
+          {% for producto in vencidas %}
+            <li><strong>{{ producto.nombre }}</strong> — {{ producto.precio_oferta|soles }} <span class="text-muted">(venció el {{ producto.oferta_hasta|date:"d/m/Y" }})</span></li>
+          {% endfor %}
+          {% if vencidas_sin_mostrar %}<li class="text-muted">y {{ vencidas_sin_mostrar }} más</li>{% endif %}
+        </ul>
+        <p class="small text-muted mb-4">Volverán a su precio normal (el que tus clientes ya ven). Si quieres repetir una oferta, tendrás que escribir su precio otra vez.</p>
+        <form method="post" action="{% url 'catalogo:quitar_ofertas_vencidas' %}" class="d-flex justify-content-end gap-2">
+          {% csrf_token %}
+          <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Quitar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

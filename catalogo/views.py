@@ -8,12 +8,13 @@ from django.db.models.functions import Coalesce, Lower
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from inventario.models import FichaInventario
 from tiendas.decorators import tienda_requerida
 
 from .forms import BusquedaForm, ProductoForm
-from .models import Producto, VistaProducto
+from .models import Producto, VistaProducto, q_oferta_vencida, q_oferta_vigente
 
 ORDENES = {
     "recientes": ("-creado",),
@@ -272,6 +273,9 @@ def mis_productos(request):
         "agotados": Q(stock=0) & VISIBLES,
         "sin_costo": Q(ficha__costo__isnull=True),
         "ocultos": OCULTOS,
+        # Nov 2026: ofertas (incluye las ocultas: es para revisar precios, el estado se ve en la fila).
+        "oferta": q_oferta_vigente(),
+        "oferta_vencida": q_oferta_vencida(),
     }
     if ver in filtros:
         productos = productos.filter(filtros[ver])
@@ -297,12 +301,41 @@ def mis_productos(request):
         productos = productos.filter(marca_id=marca_id)
 
     pagina = Paginator(productos, 10).get_page(request.GET.get("page"))
+    # Ventana «¿Quitar las ofertas vencidas?»: lista TODAS las de la tienda (sin importar categoría, marca ni búsqueda).
+    vencidas = []
+    if ver == "oferta_vencida" and resumen["oferta_vencida"]:
+        vencidas = list(
+            Producto.objects.filter(q_oferta_vencida(), tienda=request.tienda)
+            .order_by(Lower("nombre"), "pk")[:MAX_VENCIDAS_EN_VENTANA]
+        )
     return render(request, "catalogo/mis_productos.html", {
-        "pagina": pagina, "q": texto, "resumen": resumen, "ver": ver,
+        "pagina": pagina, "q": texto, "resumen": resumen, "ver": ver, "vencidas": vencidas,
+        "vencidas_sin_mostrar": max(resumen["oferta_vencida"] - len(vencidas), 0),
         "categorias": categorias, "marcas": marcas,
         "categoria_id": categoria_id, "marca_id": marca_id,
         "total_productos": sum(c["cantidad"] for c in categorias),
     })
+
+
+MAX_VENCIDAS_EN_VENTANA = 15
+
+
+@tienda_requerida()
+@require_POST
+def quitar_ofertas_vencidas(request):
+    """
+    Nov 2026: quita de una vez todas las ofertas vencidas de la tienda (precio de oferta y fecha límite).
+    Los productos vuelven a su precio normal, que es el que los clientes ya estaban viendo.
+    """
+    cantidad = Producto.objects.filter(q_oferta_vencida(), tienda=request.tienda).update(
+        precio_oferta=None, oferta_hasta=None
+    )
+    if cantidad:
+        messages.success(request, f"Se quitaron {cantidad} oferta{'s' if cantidad != 1 else ''} vencida{'s' if cantidad != 1 else ''}. "
+                                  "Esos productos quedan con su precio normal.")
+    else:
+        messages.info(request, "No había ofertas vencidas.")
+    return redirect("catalogo:mis_productos")
 
 
 def _resumen_inventario(tienda, bajo):
@@ -315,6 +348,8 @@ def _resumen_inventario(tienda, bajo):
         agotados=Count("id", filter=Q(stock=0) & VISIBLES),
         stock_bajo=Count("id", filter=bajo & VISIBLES),
         ocultos=Count("id", filter=OCULTOS),
+        en_oferta=Count("id", filter=q_oferta_vigente()),
+        oferta_vencida=Count("id", filter=q_oferta_vencida()),
     )
     datos["valor"] = datos["valor"] or 0
     return datos

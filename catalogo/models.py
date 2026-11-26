@@ -156,6 +156,11 @@ def q_oferta_vigente(prefijo=""):
     )
 
 
+def q_oferta_vencida():
+    """Tenía oferta con fecha límite y esa fecha ya pasó (nov 2026: filtro «Oferta vencida» de Mis productos)."""
+    return Q(precio_oferta__isnull=False, precio_oferta__lt=F("precio"), oferta_hasta__lt=timezone.localdate())
+
+
 def precio_actual_expr(prefijo=""):
     """Precio que paga el cliente hoy: el de oferta si está vigente, si no el normal."""
     return Case(
@@ -381,6 +386,16 @@ class Producto(models.Model):
             self.precio_oferta is not None
             and self.precio_oferta < self.precio
             and (self.oferta_hasta is None or self.oferta_hasta >= timezone.localdate())
+        )
+
+    @property
+    def oferta_vencida(self):
+        """La oferta tenía fecha límite y ya pasó: la tienda puede renovarla o quitarla."""
+        return (
+            self.precio_oferta is not None
+            and self.precio_oferta < self.precio
+            and self.oferta_hasta is not None
+            and self.oferta_hasta < timezone.localdate()
         )
 
     @property
