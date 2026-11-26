@@ -1,0 +1,50 @@
+{% extends "cuentas/_centro.html" %}
+{# «Solicitar la baja de mi tienda» (cuentas/views.baja_tienda): llega a la consola como solicitud de cancelación. #}
+{% block titulo %}Dar de baja mi tienda | NEXALYS Tec{% endblock %}
+{% block centro %}
+<a href="{% url 'mi_cuenta' %}" class="btn-volver"><span class="flecha" aria-hidden="true">&larr;</span>Volver a Mi perfil</a>
+<div class="seccion-cuenta__cabecera mt-2">
+  <h1 class="h3 mb-1">Dar de baja mi tienda</h1>
+  <p class="text-muted mb-0">Es tu derecho de cancelación (Ley N.° 29733). Envías la solicitud y te respondemos por correo en máximo {{ plazo }} días hábiles.</p>
+</div>
+
+{% if pendiente %}
+  <div class="tarjeta-cuenta">
+    <p class="mb-2"><i class="bi bi-hourglass-split text-warning" aria-hidden="true"></i> Ya enviaste tu solicitud el <strong>{{ pendiente.creada|date:"d/m/Y" }}</strong>.</p>
+    <p class="mb-0">Te responderemos a <strong>{{ pendiente.correo }}</strong> a más tardar el <strong>{{ pendiente.vence|date:"d/m/Y" }}</strong>. Mientras tanto, tu tienda sigue funcionando.</p>
+  </div>
+{% else %}
+  <div class="tarjeta-cuenta tarjeta-cuenta--peligro">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <p class="fw-semibold mb-1">Se borrarán:</p>
+        <ul class="mb-0">
+          <li>Tu tienda <strong>{{ tienda.nombre }}</strong>, su logo, su horario y su código QR.</li>
+          <li>{{ num_productos }} producto{{ num_productos|pluralize }} con sus fotos.</li>
+          <li>Tu kardex, tus ingresos y tus proveedores.</li>
+          <li>Tu cuenta y tus datos personales.</li>
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <p class="fw-semibold mb-1">Se conservan:</p>
+        <ul class="mb-0">
+          {% if num_ventas %}<li>{% if num_ventas == 1 %}Tu venta{% else %}Tus {{ num_ventas }} ventas{% endif %}, <strong>anónima{{ num_ventas|pluralize }}</strong> («Tienda eliminada», sin los datos de tus clientes), solo para las estadísticas de la página.</li>{% endif %}
+          <li>Las hojas de tu Libro de Reclamaciones, si las hay (obligación legal).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="tarjeta-cuenta mt-3">
+    <p class="small text-muted"><i class="bi bi-lightbulb" aria-hidden="true"></i> Antes de irte: si quieres una copia de lo que tienes, <a href="{% url 'mis_datos' %}">guarda tus datos en PDF</a> y descarga tus ventas en Excel desde Inventario.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "_campos_formulario.html" %}
+      <div class="d-flex flex-wrap gap-2">
+        <button type="submit" class="btn btn-danger"><i class="bi bi-send" aria-hidden="true"></i> Enviar solicitud de baja</button>
+        <a href="{% url 'mi_cuenta' %}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+{% endif %}
+{% endblock %}

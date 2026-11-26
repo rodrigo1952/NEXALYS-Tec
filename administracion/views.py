@@ -23,7 +23,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
-from catalogo.models import Categoria, Marca, Producto, borrar_archivo_al_confirmar
+from catalogo.models import Categoria, Marca, Producto
 from cuentas import clave_temporal
 from cuentas.models import SolicitudDerecho
 from cuentas.privacidad import datos_faltantes
@@ -561,16 +561,15 @@ def usuario_eliminar(request, pk):
     usuario = get_object_or_404(User.objects.select_related("tienda"), pk=pk)
     motivo = _motivo_no_se_puede_modificar(request.user, usuario)
     tienda = getattr(usuario, "tienda", None)
-    if not motivo and tienda is not None and tienda.ventas.exists():
-        # Regla: se conserva el historial de ventas.
-        motivo = (
-            "Esta tienda tiene ventas registradas y no se puede eliminar, para conservar el historial "
-            "de ventas. Puedes desactivar la cuenta o suspender la tienda."
-        )
+    # Una tienda con ventas también se puede eliminar (nov 2026): sus ventas se conservan anónimas.
     if motivo:
         messages.error(request, motivo)
         return redirect("administracion:usuarios")
 
+    # Si la persona pidió su baja (Privacidad → Cancelación), al terminar se abre su solicitud para responderla.
+    solicitud_baja = SolicitudDerecho.objects.filter(
+        usuario=usuario, tipo=SolicitudDerecho.Tipo.CANCELACION, estado=SolicitudDerecho.Estado.PENDIENTE,
+    ).first()
     form = EliminarUsuarioForm(_datos(request))
     if request.method == "POST" and form.is_valid():
         nombre = str(usuario)
@@ -579,15 +578,16 @@ def usuario_eliminar(request, pk):
             with transaction.atomic():
                 # Se registra primero: si algo falla, la transacción deshace también el registro.
                 acciones.registrar(request.user, AccionAdmin.Tipo.ELIMINAR_CUENTA, objetivo, form.cleaned_data["motivo"])
-                if tienda is not None:
-                    for producto in tienda.productos.all():
-                        producto.delete()  # así también se borran sus imágenes
-                    borrar_archivo_al_confirmar(tienda.logo)
+                # Borra la cuenta y, en cascada, su tienda, productos, fotos y favoritos. Las señales de
+                # tiendas/models.py dejan sus ventas anónimas y borran su kardex, logo y carpetas (tiendas/baja.py).
                 usuario.delete()
         except ProtectedError:
             messages.error(request, "No se pudo eliminar: la cuenta tiene registros que deben conservarse.")
             return redirect("administracion:usuarios")
         messages.success(request, f"La cuenta \"{nombre}\" y sus datos fueron eliminados.")
+        if solicitud_baja is not None:
+            messages.info(request, "Ahora responde su solicitud: cuéntale que su cuenta fue eliminada.")
+            return redirect("administracion:solicitud_detalle", pk=solicitud_baja.pk)
         return redirect("administracion:usuarios")
 
     return render(request, "administracion/usuario_eliminar.html", {
@@ -595,7 +595,10 @@ def usuario_eliminar(request, pk):
         "rol": rol_de(usuario),
         "tienda": tienda,
         "num_productos": tienda.productos.count() if tienda else 0,
+        "num_ventas": tienda.ventas.count() if tienda else 0,
+        "num_reclamos": tienda.reclamos.count() if tienda else 0,
         "num_favoritos": usuario.favoritos.count(),
+        "solicitud_baja": solicitud_baja,
         "form": form,
     })
 

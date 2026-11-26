@@ -22,7 +22,9 @@ from tiendas.inicio import fecha_y_hora, tiendas_para_inicio
 from . import codigos, limites
 from .clave_temporal import CLAVE_SESION
 from .concurrencia import validar_y_guardar
-from .forms import EliminarCuentaForm, IngresoForm, NuevaClaveForm, PerfilForm, RecuperarClaveForm, RegistroForm
+from .forms import (
+    BajaTiendaForm, EliminarCuentaForm, IngresoForm, NuevaClaveForm, PerfilForm, RecuperarClaveForm, RegistroForm,
+)
 from .models import DIAS_PARA_CONFIRMAR_CORREO, ClaveTemporal, CorreoPendiente
 from .reautenticacion import confirmada_recientemente, marcar_confirmada
 from .verificacion import enviar_bienvenida, enviar_correo_confirmacion, horas_validez, leer_token
@@ -243,6 +245,49 @@ def eliminar_cuenta(request):
         messages.success(request, "Tu cuenta y tus datos fueron eliminados. ¡Gracias por usar NEXALYS Tec!")
         return redirect("inicio")
     return render(request, "cuentas/eliminar_cuenta.html", {"form": form})
+
+
+@login_required
+def baja_tienda(request):
+    """
+    «Solicitar la baja de mi tienda» (derecho de cancelación, Ley 29733). La tienda no se borra sola:
+    llega a la consola como solicitud de cancelación con su plazo, y el administrador la elimina
+    (Usuarios → Eliminar). Sus ventas se conservan anónimas (tiendas/baja.py).
+    """
+    from .models import SolicitudDerecho
+    from .privacidad import PLAZOS, sumar_dias_habiles
+
+    tienda = getattr(request.user, "tienda", None)
+    if tienda is None:
+        raise PermissionDenied
+    pendiente = SolicitudDerecho.objects.filter(
+        usuario=request.user, tipo=SolicitudDerecho.Tipo.CANCELACION, estado=SolicitudDerecho.Estado.PENDIENTE,
+    ).first()
+    form = BajaTiendaForm(request.user, request.POST or None)
+    if request.method == "POST" and pendiente is None and form.is_valid():
+        motivo = form.cleaned_data["motivo"].strip() or "No lo indicó."
+        solicitud = SolicitudDerecho.objects.create(
+            usuario=request.user,
+            nombre=request.user.get_full_name() or request.user.username,
+            correo=request.user.email,
+            tipo=SolicitudDerecho.Tipo.CANCELACION,
+            detalle=(
+                f"Solicito la baja de mi tienda «{tienda.nombre}» y la eliminación de mi cuenta "
+                f"«{request.user.username}».\nMotivo: {motivo}"
+            ),
+            vence=sumar_dias_habiles(timezone.localdate(), PLAZOS["cancelacion"]),
+        )
+        _avisar_solicitud_recibida(solicitud)
+        return render(request, "cuentas/privacidad_solicitud_enviada.html", {"solicitud": solicitud})
+    return render(request, "cuentas/baja_tienda.html", {
+        "form": form,
+        "tienda": tienda,
+        "pendiente": pendiente,
+        "num_productos": tienda.productos.count(),
+        "num_ventas": tienda.ventas.count(),
+        "plazo": PLAZOS["cancelacion"],
+    })
+
 
 # ---------------------------------------------------------------------------
 # Ayuda y soporte / Privacidad y términos (menú de la cuenta)

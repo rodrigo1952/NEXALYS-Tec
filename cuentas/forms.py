@@ -236,6 +236,35 @@ class EliminarCuentaForm(EstiloBootstrapMixin, forms.Form):
         return clave
 
 
+class BajaTiendaForm(EstiloBootstrapMixin, forms.Form):
+    """«Solicitar la baja de mi tienda»: llega como solicitud de cancelación a la consola (cuentas/views.baja_tienda)."""
+
+    motivo = forms.CharField(
+        label="¿Por qué te vas? (opcional)", required=False, max_length=500,
+        widget=forms.Textarea(attrs={"rows": 3}),
+        help_text="Nos ayuda a mejorar. Si es por algo que podemos arreglar, te escribiremos.",
+    )
+    clave = forms.CharField(
+        label="Contraseña actual",
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+        help_text="Para confirmar que eres el dueño de la tienda.",
+    )
+    confirmar = forms.BooleanField(
+        label="Entiendo que se borrarán mi tienda, mis productos y mi cuenta, y que mis ventas se conservarán anónimas.",
+    )
+
+    def __init__(self, usuario, *args, **kwargs):
+        self.usuario = usuario
+        super().__init__(*args, **kwargs)
+
+    def clean_clave(self):
+        clave = self.cleaned_data["clave"]
+        if not self.usuario.check_password(clave):
+            raise ValidationError("La contraseña no es correcta.")
+        return clave
+
+
 # --- Formularios de Django para contraseñas, con estilo Bootstrap ---
 
 class CambiarClaveForm(EstiloBootstrapMixin, PasswordChangeForm):

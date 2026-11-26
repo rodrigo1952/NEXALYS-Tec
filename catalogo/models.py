@@ -473,16 +473,6 @@ class Producto(models.Model):
         elif update_fields is None and stock_anterior is not None and stock_anterior != self.stock:
             registrar(self, Tipo.EDICION, self.stock - stock_anterior, usuario=usuario)
 
-    def delete(self, *args, **kwargs):
-        # Al eliminar el producto, también se borra su imagen
-        # (las fotos adicionales se borran con la señal de FotoProducto).
-        nombre = self.imagen.name
-        resultado = super().delete(*args, **kwargs)
-        if nombre:
-            almacenamiento = self.imagen.storage
-            transaction.on_commit(lambda: almacenamiento.delete(nombre))
-        return resultado
-
 
 class FotoProducto(models.Model):
     """Fotos adicionales de un producto (la foto principal es Producto.imagen)."""
@@ -519,6 +509,13 @@ class FotoProducto(models.Model):
 @receiver(post_delete, sender=FotoProducto)
 def borrar_archivo_de_foto(sender, instance, **kwargs):
     # La señal también se ejecuta cuando se elimina el producto completo (CASCADE).
+    borrar_archivo_al_confirmar(instance.imagen)
+
+
+@receiver(post_delete, sender=Producto)
+def borrar_imagen_del_producto(sender, instance, **kwargs):
+    # Se elimine por donde se elimine: la página, la consola, Django Admin o junto con su tienda
+    # (en cascada Django no llama a Producto.delete(), pero sí envía esta señal). Con sus miniaturas.
     borrar_archivo_al_confirmar(instance.imagen)
 
 

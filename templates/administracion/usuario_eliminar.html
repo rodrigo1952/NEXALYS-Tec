@@ -7,15 +7,24 @@
     <section class="panel-consola panel-consola--danger mt-2">
       <h1 class="h4 text-danger">Eliminar la cuenta «{{ usuario.username }}»</h1>
       <p class="mb-2">Rol: <strong>{{ rol }}</strong> · Correo: {{ usuario.email|default:"—" }}</p>
+      {% if solicitud_baja %}<div class="alert alert-info small"><i class="bi bi-send" aria-hidden="true"></i> Pidió su baja el {{ solicitud_baja.creada|date:"d/m/Y" }} (responder hasta el {{ solicitud_baja.vence|date:"d/m/Y" }}). Al eliminarla se abre su solicitud para que le respondas.</div>{% endif %}
       <p class="mb-1">Se borrarán de forma permanente:</p>
       <ul>
         <li>La cuenta y sus datos personales.</li>
         {% if num_favoritos %}<li>{{ num_favoritos }} favorito{{ num_favoritos|pluralize }}.</li>{% endif %}
         {% if tienda %}
           <li>La tienda <strong>{{ tienda.nombre }}</strong>, su logo y su horario.</li>
-          <li>{{ num_productos }} producto{{ num_productos|pluralize }} con sus fotos.</li>
+          <li>{{ num_productos }} producto{{ num_productos|pluralize }} con sus fotos y su carpeta de imágenes.</li>
+          <li>Su kardex, sus ingresos y sus proveedores.</li>
         {% endif %}
       </ul>
+      {% if tienda and num_ventas or tienda and num_reclamos %}
+        <p class="mb-1">Se conservan:</p>
+        <ul>
+          {% if num_ventas %}<li>{{ num_ventas }} venta{{ num_ventas|pluralize }} de la tienda, <strong>anónima{{ num_ventas|pluralize }}</strong> («Tienda eliminada», sin datos del cliente), para que las estadísticas no cambien.</li>{% endif %}
+          {% if num_reclamos %}<li>{{ num_reclamos }} hoja{{ num_reclamos|pluralize }} de su Libro de Reclamaciones (obligación legal).</li>{% endif %}
+        </ul>
+      {% endif %}
       <div class="alert alert-warning small">Si solo quieres impedir que entre a la página, es mejor <strong>desactivar</strong> la cuenta: se puede revertir.</div>
       <form method="post" novalidate>
         {% csrf_token %}

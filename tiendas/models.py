@@ -4,12 +4,14 @@ from urllib.parse import quote
 from django.conf import settings
 from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
+from django.db.models.signals import post_delete, pre_delete
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
 
 from catalogo.archivos import ruta_logo_tienda
 from catalogo.imagenes import LADO_MAXIMO_LOGO, optimizar_campo
-from catalogo.models import EXTENSIONES_IMAGEN, validar_tamano_imagen
+from catalogo.models import EXTENSIONES_IMAGEN, borrar_archivo_al_confirmar, validar_tamano_imagen
 
 # Regla de negocio: el WhatsApp debe ser un celular peruano (9 digitos, empieza con 9).
 validar_whatsapp = RegexValidator(
@@ -424,3 +426,21 @@ class EscaneoQR(models.Model):
 
     def __str__(self):
         return f"{self.tienda} · {timezone.localtime(self.fecha):%d/%m/%Y %H:%M}"
+
+
+# --- Al eliminar una tienda (por donde sea: consola, limpieza automática o Django Admin) ---
+# Ventas anónimas, kardex fuera, logo y carpetas vacías borrados. Detalle en tiendas/baja.py.
+
+@receiver(pre_delete, sender=Tienda)
+def antes_de_eliminar_tienda(sender, instance, **kwargs):
+    from .baja import anonimizar_registros
+
+    anonimizar_registros(instance)
+
+
+@receiver(post_delete, sender=Tienda)
+def despues_de_eliminar_tienda(sender, instance, **kwargs):
+    from .baja import borrar_carpetas_al_confirmar
+
+    borrar_archivo_al_confirmar(instance.logo)
+    borrar_carpetas_al_confirmar(instance)

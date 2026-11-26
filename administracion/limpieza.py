@@ -16,24 +16,17 @@ Django no tiene un reloj que trabaje solo, así que la limpieza se ejecuta:
 """
 
 from datetime import timedelta
-from types import SimpleNamespace
 
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.utils import timezone
 
-from catalogo.archivos import carpeta_tienda
-from catalogo.models import borrar_archivo_al_confirmar
-from catalogo.reubicar import borrar_carpetas_vacias
 from cuentas.models import DIAS_PARA_CONFIRMAR_CORREO
-from inventario.models import Venta
+from tiendas.baja import NOMBRE_ANONIMO  # noqa: F401  (las pruebas y la consola lo usan desde aquí)
 from tiendas.models import DIAS_PARA_ELIMINAR_SUSPENDIDA, Tienda
 
 from . import acciones
 from .models import AccionAdmin
-
-NOMBRE_ANONIMO = "Tienda eliminada"
-
 
 def tiendas_vencidas(ahora=None):
     limite = (ahora or timezone.now()) - timedelta(days=DIAS_PARA_ELIMINAR_SUSPENDIDA)
@@ -46,26 +39,17 @@ def eliminar_tienda_vencida(tienda):
         tienda = Tienda.objects.select_for_update().select_related("usuario").get(pk=tienda.pk)
         if tienda.estado != Tienda.Estado.SUSPENDIDA:
             return False  # alguien la reactivó justo ahora
-        nombre, carpeta = tienda.nombre, carpeta_tienda(tienda)
+        nombre = tienda.nombre
         suspendida = timezone.localtime(tienda.suspendida_en).strftime("%d/%m/%Y")
         motivo = tienda.motivo_suspension or "sin motivo registrado"
-
-        # Ventas anónimas: se quitan la tienda y los datos personales del cliente.
-        Venta.objects.filter(tienda=tienda).update(
-            tienda=None, tienda_nombre=NOMBRE_ANONIMO, usuario=None,
-            cliente_nombre="Cliente anónimo", cliente_documento="", nota="", motivo_anulacion="",
-        )
-        tienda.movimientos.all().delete()  # el kardex es privado de la tienda
-        for producto in tienda.productos.all():
-            producto.delete()  # también borra sus imágenes
-        borrar_archivo_al_confirmar(tienda.logo)
-        tienda.usuario.delete()  # borra la cuenta, la tienda y su horario
+        # Borra la cuenta, la tienda, su horario y sus productos. Las señales de tiendas/models.py
+        # dejan sus ventas anónimas, borran su kardex, sus imágenes y sus carpetas (tiendas/baja.py).
+        tienda.usuario.delete()
         acciones.registrar(
             None, AccionAdmin.Tipo.ELIMINACION_AUTOMATICA, f"Tienda «{nombre}»",
             f"Suspendida desde el {suspendida} y no se reactivó en {DIAS_PARA_ELIMINAR_SUSPENDIDA} días. "
             f"Motivo de la suspensión: {motivo}",
         )
-    transaction.on_commit(lambda: borrar_carpetas_vacias(carpeta))
     return True
 
 

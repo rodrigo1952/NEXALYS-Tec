@@ -121,6 +121,14 @@
   es correcta. Si eligió mal, la página **marca sola la opción correcta** (brilla con una flechita), deja
   escrito el usuario y pone el cursor en la contraseña. Diseño: tarjeta blanca con dos capas detrás (cian y
   azul marino, clase `pagina-ingreso` en el body), logo N de circuito, selector con íconos y botón «Mostrar» con ojo.
+- **Eliminar una tienda** (nov 2026), se elimine por donde se elimine (consola, limpieza automática o Django
+  Admin): señales en `tiendas/models.py` → `tiendas/baja.py`. Sus ventas se conservan **anónimas** («Tienda
+  eliminada», sin datos del cliente), su kardex se borra, y se borran su logo, las fotos de sus productos (señal
+  `post_delete` de Producto en `catalogo/models.py`), sus miniaturas y sus carpetas vacías (`media/tiendas/N-nombre`
+  y `media/miniaturas/<tipo>/tiendas/N-nombre`). Ya no se bloquea por tener ventas. La tienda no se borra sola:
+  «Solicitar la baja de mi tienda» (Mi perfil → `baja_tienda`, con contraseña) crea una solicitud de
+  cancelación; desde su detalle en la consola el admin la elimina y vuelve a la solicitud para responder.
+  Archivos sueltos de antes: `python manage.py limpiar_archivos` (vista previa) y `--borrar`.
 - **Exportación de demo**: nunca exporta contraseñas, clientes, ventas, inventario ni favoritos, y
   reemplaza los correos reales.
 - "Otra" (marca) y "Otros" (categoría) van siempre al final de las listas.

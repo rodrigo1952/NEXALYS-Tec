@@ -247,12 +247,15 @@ class UsuariosAdminTests(BaseAdministracion):
         self.assertFalse(Tienda.objects.exists())
         self.assertFalse(Producto.objects.exists())
 
-    def test_tienda_con_ventas_no_se_elimina(self):
-        self.crear_venta()
+    def test_tienda_con_ventas_se_elimina_y_sus_ventas_quedan_anonimas(self):
+        # Nov 2026: antes no se podía eliminar; ahora sus ventas se conservan anónimas (tiendas/baja.py).
+        venta = self.crear_venta()
         url = reverse("administracion:usuario_eliminar", args=[self.tienda.usuario.pk])
-        respuesta = self.client.post(url, {"confirmar": "on"}, follow=True)
-        self.assertContains(respuesta, "historial")
-        self.assertTrue(Tienda.objects.exists())
+        self.assertContains(self.client.get(url), "1 venta de la tienda, <strong>anónima</strong>")
+        self.client.post(url, {"confirmar": "on", "motivo": "La tienda cerró"})
+        self.assertFalse(Tienda.objects.exists())
+        venta.refresh_from_db()
+        self.assertEqual((venta.tienda, venta.tienda_nombre, venta.cliente_nombre), (None, "Tienda eliminada", "Cliente anónimo"))
 
     def test_no_puede_eliminarse_a_si_mismo(self):
         self.client.post(reverse("administracion:usuario_eliminar", args=[self.admin.pk]), {"confirmar": "on"})

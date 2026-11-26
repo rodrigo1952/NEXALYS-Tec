@@ -14,12 +14,15 @@
   <dl class="datos-cuenta">
     <div><dt>Pide</dt><dd>{{ solicitud.get_tipo_display }}</dd></div>
     <div><dt>Correo</dt><dd><a href="mailto:{{ solicitud.correo }}">{{ solicitud.correo }}</a></dd></div>
-    <div><dt>Cuenta</dt><dd>{% if solicitud.usuario %}{{ solicitud.usuario.username }}{% if solicitud.usuario.email|lower != solicitud.correo|lower %} <span class="badge text-bg-warning">el correo no es el de la cuenta</span>{% endif %}{% else %}La envió sin iniciar sesión{% endif %}</dd></div>
+    <div><dt>Cuenta</dt><dd>{% if solicitud.usuario %}{{ solicitud.usuario.username }}{% if solicitud.usuario.email|lower != solicitud.correo|lower %} <span class="badge text-bg-warning">el correo no es el de la cuenta</span>{% endif %}{% else %}Sin cuenta (la envió sin iniciar sesión o la cuenta ya fue eliminada){% endif %}</dd></div>
     <div><dt>Recibida</dt><dd>{{ solicitud.creada|date:"d/m/Y H:i" }}</dd></div>
     <div><dt>Responder hasta</dt><dd>{{ solicitud.vence|date:"d/m/Y" }}{% if solicitud.estado == "pendiente" %} ({% if solicitud.dias_restantes < 0 %}vencida{% else %}quedan {{ solicitud.dias_restantes }} día{{ solicitud.dias_restantes|pluralize }}{% endif %}){% endif %}</dd></div>
   </dl>
   <h2 class="h6 mt-3">Detalle</h2>
   <p class="mb-0">{{ solicitud.detalle|linebreaksbr }}</p>
+  {% if solicitud.estado == "pendiente" and solicitud.tipo == "cancelacion" and solicitud.usuario %}
+    <a href="{% url 'administracion:usuario_eliminar' solicitud.usuario.pk %}" class="btn btn-outline-danger mt-3"><i class="bi bi-trash" aria-hidden="true"></i> {% if solicitud.usuario.tienda %}Eliminar la cuenta y la tienda{% else %}Eliminar la cuenta{% endif %}</a>
+  {% endif %}
 </section>
 
 {% if solicitud.estado == "pendiente" %}

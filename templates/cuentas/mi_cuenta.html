@@ -58,6 +58,17 @@
   {% endif %}
 </div>
 
+{% if tienda_actual %}
+  <div class="tarjeta-cuenta tarjeta-cuenta--peligro mt-4">
+    <div class="tarjeta-cuenta__titulo">
+      <div>
+        <h2 class="h6 text-danger mb-1">Dar de baja mi tienda</h2>
+        <p class="small text-muted mb-0">Envías la solicitud y te respondemos por correo. Tus ventas se conservan anónimas.</p>
+      </div>
+      <a href="{% url 'baja_tienda' %}" class="btn btn-sm btn-outline-danger">Solicitar la baja de mi tienda</a>
+    </div>
+  </div>
+{% endif %}
 {% if puede_eliminar %}
   <div class="tarjeta-cuenta tarjeta-cuenta--peligro mt-4">
     <div class="tarjeta-cuenta__titulo">
