@@ -29,7 +29,7 @@ la política, pedir derechos, descargar los datos, eliminar la cuenta (clientes)
     <hr class="my-4">
     <p class="small text-muted mb-2"><strong>¿No estás de acuerdo?</strong> No podrás usar tu cuenta, pero puedes:</p>
     <div class="d-flex flex-wrap gap-2">
-      <a href="{% url 'mis_datos' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download" aria-hidden="true"></i> Descargar mis datos</a>
+      <a href="{% url 'mis_datos' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-person" aria-hidden="true"></i> Ver mis datos</a>
       <a href="{% url 'privacidad_solicitud' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-send" aria-hidden="true"></i> Hacer una solicitud</a>
       {% if puede_eliminar %}<a href="{% url 'eliminar_cuenta' %}" class="btn btn-sm btn-outline-danger">Eliminar mi cuenta</a>{% endif %}
       <form method="post" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary">Cerrar sesión</button></form>

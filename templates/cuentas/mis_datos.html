@@ -1,0 +1,97 @@
+{% extends "cuentas/_centro.html" %}
+{# «Mis datos» (derecho de acceso, Ley 29733): lo que la página guarda de la cuenta, para leer, imprimir o guardar en PDF. #}
+{# El título es el nombre del PDF al «Guardar como PDF». Los datos vienen de cuentas/mis_datos.py (los mismos de la copia .json). #}
+{% block titulo %}Mis datos de {{ datos.cuenta.usuario }} - NEXALYS Tec{% endblock %}
+{% block centro %}
+<div class="seccion-cuenta__cabecera d-flex flex-wrap justify-content-between align-items-start gap-3">
+  <div>
+    <h1 class="h3 mb-1">Mis datos</h1>
+    <p class="text-muted mb-0">Todo lo que NEXALYS Tec guarda de tu cuenta, al {{ datos.generado_el }}. Nunca incluye tu contraseña.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2 no-imprimir">
+    <button type="button" class="btn btn-primary" data-imprimir><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Guardar en PDF o imprimir</button>
+  </div>
+</div>
+<p class="small text-muted no-imprimir">En la ventana que se abre, elige <strong>«Guardar como PDF»</strong> en «Destino» para tener el archivo en tu equipo.</p>
+
+<section class="tarjeta-cuenta mis-datos" aria-labelledby="md-cuenta">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="md-cuenta"><i class="bi bi-person" aria-hidden="true"></i> Tu cuenta</h2></div>
+  <dl class="mis-datos__lista">
+    <div><dt>Usuario</dt><dd>{{ datos.cuenta.usuario }}</dd></div>
+    <div><dt>Nombres</dt><dd>{{ datos.cuenta.nombres|default:"—" }}</dd></div>
+    <div><dt>Apellidos</dt><dd>{{ datos.cuenta.apellidos|default:"—" }}</dd></div>
+    <div><dt>Correo</dt><dd>{{ datos.cuenta.correo|default:"—" }}</dd></div>
+    <div><dt>Tipo de cuenta</dt><dd>{{ datos.cuenta.rol|join:", "|default:"—" }}</dd></div>
+    <div><dt>Registrada el</dt><dd>{{ datos.cuenta.registrada_el|default:"—" }}</dd></div>
+    <div><dt>Último ingreso</dt><dd>{{ datos.cuenta.ultimo_ingreso|default:"—" }}</dd></div>
+  </dl>
+</section>
+
+{% if datos.tienda %}{% with tienda=datos.tienda %}
+<section class="tarjeta-cuenta mis-datos mt-3" aria-labelledby="md-tienda">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="md-tienda"><i class="bi bi-shop" aria-hidden="true"></i> Tu tienda</h2></div>
+  <dl class="mis-datos__lista">
+    <div><dt>Nombre</dt><dd>{{ tienda.nombre }}</dd></div>
+    <div><dt>Dirección</dt><dd>{{ tienda.direccion|default:"—" }}</dd></div>
+    <div><dt>WhatsApp</dt><dd>{{ tienda.whatsapp|default:"—" }}</dd></div>
+    <div><dt>Estado</dt><dd>{{ tienda.estado }}</dd></div>
+    <div><dt>Registrada el</dt><dd>{{ tienda.registrada_el|default:"—" }}</dd></div>
+    <div><dt>Ubicación en el mapa</dt><dd>{% if tienda.ubicacion_en_el_mapa %}{{ tienda.ubicacion_en_el_mapa.latitud }}, {{ tienda.ubicacion_en_el_mapa.longitud }}{% else %}Sin marcar{% endif %}</dd></div>
+    <div class="mis-datos__ancho"><dt>Descripción</dt><dd>{{ tienda.descripcion|default:"—" }}</dd></div>
+    <div class="mis-datos__ancho"><dt>Logo</dt><dd>{% if tienda.logo %}<a href="{{ tienda.logo }}">{{ tienda.logo }}</a>{% else %}Sin logo{% endif %}</dd></div>
+    <div class="mis-datos__ancho"><dt>Horario</dt><dd>{% for dia in tienda.horario %}{{ dia }}{% if not forloop.last %}<br>{% endif %}{% empty %}Sin horario{% endfor %}</dd></div>
+  </dl>
+  <h3 class="h6 mt-3 mb-2">Productos ({{ tienda.productos|length }})</h3>
+  {% if tienda.productos %}
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mis-datos__tabla">
+      <thead><tr><th scope="col">Producto</th><th scope="col" class="text-end">Precio (S/)</th><th scope="col" class="text-end">Stock</th><th scope="col">Publicado</th></tr></thead>
+      <tbody>{% for p in tienda.productos %}<tr><td>{{ p.nombre }}</td><td class="text-end">{{ p.precio }}</td><td class="text-end">{{ p.stock }}</td><td>{{ p.publicado|yesno:"Sí,No" }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% else %}<p class="text-muted mb-0">Todavía no tienes productos.</p>{% endif %}
+  <p class="small text-muted mb-0 mt-2">{{ tienda.nota }}</p>
+</section>
+{% endwith %}{% endif %}
+
+<section class="tarjeta-cuenta mis-datos mt-3" aria-labelledby="md-favoritos">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="md-favoritos"><i class="bi bi-heart" aria-hidden="true"></i> Favoritos ({{ datos.favoritos|length }})</h2></div>
+  {% if datos.favoritos %}
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mis-datos__tabla">
+      <thead><tr><th scope="col">Producto</th><th scope="col">Tienda</th><th scope="col" class="text-end">Precio al guardarlo (S/)</th><th scope="col">Guardado el</th></tr></thead>
+      <tbody>{% for f in datos.favoritos %}<tr><td>{{ f.producto }}</td><td>{{ f.tienda }}</td><td class="text-end">{{ f.precio_al_guardarlo }}</td><td>{{ f.guardado_el }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% else %}<p class="text-muted mb-0">No tienes favoritos guardados.</p>{% endif %}
+</section>
+
+<section class="tarjeta-cuenta mis-datos mt-3" aria-labelledby="md-politica">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="md-politica"><i class="bi bi-file-earmark-lock" aria-hidden="true"></i> Política de privacidad aceptada</h2></div>
+  {% if datos.politica_de_privacidad_aceptada %}
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mis-datos__tabla">
+      <thead><tr><th scope="col">Versión</th><th scope="col">Fecha</th><th scope="col">Dónde</th></tr></thead>
+      <tbody>{% for c in datos.politica_de_privacidad_aceptada %}<tr><td>{{ c.version }}</td><td>{{ c.fecha }}</td><td>{{ c.donde }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% else %}<p class="text-muted mb-0">Aún no has aceptado la política de privacidad.</p>{% endif %}
+</section>
+
+<section class="tarjeta-cuenta mis-datos mt-3" aria-labelledby="md-solicitudes">
+  <div class="tarjeta-cuenta__titulo"><h2 class="h6 mb-0" id="md-solicitudes"><i class="bi bi-send" aria-hidden="true"></i> Solicitudes sobre tus datos</h2></div>
+  {% if datos.solicitudes_de_derechos %}
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mis-datos__tabla">
+      <thead><tr><th scope="col">Tipo</th><th scope="col">Recibida el</th><th scope="col">Estado</th><th scope="col">Detalle</th><th scope="col">Respuesta</th></tr></thead>
+      <tbody>{% for s in datos.solicitudes_de_derechos %}<tr><td>{{ s.tipo }}</td><td>{{ s.recibida_el }}</td><td>{{ s.estado }}</td><td>{{ s.detalle|default:"—" }}</td><td>{{ s.respuesta|default:"—" }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  {% else %}<p class="text-muted mb-0">No has hecho solicitudes.</p>{% endif %}
+</section>
+
+<p class="small text-muted mt-3 mb-0 no-imprimir">
+  <i class="bi bi-filetype-json" aria-hidden="true"></i> ¿Vas a llevar tus datos a otro sistema?
+  <a href="{% url 'mis_datos_json' %}">Descargar copia técnica (.json)</a>
+</p>
+{% endblock %}

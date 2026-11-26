@@ -2758,3 +2758,16 @@ body.fondo-marca .nota-qr .bi{ color: var(--cel-precio); }
 @media (prefers-reduced-motion: reduce) {
   .confirmar-clave--aparece, .campo-resaltado{ animation: none; }
 }
+
+/* «Mis datos» (templates/cuentas/mis_datos.html): datos de la cuenta para leer, imprimir o guardar en PDF. */
+.mis-datos__lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .65rem 1.5rem; margin: 0; }
+.mis-datos__lista dt { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--nx-texto-suave); }
+.mis-datos__lista dd { margin: 0; overflow-wrap: anywhere; }
+.mis-datos__ancho { grid-column: 1 / -1; }
+.mis-datos__tabla { margin-bottom: 0; }
+.mis-datos__tabla th { font-size: .8rem; color: var(--nx-texto-suave); font-weight: 600; white-space: nowrap; }
+@media print {
+  .mis-datos { box-shadow: none !important; background: #fff !important; border: 1px solid #D6E3F5 !important; break-inside: avoid; }
+  .mis-datos__lista { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .seccion-cuenta__cabecera { margin-bottom: .75rem; }
+}

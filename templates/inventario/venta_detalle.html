@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load formato %}
-{% block titulo %}Nota de venta N.° {{ venta.numero|stringformat:"05d" }} | NEXALYS Tec{% endblock %}
+{# El título es el nombre del PDF al «Guardar como PDF»: empieza con la tienda para que se ordenen por tienda. #}
+{% block titulo %}{{ venta.tienda.nombre }} - Nota de venta N.° {{ venta.numero|stringformat:"05d" }}{% endblock %}
 {% block contenido %}
 <div class="no-imprimir">
   {% include "inventario/_menu.html" %}

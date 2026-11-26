@@ -334,7 +334,18 @@ def _avisar_solicitud_recibida(solicitud):
 
 @login_required
 def mis_datos(request):
-    """Descargar mis datos (derecho de acceso): un archivo con todo lo que la página guarda de la cuenta."""
+    """
+    Mis datos (derecho de acceso): una página ordenada con todo lo que la página guarda de la cuenta,
+    lista para leer, imprimir o «Guardar como PDF». Abajo, la copia técnica en .json (mis_datos_json).
+    """
+    from .mis_datos import datos_de
+
+    return render(request, "cuentas/mis_datos.html", {"datos": datos_de(request.user)})
+
+
+@login_required
+def mis_datos_json(request):
+    """Copia técnica de «Mis datos» en .json, para llevar los datos a otro sistema (portabilidad)."""
     from django.http import HttpResponse
 
     from .mis_datos import archivo_json

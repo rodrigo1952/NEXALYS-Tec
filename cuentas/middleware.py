@@ -32,7 +32,7 @@ class PrivacidadMiddleware:
     """
 
     LIBRES = (
-        "privacidad", "privacidad_aceptar", "privacidad_solicitud", "mis_datos", "eliminar_cuenta",
+        "privacidad", "privacidad_aceptar", "privacidad_solicitud", "mis_datos", "mis_datos_json", "eliminar_cuenta",
         "logout", "clave_temporal",
     )
 

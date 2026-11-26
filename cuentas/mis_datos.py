@@ -1,6 +1,7 @@
 """
-«Descargar mis datos» (derecho de acceso, Ley 29733): todo lo que la página guarda de la persona,
-en un archivo JSON que se puede abrir con el Bloc de notas o con cualquier programa.
+«Mis datos» (derecho de acceso, Ley 29733): todo lo que la página guarda de la persona.
+Se muestra en una página para leer, imprimir o guardar en PDF (templates/cuentas/mis_datos.html)
+y, como copia técnica, en un archivo .json para llevarlo a otro sistema.
 Nunca incluye la contraseña (ni cifrada).
 """
 

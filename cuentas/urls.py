@@ -20,5 +20,6 @@ urlpatterns = [
     path("privacidad/aceptar/", views.privacidad_aceptar, name="privacidad_aceptar"),
     path("privacidad/solicitud/", views.privacidad_solicitud, name="privacidad_solicitud"),
     path("mi-cuenta/mis-datos/", views.mis_datos, name="mis_datos"),
+    path("mi-cuenta/mis-datos/copia.json", views.mis_datos_json, name="mis_datos_json"),
     path("panel/admin/", resumen, name="panel_admin"),  # portada del panel de administración
 ]

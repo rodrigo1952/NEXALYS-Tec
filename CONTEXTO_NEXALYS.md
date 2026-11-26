@@ -297,6 +297,8 @@
   los `.alert` llevan su ícono por CSS (✓ éxito, ! aviso, ✕ error, i información).
 - Nota de venta: al imprimir sale solo la nota a hoja completa. «Anular venta» abre una ventana con lo que vuelve
   al stock, el motivo (obligatorio) y «Esta acción no se puede deshacer»; sin JavaScript sigue la página aparte.
+  El título de la nota y del ingreso empieza con la tienda («Selva Byte - Nota de venta N.° 00007»): es el nombre
+  del PDF al «Guardar como PDF» (nov 2026).
 - Catálogo: al filtrar, ordenar o cambiar de página salen **tarjetas grises de carga** (`catalogo.js`); cada foto
   de producto muestra un recuadro gris que brilla mientras carga. Pie de página completo (Explorar, Para
   tiendas, Ayuda y la franja «Proyecto IV ciclo · IESTP Urusayhua · 2026»).
@@ -350,7 +352,8 @@
 - **Privacidad Ley 29733**: `cuentas/privacidad.py` (`VERSION_POLITICA` = 2026-11-11, plazos 8/20/10 días hábiles),
   modelos `ConsentimientoPrivacidad` y `SolicitudDerecho` (migración cuentas 0006), casilla `acepto_privacidad` en
   ambos registros, `PrivacidadMiddleware` (aceptar al entrar; admin exento; las pruebas lo apagan con
-  `config/pruebas.py`), `/privacidad/aceptar/`, `/privacidad/solicitud/`, `/mi-cuenta/mis-datos/` (JSON), consola
+  `config/pruebas.py`), `/privacidad/aceptar/`, `/privacidad/solicitud/`, `/mi-cuenta/mis-datos/` (página legible para guardar en PDF; copia técnica
+  en `/mi-cuenta/mis-datos/copia.json`, nov 2026), consola
   Control → Privacidad (responder envía correo y queda en el historial). Datos del responsable en el .env
   (`PRIVACIDAD_*`); mientras falten: «por completar» en la política y tarea en el Resumen.
 - **Correo real**: `MAILERS` SMTP si hay `CORREO_SERVIDOR` en el .env (Gmail + contraseña de aplicación; puerto 587

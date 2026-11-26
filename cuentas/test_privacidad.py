@@ -92,7 +92,7 @@ class AceptarAlEntrarTests(TestCase):
         self.assertRedirects(respuesta, reverse("inicio"), fetch_redirect_response=False)
 
     def test_sin_aceptar_puede_leer_descargar_pedir_borrar_o_salir(self):
-        for nombre in ("privacidad", "privacidad_solicitud", "mis_datos", "eliminar_cuenta"):
+        for nombre in ("privacidad", "privacidad_solicitud", "mis_datos", "mis_datos_json", "eliminar_cuenta"):
             self.assertEqual(self.client.get(reverse(nombre)).status_code, 200, nombre)
         self.assertRedirects(self.client.post(reverse("logout")), reverse("inicio"), fetch_redirect_response=False)
 
@@ -132,7 +132,7 @@ class DescargarMisDatosTests(TestCase):
         )
         Favorito.objects.create(usuario=cliente, producto=producto, precio_guardado=700, precio_visto=700)
         self.client.force_login(cliente)
-        respuesta = self.client.get(reverse("mis_datos"))
+        respuesta = self.client.get(reverse("mis_datos_json"))
         self.assertEqual(respuesta["Content-Disposition"], 'attachment; filename="mis-datos-nexalys-cliente1.json"')
         datos = json.loads(respuesta.content)
         self.assertEqual(datos["cuenta"]["correo"], "cliente1@ejemplo.com")
@@ -144,12 +144,44 @@ class DescargarMisDatosTests(TestCase):
     def test_tienda_descarga_tambien_su_tienda(self):
         tienda = crear_tienda()
         self.client.force_login(tienda.usuario)
-        datos = json.loads(self.client.get(reverse("mis_datos")).content)
+        datos = json.loads(self.client.get(reverse("mis_datos_json")).content)
         self.assertEqual(datos["tienda"]["nombre"], "Tienda Uno")
         self.assertEqual(datos["tienda"]["whatsapp"], "911111111")
 
     def test_requiere_iniciar_sesion(self):
         self.assertEqual(self.client.get(reverse("mis_datos")).status_code, 302)
+        self.assertEqual(self.client.get(reverse("mis_datos_json")).status_code, 302)
+
+    def test_pagina_legible_para_guardar_en_pdf(self):
+        # Nov 2026: el .json solo se leía con programas; ahora «Mis datos» es una página que se imprime o se guarda en PDF.
+        cliente = crear_cliente()
+        tienda = crear_tienda()
+        producto = Producto.objects.create(
+            tienda=tienda, categoria=Categoria.objects.get(nombre="Celulares"), marca=Marca.objects.get(nombre="Samsung"),
+            nombre="Galaxy A15", precio=Decimal("700.00"), stock=5,
+        )
+        Favorito.objects.create(usuario=cliente, producto=producto, precio_guardado=700, precio_visto=700)
+        self.client.force_login(cliente)
+        respuesta = self.client.get(reverse("mis_datos"))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "<title>Mis datos de cliente1 - NEXALYS Tec</title>", html=False)
+        self.assertContains(respuesta, "cliente1@ejemplo.com")
+        self.assertContains(respuesta, "Galaxy A15")
+        self.assertContains(respuesta, "data-imprimir")
+        self.assertContains(respuesta, f'href="{reverse("mis_datos_json")}"')
+        self.assertNotIn(cliente.password, respuesta.content.decode())
+
+    def test_pagina_de_la_tienda_muestra_su_tienda_y_productos(self):
+        tienda = crear_tienda()
+        Producto.objects.create(
+            tienda=tienda, categoria=Categoria.objects.get(nombre="Celulares"), marca=Marca.objects.get(nombre="Samsung"),
+            nombre="Galaxy A15", precio=Decimal("700.00"), stock=5,
+        )
+        self.client.force_login(tienda.usuario)
+        respuesta = self.client.get(reverse("mis_datos"))
+        self.assertContains(respuesta, "Tu tienda")
+        self.assertContains(respuesta, "911111111")
+        self.assertContains(respuesta, "Productos (1)")
 
     def test_acceso_desde_mi_perfil(self):
         self.client.force_login(crear_cliente())
