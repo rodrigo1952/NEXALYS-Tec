@@ -48,7 +48,7 @@
   «Registrarse» y «Registrar mi tienda» (`.menu-acceso`). Secciones con íconos (casa, cuadrícula, ubicación); la elegida
   en una píldora blanca con texto azul. Barra de categorías en píldoras suaves.
   **Tarjeta de producto** (`catalogo/_tarjeta_producto.html`): etiqueta de la marca con su color
-  (`chip-marca--<marca con slugify>`, colores en marca.css; las demás en azul marino), descuento «-20%» sobre la foto,
+  (`Marca.color`, lo elige el admin desde nov 2026; va en `style="--chip-marca: …"`; por defecto azul marino), descuento «-20%» sobre la foto,
   precio grande en azul con el anterior tachado delante (si está en oferta, el precio va en rojo oscuro #C62828, clase
   `precio--oferta`; también en el detalle, con el aviso «Oferta válida hasta…» en rojo con etiqueta, y en Mis productos), tienda y botón «Consultar por WhatsApp» (en el celular solo
   «WhatsApp»; agotado: «¿Cuándo llega?» con borde verde y la foto más clara). El botón está por encima del enlace que
@@ -130,6 +130,14 @@
   «Solicitar la baja de mi tienda» (Mi perfil → `baja_tienda`, con contraseña) crea una solicitud de
   cancelación; desde su detalle en la consola el admin la elimina y vuelve a la solicitud para responder.
   Archivos sueltos de antes: `python manage.py limpiar_archivos` (vista previa) y `--borrar`.
+- **Eliminar una categoría o marca** (nov 2026, `catalogo/gestion.py`): si tiene productos, el admin elige a
+  cuál pasan (solo activas; «Otros»/«Otra» viene marcada), se mueven, se recalcula su texto de búsqueda y luego
+  se elimina. Queda en el Historial (`eliminar_categoria` / `eliminar_marca`). Ningún producto queda sin
+  categoría ni marca (`on_delete=PROTECT`).
+- **Color de marca** (nov 2026, `catalogo/colores.py`): `#RRGGBB` con contraste de al menos 4.5 : 1 contra el
+  texto blanco (si no, el formulario lo rechaza). Selector con vista previa en vivo (`js/color_marca.js`).
+- **Ventas por tienda** (consola): píldoras «Últimos 6 meses» (por defecto) y un año por cada año con ventas
+  (enero a diciembre; los meses que aún no llegan salen con «—»). Las ventas viejas nunca se borran.
 - **Exportación de demo**: nunca exporta contraseñas, clientes, ventas, inventario ni favoritos, y
   reemplaza los correos reales.
 - "Otra" (marca) y "Otros" (categoría) van siempre al final de las listas.
@@ -206,7 +214,8 @@
   aplican al instante en computadora (en el celular, panel «Filtrar» + «Ver resultados»), chips para
   quitar filtros, orden y vista 4/3/lista. La búsqueda viene del menú y la categoría de la barra.
 - Cada categoría tiene `icono` (Bootstrap Icons, lo elige el admin con un selector de dibujos); se ve
-  solo en «Todas las categorías». Visor de fotos con fondo claro difuminado y miniaturas.
+  solo en «Todas las categorías». Son 38 (`ICONOS_CATEGORIA`, nov 2026; «Otros» al final); para agregar uno,
+  comprobar que exista en `bootstrap-icons.min.css` y crear la migración. Visor de fotos con fondo claro difuminado y miniaturas.
 - El orden de las fotos adicionales se guarda en `FotoProducto.orden` (la principal es `Producto.imagen`).
 - Detalle del producto: las fotos cambian solas cada **5 segundos** (se pausan con el mouse encima y no
   se mueven si el sistema pide «reducir movimiento»); la miniatura de la foto que se ve queda resaltada.

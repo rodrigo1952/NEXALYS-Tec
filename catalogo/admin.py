@@ -17,7 +17,7 @@ class CategoriaAdmin(admin.ModelAdmin):
 
 @admin.register(Marca)
 class MarcaAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "activa")
+    list_display = ("nombre", "color", "activa")
     list_editable = ("activa",)
     search_fields = ("nombre",)
 

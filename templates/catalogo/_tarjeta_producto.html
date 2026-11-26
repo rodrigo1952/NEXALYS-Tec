@@ -1,7 +1,7 @@
 {% load miniaturas whatsapp %}{% comment %}
 Tarjeta de producto (diseño celeste). Toda la tarjeta lleva al detalle (el nombre usa «stretched-link»);
 el corazón de favoritos, el enlace de la tienda y el botón de WhatsApp funcionan aparte.
-- Etiqueta de color con la marca (chip-marca--<marca>, colores en marca.css) y el descuento sobre la foto.
+- Etiqueta de color con la marca (el color lo elige el administrador: Marca.color) y el descuento sobre la foto.
 - Agotado: foto más clara, etiqueta «Agotado» y el botón pregunta «¿Cuándo llega?».
 - En el celular el botón dice solo «WhatsApp».
 {% endcomment %}
@@ -19,7 +19,7 @@ el corazón de favoritos, el enlace de la tienda y el botón de WhatsApp funcion
     {% if producto.agotado %}<span class="tarjeta-producto__agotado">Agotado</span>{% endif %}
   </div>
   <div class="card-body d-flex flex-column">
-    {% if producto.marca %}<span class="chip-marca chip-marca--{{ producto.marca.nombre|slugify }}">{{ producto.marca }}</span>{% endif %}
+    {% if producto.marca %}<span class="chip-marca" style="--chip-marca: {{ producto.marca.color }}">{{ producto.marca }}</span>{% endif %}
     <small class="tarjeta-producto__categoria">{{ producto.categoria }}</small>
     <h3 class="h6 card-title"><a href="{% url 'catalogo:detalle' producto.pk %}" class="tarjeta-producto__nombre stretched-link">{{ producto.nombre }}</a></h3>
     {% if producto.coincide_descripcion %}

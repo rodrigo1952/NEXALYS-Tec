@@ -7,8 +7,16 @@
     <p class="consola-cabecera__antetitulo">Marketplace</p>
     <h1 class="h3 mb-0">Ventas por tienda</h1>
   </div>
-  <span class="text-muted small">Últimos {{ meses|length }} meses · {{ total_general|soles }}</span>
+  <span class="text-muted small">{{ titulo_periodo }} · {{ total_general|soles }}</span>
 </div>
+
+{# Periodo (nov 2026): los últimos 6 meses o un año completo; solo aparecen los años que tienen ventas. #}
+<ul class="nav nav-pills small mb-3" aria-label="Periodo">
+  <li class="nav-item"><a class="nav-link py-1{% if not periodo %} active" aria-current="page{% endif %}" href="{% url 'administracion:ventas' %}">Últimos 6 meses</a></li>
+  {% for anio in anios %}
+    <li class="nav-item"><a class="nav-link py-1{% if periodo == anio|stringformat:'d' %} active" aria-current="page{% endif %}" href="{% url 'administracion:ventas' %}?periodo={{ anio }}">{{ anio }}</a></li>
+  {% endfor %}
+</ul>
 
 <div class="tabla-consola">
   <div class="table-responsive">
@@ -20,7 +28,7 @@
         {% for f in filas %}
           <tr>
             <td class="small">{% if f.tienda %}<a href="{% url 'administracion:tienda_detalle' f.tienda.pk %}">{{ f.nombre }}</a>{% else %}<span class="text-muted">{{ f.nombre }}</span>{% endif %}</td>
-            {% for monto in f.montos %}<td class="text-end text-nowrap small{% if not monto %} text-muted{% endif %}">{{ monto|soles }}</td>{% endfor %}
+            {% for monto, futuro in f.celdas %}<td class="text-end text-nowrap small{% if not monto %} text-muted{% endif %}">{% if futuro %}—{% else %}{{ monto|soles }}{% endif %}</td>{% endfor %}
             <td class="text-end text-nowrap fw-semibold">{{ f.total|soles }}</td>
           </tr>
         {% empty %}
@@ -29,7 +37,7 @@
       </tbody>
       {% if filas %}
         <tfoot>
-          <tr><th>TOTAL</th>{% for t in totales %}<th class="text-end text-nowrap">{{ t|soles }}</th>{% endfor %}<th class="text-end text-nowrap">{{ total_general|soles }}</th></tr>
+          <tr><th>TOTAL</th>{% for t, futuro in totales %}<th class="text-end text-nowrap">{% if futuro %}—{% else %}{{ t|soles }}{% endif %}</th>{% endfor %}<th class="text-end text-nowrap">{{ total_general|soles }}</th></tr>
         </tfoot>
       {% endif %}
     </table>

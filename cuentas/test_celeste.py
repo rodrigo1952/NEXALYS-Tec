@@ -13,6 +13,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from catalogo.models import Marca
 from catalogo.tests import BaseCatalogo, crear_tienda
 from tiendas.inicio import fecha_y_hora, tiendas_para_inicio
 from tiendas.models import Tienda
@@ -110,9 +111,14 @@ class EstilosTests(TestCase):
         self.assertIsNotNone(finders.find("vendor/fuentes/LICENSE-inter"))
 
     def test_colores_por_marca(self):
+        # Nov 2026: el color ya no está fijo en marca.css; se guarda en cada marca (lo elige el administrador).
         css = leer_estatico("css/marca.css")
-        for marca in ("samsung", "lenovo", "xiaomi", "apple", "epson", "kingston"):
-            self.assertIn(f".chip-marca--{marca}", css)
+        self.assertIn("background: var(--chip-marca, var(--nx-oscuro))", css)
+        # La migración 0013 pasó a la base los colores que antes estaban en el CSS.
+        colores = dict(Marca.objects.values_list("nombre", "color"))
+        for nombre, color in (("Samsung", "#1428A0"), ("Epson", "#1A56C4"), ("Kingston", "#141414"),
+                              ("TP-Link", "#0B6E7E"), ("Soundcore (Anker)", "#1D4ED8"), ("ADATA", "#0B1B3A")):
+            self.assertEqual(colores[nombre], color, nombre)
 
 
 class CorazonDelClienteTests(BaseCatalogo):
@@ -144,7 +150,7 @@ class TarjetaDeProductoTests(BaseCatalogo):
     def test_boton_de_whatsapp_y_marca_de_color(self):
         self.crear_producto()
         html = self.client.get(reverse("inicio")).content.decode()
-        self.assertIn('class="chip-marca chip-marca--samsung">Samsung</span>', html)
+        self.assertIn('class="chip-marca" style="--chip-marca: #1428A0">Samsung</span>', html)
         self.assertIn('class="btn btn-wa tarjeta-producto__whatsapp"', html)
         self.assertIn('<span class="d-none d-sm-inline">Consultar por </span>WhatsApp', html)
         self.assertIn('href="https://wa.me/51911111111?text=', html)

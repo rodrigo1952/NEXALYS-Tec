@@ -23,6 +23,8 @@ class AccionAdmin(models.Model):
         RESTABLECER_CLAVE = "restablecer_clave", "Restableció una contraseña"
         RESPONDER_SOLICITUD = "responder_derecho", "Respondió una solicitud de datos personales"
         RESPONDER_RECLAMO = "responder_reclamo", "Respondió una hoja del Libro de Reclamaciones"
+        ELIMINAR_CATEGORIA = "eliminar_categoria", "Eliminó una categoría"
+        ELIMINAR_MARCA = "eliminar_marca", "Eliminó una marca"
 
     fecha = models.DateTimeField("fecha", auto_now_add=True, db_index=True)
     admin = models.ForeignKey(

@@ -1238,7 +1238,8 @@ a.kpi:hover, a.kpi:focus-visible { transform: translateY(-2px); border-color: va
 .linea-tiempo li:last-child { border-bottom: 0; padding-bottom: 0; }
 .linea-tiempo__punto { display: inline-block; flex-shrink: 0; width: .7rem; height: .7rem; margin-top: .4rem; border-radius: 50%; background: var(--nx-texto-suave); }
 .linea-tiempo__punto--suspender_tienda, .linea-tiempo__punto--desactivar_cuenta, .linea-tiempo__punto--eliminar_cuenta,
-.linea-tiempo__punto--ocultar_producto, .linea-tiempo__punto--eliminacion_auto { background: #DC3545; }
+.linea-tiempo__punto--ocultar_producto, .linea-tiempo__punto--eliminacion_auto,
+.linea-tiempo__punto--eliminar_categoria, .linea-tiempo__punto--eliminar_marca { background: #DC3545; }
 .linea-tiempo__punto--reactivar_tienda, .linea-tiempo__punto--reactivar_cuenta, .linea-tiempo__punto--mostrar_producto { background: #198754; }
 .linea-tiempo__punto--restablecer_clave, .linea-tiempo__punto--responder_derecho,
 .linea-tiempo__punto--responder_reclamo { background: var(--nx-acento); }
@@ -2330,20 +2331,7 @@ body.fondo-marca .chip-marca{
   background: var(--chip-marca, var(--nx-oscuro)); color: #FFFFFF; font-size: .75rem; font-weight: 700; line-height: 24px;
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-/* Color de cada marca (las demás, azul marino) */
-body.fondo-marca .chip-marca--samsung{ --chip-marca: #1428A0; }
-body.fondo-marca .chip-marca--lenovo, body.fondo-marca .chip-marca--nintendo, body.fondo-marca .chip-marca--canon, body.fondo-marca .chip-marca--hyperx, body.fondo-marca .chip-marca--redragon{ --chip-marca: #C8102E; }
-body.fondo-marca .chip-marca--kingston, body.fondo-marca .chip-marca--sony, body.fondo-marca .chip-marca--corsair, body.fondo-marca .chip-marca--amazfit, body.fondo-marca .chip-marca--logitech, body.fondo-marca .chip-marca--amd{ --chip-marca: #141414; }
-body.fondo-marca .chip-marca--asus{ --chip-marca: #5B34C9; }
-body.fondo-marca .chip-marca--apple{ --chip-marca: #5F6B7A; }
-body.fondo-marca .chip-marca--epson{ --chip-marca: #1A56C4; }
-body.fondo-marca .chip-marca--xiaomi, body.fondo-marca .chip-marca--jbl{ --chip-marca: #B8470B; }
-body.fondo-marca .chip-marca--lg{ --chip-marca: #A50034; }
-body.fondo-marca .chip-marca--hp{ --chip-marca: #0063A6; }
-body.fondo-marca .chip-marca--motorola{ --chip-marca: #1E3A8A; }
-body.fondo-marca .chip-marca--infinix, body.fondo-marca .chip-marca--acer{ --chip-marca: #2E7D32; }
-body.fondo-marca .chip-marca--tp-link, body.fondo-marca .chip-marca--ezviz, body.fondo-marca .chip-marca--hisense{ --chip-marca: #0B6E7E; }
-body.fondo-marca .chip-marca--soundcore-anker{ --chip-marca: #1D4ED8; }
+/* El color de cada marca lo elige el administrador (nov 2026, Marca.color): va en style="--chip-marca: …". */
 body.fondo-marca .tarjeta-producto__categoria{ color: var(--cel-suave); font-size: .8rem; }
 body.fondo-marca .tarjeta-producto .card-title{ margin: 2px 0 8px; }
 body.fondo-marca .tarjeta-producto__nombre{
@@ -2778,3 +2766,11 @@ body.fondo-marca .nota-qr .bi{ color: var(--cel-precio); }
 body.fondo-marca .precio--oferta,
 body.fondo-marca .tarjeta-producto__precio .precio.precio--oferta { color: #C62828 !important; }
 body.fondo-marca .aviso-oferta { display: flex; align-items: center; gap: .35rem; color: #C62828; font-weight: 600; }
+
+/* Selector del color de la etiqueta de una marca (consola, nov 2026): color, vista previa y aviso de contraste. */
+.selector-color { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; }
+.selector-color__campo { width: 3.5rem; height: 2.5rem; padding: .25rem; cursor: pointer; }
+.selector-color__vista { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0 .9rem; border: 1px dashed #C9D8EC; border-radius: 12px; background: #FFFFFF; }
+.selector-color__contraste { flex-basis: 100%; font-size: .875rem; }
+.selector-color__contraste--bien { color: #1E7E34; }
+.selector-color__contraste--mal { color: #B42318; font-weight: 600; }

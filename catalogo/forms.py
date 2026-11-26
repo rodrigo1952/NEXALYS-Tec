@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 
 from django import forms
@@ -14,6 +15,7 @@ from cuentas.estilos import EstiloBootstrapMixin
 from inventario.models import FichaInventario
 from tiendas.models import Tienda
 
+from .colores import COLOR_MARCA_POR_DEFECTO, CONTRASTE_MINIMO, PATRON_COLOR, contraste_con_blanco
 from .models import (
     EXTENSIONES_IMAGEN,
     MAX_DESTACADOS,
@@ -558,8 +560,57 @@ class CategoriaForm(NombreUnicoForm):
         return self.cleaned_data.get("icono") or (self.instance.icono if self.instance.pk else "grid")
 
 
+class SelectorColor(forms.TextInput):
+    """Color de la etiqueta de la marca: selector, vista previa con el nombre y aviso de contraste (js/color_marca.js)."""
+
+    input_type = "color"
+    template_name = "widgets/selector_color.html"  # en catalogo/templates/widgets/
+
+
 class MarcaForm(NombreUnicoForm):
     class Meta:
         model = Marca
-        fields = ["nombre", "activa"]
-        help_texts = {"activa": "Si la desactivas, las tiendas ya no podrán elegirla en productos nuevos."}
+        fields = ["nombre", "color", "activa"]
+        widgets = {"color": SelectorColor}
+        help_texts = {
+            "activa": "Si la desactivas, las tiendas ya no podrán elegirla en productos nuevos.",
+            "color": "Fondo de la etiqueta con el nombre de la marca en las tarjetas de producto. "
+                     "El nombre va en blanco, así que el color debe ser oscuro para que se lea.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["color"].required = False  # si no se elige, queda el azul marino de NEXALYS
+
+    def clean_color(self):
+        color = (self.cleaned_data.get("color") or "").strip()
+        if not color:
+            return self.instance.color if self.instance.pk else COLOR_MARCA_POR_DEFECTO
+        if not re.fullmatch(PATRON_COLOR, color):
+            raise ValidationError("Escribe el color como #RRGGBB (por ejemplo #1428A0).")
+        color = color.upper()
+        contraste = contraste_con_blanco(color)
+        if contraste < CONTRASTE_MINIMO:
+            raise ValidationError(
+                f"Con ese color el nombre en blanco no se lee bien (contraste {contraste:.1f} : 1; "
+                f"el mínimo es {CONTRASTE_MINIMO:g} : 1). Elige un tono más oscuro."
+            )
+        return color
+
+
+class MoverProductosForm(forms.Form):
+    """Al eliminar una categoría o marca que tiene productos: a cuál pasan esos productos (nov 2026)."""
+
+    destino = forms.ModelChoiceField(queryset=Categoria.objects.none(), empty_label=None)
+
+    def __init__(self, modelo, registro, singular, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Solo las activas: pasar productos a una desactivada los dejaría otra vez fuera del menú y los filtros.
+        opciones = _otros_al_final(modelo.objects.filter(activa=True).exclude(pk=registro.pk))
+        campo = self.fields["destino"]
+        campo.queryset = opciones
+        campo.label = f"Pasar sus productos a la {singular}"
+        campo.widget.attrs["class"] = "form-select"
+        generica = opciones.filter(nombre__in=NOMBRES_GENERICOS).first()
+        if generica is not None:
+            campo.initial = generica.pk

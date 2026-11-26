@@ -1,0 +1,9 @@
+{# Color de la etiqueta de una marca (nov 2026): selector, vista previa con el nombre y aviso de contraste. #}
+{# La vista previa y el aviso los actualiza static/js/color_marca.js; al guardar, el servidor revisa el contraste. #}
+<div class="selector-color" data-selector-color>
+  <input type="color" name="{{ widget.name }}" id="{{ widget.attrs.id }}" value="{{ widget.value|default:'#0B1B3A' }}" class="form-control form-control-color selector-color__campo" aria-describedby="{{ widget.attrs.id }}-contraste">
+  <span class="selector-color__vista">
+    <span class="chip-marca mb-0" data-vista-marca style="--chip-marca: {{ widget.value|default:'#0B1B3A' }}">Vista previa</span>
+  </span>
+  <span class="selector-color__contraste" id="{{ widget.attrs.id }}-contraste" data-contraste aria-live="polite"></span>
+</div>

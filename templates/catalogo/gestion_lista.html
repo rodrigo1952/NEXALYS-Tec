@@ -32,7 +32,7 @@
       <tbody>
         {% for registro in pagina %}
           <tr>
-            <td>{% if tipo == "categorias" %}<span class="icono-categoria" aria-hidden="true"><i class="bi bi-{{ registro.icono }}"></i></span>{% endif %}{{ registro.nombre }}</td>
+            <td>{% if tipo == "categorias" %}<span class="icono-categoria" aria-hidden="true"><i class="bi bi-{{ registro.icono }}"></i></span>{{ registro.nombre }}{% else %}<span class="chip-marca mb-0" style="--chip-marca: {{ registro.color }}">{{ registro.nombre }}</span>{% endif %}</td>
             <td class="text-end">{{ registro.num_productos }}</td>
             <td>{% if registro.activa %}<span class="estado estado--ok">Activa</span>{% else %}<span class="estado estado--apagado">Inactiva</span>{% endif %}</td>
             <td class="text-end text-nowrap">

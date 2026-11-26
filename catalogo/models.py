@@ -18,6 +18,7 @@ from config.context_processors import enlace_completo
 
 from .archivos import ruta_foto_producto, ruta_imagen_producto
 from .busqueda import normalizar
+from .colores import COLOR_MARCA_POR_DEFECTO, validar_color
 from .imagenes import LADO_MAXIMO_PRODUCTO, optimizar_campo
 
 PRECIO_MINIMO = Decimal("0.10")
@@ -41,29 +42,47 @@ def borrar_archivo_al_confirmar(campo):
         transaction.on_commit(lambda: almacenamiento.delete(nombre))
 
 
-# Íconos que el administrador puede elegir para una categoría (nombres de Bootstrap Icons).
-# Se ven en la lista «Todas las categorías» del menú.
+# Íconos que el administrador puede elegir para una categoría (nombres de Bootstrap Icons 1.11).
+# Se ven en la lista «Todas las categorías» del menú. Nov 2026: de 22 a 38 (agrupados por tema; «Otros» al final).
+# Para agregar otro: elegir el nombre en icons.getbootstrap.com, comprobar que exista en
+# static/vendor/bootstrap-icons/bootstrap-icons.min.css (bi-<nombre>::before) y crear la migración.
 ICONOS_CATEGORIA = [
     ("phone", "Celular"),
     ("laptop", "Laptop"),
     ("pc-display", "Computadora de escritorio"),
     ("tablet", "Tablet"),
+    ("pen", "Lápiz digital"),
     ("display", "Monitor"),
     ("tv", "Televisor"),
+    ("projector", "Proyector"),
     ("headphones", "Audífonos"),
+    ("earbuds", "Audífonos inalámbricos"),
     ("speaker", "Parlante"),
+    ("soundwave", "Bocina inteligente"),
+    ("mic", "Micrófono"),
     ("keyboard", "Teclado y accesorios"),
     ("mouse", "Mouse"),
+    ("webcam", "Cámara web"),
     ("printer", "Impresora"),
     ("cpu", "Componentes / repuestos"),
+    ("motherboard", "Placa madre"),
+    ("gpu-card", "Tarjeta de video"),
+    ("memory", "Memoria RAM"),
+    ("fan", "Refrigeración"),
     ("usb-drive", "Almacenamiento"),
+    ("device-ssd", "Disco SSD"),
     ("camera-video", "Cámara de seguridad"),
     ("camera", "Cámara de fotos"),
     ("smartwatch", "Smartwatch"),
     ("controller", "Videojuegos"),
     ("router", "Redes / router"),
+    ("sim", "Chip / SIM"),
+    ("house-gear", "Casa inteligente"),
+    ("lightbulb", "Iluminación"),
     ("battery-charging", "Energía / UPS"),
+    ("battery-full", "Power bank"),
     ("plug", "Cables y cargadores"),
+    ("disc", "Software y licencias"),
     ("tools", "Servicio técnico"),
     ("grid", "Otros"),
 ]
@@ -105,6 +124,11 @@ class Marca(models.Model):
 
     nombre = models.CharField("nombre", max_length=60, unique=True)
     activa = models.BooleanField("activa", default=True)
+    # Nov 2026: color de la etiqueta de la marca en las tarjetas (antes estaba fijo en marca.css).
+    color = models.CharField(
+        "color de la etiqueta", max_length=7, default=COLOR_MARCA_POR_DEFECTO, validators=[validar_color],
+        help_text="Fondo de la etiqueta con el nombre de la marca en las tarjetas de producto.",
+    )
 
     class Meta:
         ordering = ["nombre"]

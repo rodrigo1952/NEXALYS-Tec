@@ -7,7 +7,7 @@ como herramienta avanzada.
 """
 
 import logging
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 from django.contrib import messages
@@ -370,17 +370,41 @@ def _meses_atras(cantidad):
     return meses
 
 
+def _anios_con_ventas():
+    """Años que tienen ventas (sin anuladas), del más reciente al más antiguo; siempre incluye el año actual."""
+    anios = {d.year for d in _ventas_validas().datetimes("fecha", "year")}
+    anios.add(timezone.localdate().year)
+    return sorted(anios, reverse=True)
+
+
+def _periodo_ventas(valor):
+    """
+    Periodo elegido en las píldoras de Ventas (nov 2026): «Últimos 6 meses» (por defecto) o un año con ventas.
+    Devuelve (clave, meses, años con ventas, hasta); hasta es None cuando llega hasta hoy.
+    """
+    anios = _anios_con_ventas()
+    if valor and valor.isdigit() and int(valor) in anios:
+        anio = int(valor)
+        meses = [date(anio, mes, 1) for mes in range(1, 13)]
+        hasta = timezone.make_aware(datetime.combine(date(anio + 1, 1, 1), time.min))
+        return str(anio), meses, anios, hasta
+    return "", _meses_atras(MESES_VENTAS), anios, None
+
+
 @solo_admin
 def ventas(request):
     """
-    Tabla de ventas: filas = tiendas, columnas = últimos 6 meses y total.
+    Tabla de ventas: filas = tiendas, columnas = meses del periodo y total.
+    Periodo (píldoras): últimos 6 meses (por defecto) o un año completo, de enero a diciembre.
     Solo totales vendidos (sin anuladas). Las tiendas eliminadas se agrupan como "Tienda eliminada".
     """
-    meses = _meses_atras(MESES_VENTAS)
+    periodo, meses, anios, hasta = _periodo_ventas(request.GET.get("periodo", ""))
     desde = timezone.make_aware(datetime.combine(meses[0], time.min))
+    validas = _ventas_validas().filter(fecha__gte=desde)
+    if hasta:
+        validas = validas.filter(fecha__lt=hasta)
     filas_bd = (
-        _ventas_validas().filter(fecha__gte=desde)
-        .annotate(mes=TruncMonth("fecha")).order_by()
+        validas.annotate(mes=TruncMonth("fecha")).order_by()
         .values("tienda_id", "mes").annotate(total=Sum("total"))
     )
     por_tienda = {}
@@ -398,9 +422,16 @@ def ventas(request):
         filas.append({"tienda": None, "nombre": limpieza.NOMBRE_ANONIMO, "montos": montos, "total": sum(montos)})
     filas.sort(key=lambda f: (-f["total"], f["nombre"].lower()))
     totales = [sum(f["montos"][i] for f in filas) for i in range(len(meses))]
+    # Meses que todavía no llegan (al ver el año actual): se muestran con «—» en vez de S/ 0.00.
+    inicio_mes_actual = timezone.localdate().replace(day=1)
+    futuros = [m > inicio_mes_actual for m in meses]
+    for fila in filas:
+        fila["celdas"] = list(zip(fila["montos"], futuros))
     return render(request, "administracion/ventas.html", {
         "meses": [f"{NOMBRES_MES[m.month - 1]} {m:%Y}" for m in meses],
-        "filas": filas, "totales": totales, "total_general": sum(totales),
+        "filas": filas, "totales": list(zip(totales, futuros)), "total_general": sum(totales),
+        "periodo": periodo, "anios": anios,
+        "titulo_periodo": f"Año {periodo}" if periodo else f"Últimos {len(meses)} meses",
     })
 
 
