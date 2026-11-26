@@ -2771,3 +2771,10 @@ body.fondo-marca .nota-qr .bi{ color: var(--cel-precio); }
   .mis-datos__lista { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .seccion-cuenta__cabecera { margin-bottom: .75rem; }
 }
+
+/* Precio de oferta en rojo oscuro (nov 2026): se distingue al instante del precio normal, que sigue en azul.
+   #C62828 (contraste 5.6 : 1) en vez del rojo del globito (#E8463B, 3.9 : 1), que en texto se lee débil.
+   Va en tarjetas (inicio, catálogo, ofertas, favoritos, tienda), detalle del producto y Mis productos. */
+body.fondo-marca .precio--oferta,
+body.fondo-marca .tarjeta-producto__precio .precio.precio--oferta { color: #C62828 !important; }
+body.fondo-marca .aviso-oferta { display: flex; align-items: center; gap: .35rem; color: #C62828; font-weight: 600; }

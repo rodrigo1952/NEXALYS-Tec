@@ -49,7 +49,8 @@
   en una píldora blanca con texto azul. Barra de categorías en píldoras suaves.
   **Tarjeta de producto** (`catalogo/_tarjeta_producto.html`): etiqueta de la marca con su color
   (`chip-marca--<marca con slugify>`, colores en marca.css; las demás en azul marino), descuento «-20%» sobre la foto,
-  precio grande en azul con el anterior tachado delante, tienda y botón «Consultar por WhatsApp» (en el celular solo
+  precio grande en azul con el anterior tachado delante (si está en oferta, el precio va en rojo oscuro #C62828, clase
+  `precio--oferta`; también en el detalle, con el aviso «Oferta válida hasta…» en rojo con etiqueta, y en Mis productos), tienda y botón «Consultar por WhatsApp» (en el celular solo
   «WhatsApp»; agotado: «¿Cuándo llega?» con borde verde y la foto más clara). El botón está por encima del enlace que
   cubre la tarjeta (z-index 2).
   **Inicio** (como la vista previa): panel de Categorías (primero), «¿Qué tienda está abierta ahora?» con la fecha y

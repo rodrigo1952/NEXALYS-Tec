@@ -83,7 +83,7 @@ Los productos sin precio de compra se marcan: solo la tienda lo ve (esta página
           <td class="d-none d-lg-table-cell">{{ producto.marca }}</td>
           <td class="text-end text-nowrap celda-precio" data-etiqueta="Precio">
             {% if producto.en_oferta %}
-              <span class="text-danger fw-semibold">{{ producto.precio_oferta|soles }}</span><br>
+              <span class="text-danger fw-semibold precio--oferta">{{ producto.precio_oferta|soles }}</span><br>
               <small class="text-muted text-decoration-line-through">{{ producto.precio|soles }}</small><br>
               <span class="badge text-bg-danger">Oferta</span>
             {% else %}

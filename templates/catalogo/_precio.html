@@ -1,7 +1,7 @@
 {% load formato %}
 {% comment %}Precio de un producto: si tiene oferta vigente, muestra el precio anterior tachado y el descuento.{% endcomment %}
 {% if producto.en_oferta %}
-  <span class="fw-bold text-danger precio">{{ producto.precio_oferta|soles }}</span>
+  <span class="fw-bold text-danger precio precio--oferta">{{ producto.precio_oferta|soles }}</span>
   <small class="text-muted text-decoration-line-through ms-1 precio">{{ producto.precio|soles }}</small>
   <span class="badge text-bg-danger ms-1">-{{ producto.porcentaje_descuento }}%</span>
 {% else %}
